@@ -8,7 +8,7 @@ if __name__ == "__main__":
     model = load_model_from_path("xmls/cartpole.xml")
     sim = MjSim(model)
     viewer = MjViewer(sim)
-    new_state = State(time=0, qpos=np.array([0, np.pi]), qvel=np.array([0, 0]), act=0, udd_state={})
+    new_state = State(time=0, qpos=np.array([0, 1]), qvel=np.array([0, 0]), act=0, udd_state={})
     sim.set_state(new_state)
     while True:
         viewer.render()

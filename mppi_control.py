@@ -20,9 +20,12 @@ class Cost(object):
         self._goal = goal
         self.value_scale = value_scale
 
-    def running_cost(self, state):
-        return (100 * (np.cos(state.qpos[0]))**2 + 0.2 * state.qvel[0]**2) * 0.01 + \
-               (100 * (1 - np.cos(state.qpos[1]))**2 + 0.2 * state.qvel[1]**2) * 0.01
+    def running_cost(self, state, control, control_dist, variance):
+        QR_cost = (1 - 1/variance)/2 + control_dist.T * self._R + control_dist + \
+                  control.T * self._R * control + 0.5 * control.T * self._R * control
+
+        return (100 * (np.cos(state.qpos[0]))**2 + 0.2 * state.qvel[0]**2 * 0.01) + \
+               (100 * (1 - np.cos(state.qpos[1]))**2 + 0.2 * state.qvel[1]**2 * 0.01) + QR_cost
 
 
 class MPPI(object):
@@ -75,10 +78,14 @@ class MPPI(object):
 
                 self._sim.step()
 
-                self._sample_cost[sample] = self._sample_cost[sample] + self._cost_func.running_cost(self._sim.get_state())
+                self._sample_cost[sample] = self._sample_cost[sample] + \
+                                            self._cost_func.running_cost(self._sim.get_state(),
+                                                                         self._variance,
+                                                                         np.array([self._ctrl[i][time][0] for i in range(self._num_actions)]),
+                                                                         np.array([self._delta_ctrl[i][time][0] for i in range(self._num_actions)]))
 
             for controls in range(self._num_actions):
-                self._delta_ctrl[controls][-1][sample] = np.random.random() * self._variance
+                self._delta_ctrl[controls][-1][sample] = np.random.uniform(-1, 1, 1)[0] * self._variance
 
     def simulate(self, viewer=None):
         for iteration in range(self._time_horizon):
@@ -117,8 +124,8 @@ if __name__ == "__main__":
 
     new_state = State(time=0, qpos=np.array([np.pi/2, 0, 0]), qvel=np.array([0.0, 0, 0]), act=0, udd_state={})
     plant.set_state(new_state)
-    cost = Cost(None, None, None, 10)
-    pi = MPPI(sim, 250, 250, cost, 0.025, plant, 1000)
+    cost = Cost(None, np.eye(1)*10, None, 1)
+    pi = MPPI(sim, 250, 250, cost, 1, plant, 1000)
     pi.simulate()
 
     rec = input("Visualise ?")
