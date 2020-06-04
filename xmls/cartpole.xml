@@ -50,6 +50,6 @@
     </body>
   </worldbody>
   <actuator>
-    <motor ctrllimited="false" ctrlrange="-1 1" gear="1" joint="slider" name="slide"/>
+    <motor ctrllimited="true" ctrlrange="-1 1" gear="500" joint="slider" name="slide"/>
   </actuator>
 </mujoco>

@@ -21,8 +21,8 @@ class Cost(object):
         self.value_scale = value_scale
 
     def running_cost(self, state):
-        return (12 * (np.cos(state.qpos[0]))**2 + 0.2 * state.qvel[0]**2) * 0.01 + \
-               (12 * (1 - np.cos(state.qpos[1]))**2 + 0.2 * state.qvel[1]**2) * 0.01
+        return (100 * (np.cos(state.qpos[0]))**2 + 0.2 * state.qvel[0]**2) * 0.01 + \
+               (100 * (1 - np.cos(state.qpos[1]))**2 + 0.2 * state.qvel[1]**2) * 0.01
 
 
 class MPPI(object):
@@ -53,13 +53,12 @@ class MPPI(object):
         self._plant_state   = [State for _ in range(time_horizon)]
         self.plant_control  = [np.zeros((self._num_actions, 1)) for _ in range(time_horizon)]
 
-    def total_entropy(self, delta_control_sample_1):
+    def total_entropy(self, delta_ctrl_samples):
         num = np.zeros((self._num_actions, 1))
         den = 0.0
 
         for sample in range(self._samples):
-            ctrl_array = delta_control_sample_1[sample]
-            # ctrl_array = np.array([delta_ctrl_samples[i][sample] for i in range(self._num_actions)])
+            ctrl_array = np.array([delta_ctrl_samples[i][sample] for i in range(self._num_actions)])
             num += np.exp(-(1/self._cost_func.value_scale * self._sample_cost[sample])) * ctrl_array
             den += np.exp(-(1/self._cost_func.value_scale * self._sample_cost[sample]))
 
@@ -71,7 +70,7 @@ class MPPI(object):
             self._sim.set_state(self._plant.get_state())
             for time in range(self._horizon - 1):
                 for controls in range(self._num_actions):
-                    self._delta_ctrl[controls][time][sample] = np.random.uniform(-0.05, 0.05, 1)[0] * self._variance
+                    self._delta_ctrl[controls][time][sample] = np.random.uniform(-1, 1, 1)[0] * self._variance
                     self._sim.data.ctrl[controls] = self._ctrl[controls][time][0] + self._delta_ctrl[controls][time][sample]
 
                 self._sim.step()
@@ -83,18 +82,11 @@ class MPPI(object):
 
     def simulate(self, viewer=None):
         for iteration in range(self._time_horizon):
-            # current_cost = self._cost_func.running_cost(self._plant.get_state(),
-            #                                             self._plant.data.ctrl[0],
-            #                                             self._plant.data.ctrl[1])
-            # # if current_cost < 1e-6:
-            # #     print(current_cost)
-            # #     break
 
             self.compute_controls()
             self._cost_avg[iteration] = np.sum(self._sample_cost)
             for time in range(self._horizon):
-                entropy = self.total_entropy(self._delta_ctrl[0][time][:])
-                # entropy = self.total_entropy([self._delta_ctrl[i][time][:] for i in range(self._num_actions)])
+                entropy = self.total_entropy([self._delta_ctrl[i][time][:] for i in range(self._num_actions)])
 
                 for controls in range(self._num_actions):
                     self._ctrl[controls][time][0] += entropy[controls]
@@ -126,7 +118,7 @@ if __name__ == "__main__":
     new_state = State(time=0, qpos=np.array([np.pi/2, 0, 0]), qvel=np.array([0.0, 0, 0]), act=0, udd_state={})
     plant.set_state(new_state)
     cost = Cost(None, None, None, 10)
-    pi = MPPI(sim, 20, 50, cost, 1, plant, 500)
+    pi = MPPI(sim, 250, 250, cost, 0.025, plant, 1000)
     pi.simulate()
 
     rec = input("Visualise ?")
