@@ -4,10 +4,6 @@ from collections import namedtuple
 from jacobian_compute import State
 
 
-class Params:
-    NUM_action = 1
-
-
 class Cost(object):
     def __init__(self,
                  Q,
@@ -20,12 +16,11 @@ class Cost(object):
         self._goal = goal
         self.value_scale = value_scale
 
-    def running_cost(self, state, control, control_dist, variance):
-        QR_cost = (1 - 1/variance)/2 + control_dist.T * self._R + control_dist + \
-                  control.T * self._R * control + 0.5 * control.T * self._R * control
+    def running_cost(self, state, variance, control, control_dist):
+        QR_cost = (1 - 1/variance)/2 + control_dist.T.dot(self._R).dot(control_dist) + \
+                  control.T.dot(self._R).dot(control) + 0.5 * control.T.dot(self._R).dot(control)
 
-        return (100 * (np.cos(state.qpos[0]))**2 + 0.2 * state.qvel[0]**2 * 0.01) + \
-               (100 * (1 - np.cos(state.qpos[1]))**2 + 0.2 * state.qvel[1]**2 * 0.01) + QR_cost
+        return (800 * (1 - np.cos(state.qpos[2]))**2 + 50 * state.qvel[2]**2 * 0.01) + QR_cost
 
 
 class MPPI(object):
@@ -62,7 +57,7 @@ class MPPI(object):
 
         for sample in range(self._samples):
             ctrl_array = np.array([delta_ctrl_samples[i][sample] for i in range(self._num_actions)])
-            num += np.exp(-(1/self._cost_func.value_scale * self._sample_cost[sample])) * ctrl_array
+            num += np.exp(-(1/self._cost_func.value_scale * self._sample_cost[sample])) * ctrl_array.reshape(self._num_actions, 1)
             den += np.exp(-(1/self._cost_func.value_scale * self._sample_cost[sample]))
 
         return num/den
@@ -99,6 +94,7 @@ class MPPI(object):
                     self._ctrl[controls][time][0] += entropy[controls]
 
             for controls in range(self._num_actions):
+                print(self._ctrl[controls][0][0])
                 self._plant.data.ctrl[controls] = self._ctrl[controls][0][0]
 
             self.plant_control[iteration] = np.array([self._ctrl[i][0][0] for i in range(self._num_actions)])
@@ -121,16 +117,25 @@ if __name__ == "__main__":
     model = load_model_from_path("xmls/finger.xml")
     sim = MjSim(model)
     plant = MjSim(model)
-
-    new_state = State(time=0, qpos=np.array([np.pi/2, 0, 0]), qvel=np.array([0.0, 0, 0]), act=0, udd_state={})
+    new_state = State(time=0, qpos=np.array([-np.pi/2 + 0.2, 0, 0+0.1]), qvel=np.array([0.0, 0, 0]), act=0, udd_state={})
     plant.set_state(new_state)
-    cost = Cost(None, np.eye(1)*10, None, 1)
-    pi = MPPI(sim, 250, 250, cost, 1, plant, 1000)
-    pi.simulate()
+
+    R = 700.0
+    lam = 25000
+    k = 200
+    h = 500
+    T = 500
+    var = 0.9
+
+    cost = Cost(None, np.eye(2)*R, None, lam)
+    pi = MPPI(sim, k, h, cost, var, plant, T)
+    viewer = MjViewer(plant)
+    pi.simulate(viewer)
+    np.save(f"working_controls_finger_{R}_{lam}_{k}_{h}_{T}_{var}.npy", pi.plant_control[:])
 
     rec = input("Visualise ?")
     print("Visualising")
-    viewer = MjViewer(plant)
+
     plant.set_state(new_state)
 
     for control in range(len(pi.plant_control)):
