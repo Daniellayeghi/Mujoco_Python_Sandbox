@@ -1,7 +1,6 @@
 from mujoco_py import load_model_from_path, MjSim, MjViewer
 import numpy as np
-from collections import namedtuple
-from jacobian_compute import State
+from tests.jacobian_compute import State
 
 
 class Cost(object):
@@ -122,19 +121,20 @@ if __name__ == "__main__":
 
     R = 700.0
     lam = 25000
-    k = 200
-    h = 500
-    T = 500
+    k = 500
+    h = 700
+    T = 1000
     var = 0.9
 
     cost = Cost(None, np.eye(2)*R, None, lam)
     pi = MPPI(sim, k, h, cost, var, plant, T)
-    viewer = MjViewer(plant)
-    pi.simulate(viewer)
-    np.save(f"working_controls_finger_{R}_{lam}_{k}_{h}_{T}_{var}.npy", pi.plant_control[:])
+    pi.simulate()
+
+    np.save(f"mppi/results/working_controls_finger_{R}_{lam}_{k}_{h}_{T}_{var}.npy", pi.plant_control[:])
 
     rec = input("Visualise ?")
     print("Visualising")
+    viewer = MjViewer(plant)
 
     plant.set_state(new_state)
 

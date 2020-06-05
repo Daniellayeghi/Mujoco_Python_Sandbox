@@ -1,7 +1,6 @@
 from mujoco_py import load_model_from_path, MjSim, MjViewer
 import numpy as np
-from collections import namedtuple
-from jacobian_compute import State
+from tests.jacobian_compute import State
 
 if __name__ == "__main__":
     model = load_model_from_path("xmls/finger.xml")

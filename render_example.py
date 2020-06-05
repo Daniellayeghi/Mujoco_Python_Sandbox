@@ -16,7 +16,7 @@ if __name__ == "__main__":
     sim.set_state(finger_init)
     viewer = MjViewer(sim)
 
-    cartpole_controls = np.load("working_controls_finger_1000.0_25000_200_500_500_0.9.npy")
+    cartpole_controls = np.load("mppi/results/working_controls_finger_1000.0_25000_200_500_500_0.9.npy")
     for time in range(len(cartpole_controls)):
         for control in range(sim.data.ctrl.shape[0]):
             sim.data.ctrl[control] = cartpole_controls[time][control]

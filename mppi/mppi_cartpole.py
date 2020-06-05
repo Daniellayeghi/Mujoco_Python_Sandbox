@@ -1,10 +1,7 @@
-from mppi_control import MPPI
-from jacobian_compute import State
+from mppi.mppi_control import MPPI
+from tests.jacobian_compute import State
 import numpy as np
-import matplotlib.pyplot as plt
 from mujoco_py import load_model_from_path, MjSim, MjViewer
-from tempfile import TemporaryFile
-from collections import namedtuple
 
 
 class Cost(object):
@@ -45,7 +42,7 @@ if __name__ == "__main__":
     pi = MPPI(sim, k, h, cost, var, plant, T)
     viewer = MjViewer(plant)
     pi.simulate(viewer)
-    np.save(f"working_controls_cartpole_{R}_{lam}_{k}_{h}_{T}_{var}.npy", pi.plant_control[:])
+    np.save(f"mppi/results/working_controls_cartpole_{R}_{lam}_{k}_{h}_{T}_{var}.npy", pi.plant_control[:])
 
     rec = input("Visualise ?")
     print("Visualising")

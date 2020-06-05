@@ -4,6 +4,9 @@ import numpy as np
 from collections import namedtuple
 from scipy.optimize import approx_fprime
 
+# This module calculates the derivatives of dynamics w.r.t states and controls fprime.
+# The main reason for this module is to be used in unit tests for C++ implementations
+
 State = namedtuple('State', 'time qpos qvel act udd_state')
 
 
@@ -67,18 +70,16 @@ if __name__ == "__main__":
          for m in range(state_vec.shape[0])]
     )
 
-    # sim.set_state(new_state)
-    # ctrl_vec = np.array([0.5, 0.3, 0])
-    # J_ctrl = np.vstack(
-    #     [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl(x, new_state)[m], epsilon)
-    #      for m in range(state_vec.shape[0])]
-    # )
+    sim.set_state(new_state)
+    ctrl_vec = np.array([0.5, 0.3, 0])
+    J_ctrl = np.vstack(
+        [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl(x, new_state)[m], epsilon)
+         for m in range(state_vec.shape[0])]
+    )
 
-    # sim.set_state(new_state)
-    # ctrl_vec = np.array([0.5, 0.3, 0])
-    # J_ctrl_acc = np.vstack(
-    #     [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl_acc(x, new_state)[m], epsilon)
-    #      for m in range(sim.data.qacc.shape[0])]
-    # )
-
-    print(J_state)
+    sim.set_state(new_state)
+    ctrl_vec = np.array([0.5, 0.3, 0])
+    J_ctrl_acc = np.vstack(
+        [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl_acc(x, new_state)[m], epsilon)
+         for m in range(sim.data.qacc.shape[0])]
+    )
