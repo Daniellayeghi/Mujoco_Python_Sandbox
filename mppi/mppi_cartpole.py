@@ -33,10 +33,10 @@ if __name__ == "__main__":
     plant.set_state(new_state)
     R = 500.0
     lam = 2000
-    k = 100
-    h = 50
+    k = 50
+    h = 100
     T = 250
-    var = 1
+    var = 0.999
 
     cost = Cost(None, np.eye(1)*R, None, lam)
     pi = MPPI(sim, k, h, cost, var, plant, T)

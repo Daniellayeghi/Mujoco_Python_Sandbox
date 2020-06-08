@@ -123,7 +123,7 @@ if __name__ == "__main__":
     lam = 25000
     k = 500
     h = 700
-    T = 1000
+    T = 2500
     var = 0.9
 
     cost = Cost(None, np.eye(2)*R, None, lam)

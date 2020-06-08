@@ -10,6 +10,7 @@ mujoco-py = ">=2.0,<2.1"
 scipy = "*"
 recordtype = "*"
 matplotlib = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.6"
