@@ -119,18 +119,19 @@ if __name__ == "__main__":
     new_state = State(time=0, qpos=np.array([-np.pi/2 + 0.2, 0, 0+0.1]), qvel=np.array([0.0, 0, 0]), act=0, udd_state={})
     plant.set_state(new_state)
 
-    R = 700.0
-    lam = 25000
-    k = 500
-    h = 700
-    T = 2500
-    var = 0.9
+    Params = {"R":  700.0, "Lambda": 25000, "Samples": 500, "Horizon": 700, "Time": 2500, "Variance": 0.9}
 
-    cost = Cost(None, np.eye(2)*R, None, lam)
-    pi = MPPI(sim, k, h, cost, var, plant, T)
+    cost = Cost(None, np.eye(2) * Params["R"], None, Params["Lambda"])
+    pi = MPPI(sim, Params["Samples"], Params["Horizon"], cost, Params["Variance"], plant, Params["Time"])
     pi.simulate()
 
-    np.save(f"mppi/results/working_controls_finger_{R}_{lam}_{k}_{h}_{T}_{var}.npy", pi.plant_control[:])
+    np.save(f'mppi/results/working_controls_finger_{Params["R"]}_'
+            f'                                     {Params["Lamda"]}_'
+            f'                                     {Params["Samples"]}_'
+            f'                                     {Params["Horizon"]}_'
+            f'                                     {Params["Time"]}_'
+            f'                                     {Params["variance"]}.npy',
+                                                   pi.plant_control[:])
 
     rec = input("Visualise ?")
     print("Visualising")

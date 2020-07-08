@@ -1,6 +1,7 @@
 from mujoco_py import load_model_from_path, MjSim, MjViewer
 import numpy as np
 from collections import namedtuple
+from time import sleep
 
 State = namedtuple('State', 'time qpos qvel act udd_state')
 
@@ -22,3 +23,4 @@ if __name__ == "__main__":
             sim.data.ctrl[control] = cartpole_controls[time][control]
         sim.step()
         viewer.render()
+        sleep(0.01)

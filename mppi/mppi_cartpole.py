@@ -31,19 +31,23 @@ if __name__ == "__main__":
 
     new_state = State(time=0, qpos=np.array([0, np.pi]), qvel=np.array([0, 0]), act=0, udd_state={})
     plant.set_state(new_state)
-    R = 500.0
-    lam = 2000
-    k = 50
-    h = 100
-    T = 250
-    var = 0.999
 
-    cost = Cost(None, np.eye(1)*R, None, lam)
-    pi = MPPI(sim, k, h, cost, var, plant, T)
+    Params = {"R": 500.0, "Lambda": 2000, "Samples": 50, "Horizon": 100, "Time": 250, "Variance": 0.999}
+
+    cost = Cost(None, np.eye(sim.data.ctrl.shape[0]) * Params["R"], None, Params["Lambda"])
+
+    pi = MPPI(sim, Params["Samples"], Params["Horizon"], cost, Params["Variance"], plant, Params["Time"])
+    pi.simulate(viewer=None)
+
+    np.save(f'mppi/results/working_controls_cartpole_{Params["R"]}_'
+            f'                                       {Params["Lamda"]}_'
+            f'                                       {Params["Samples"]}_'
+            f'                                       {Params["Horizon"]}_'
+            f'                                       {Params["Time"]}_'
+            f'                                       {Params["variance"]}.npy',
+                                                     pi.plant_control[:])
+
     viewer = MjViewer(plant)
-    pi.simulate(viewer)
-    np.save(f"mppi/results/working_controls_cartpole_{R}_{lam}_{k}_{h}_{T}_{var}.npy", pi.plant_control[:])
-
     rec = input("Visualise ?")
     print("Visualising")
     plant.set_state(new_state)
