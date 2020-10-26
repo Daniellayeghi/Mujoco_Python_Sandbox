@@ -1,6 +1,6 @@
 from mujoco_py import load_model_from_path, MjSim, MjViewer
 import numpy as np
-from tests.jacobian_compute import State
+from utils.utilities import State
 
 
 class Cost(object):

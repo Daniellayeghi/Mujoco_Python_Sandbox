@@ -1,5 +1,5 @@
 from mppi.mppi_control import MPPI
-from tests.jacobian_compute import State
+from utils.utilities import State
 import numpy as np
 from mujoco_py import load_model_from_path, MjSim, MjViewer
 

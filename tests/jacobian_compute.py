@@ -1,14 +1,11 @@
 from mujoco_py import load_model_from_path, MjSim, MjViewer
-
 import numpy as np
 from collections import namedtuple
 from scipy.optimize import approx_fprime
+from utils.utilities import State
 
 # This module calculates the derivatives of dynamics w.r.t states and controls fprime.
 # The main reason for this module is to be used in unit tests for C++ implementations
-
-State = namedtuple('State', 'time qpos qvel act udd_state')
-
 
 def forward_sim_state(state_vector: np.array):
     perturbed_state = sim.get_state()
@@ -76,26 +73,26 @@ def forward_sim_ctrl_acc(ctrl_vector: np.array, state: State):
 
 
 if __name__ == "__main__":
-    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/Acrobot.xml")
+    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/cartpole.xml")
     sim = MjSim(model)
     viewer = MjViewer(sim)
 
-    new_state = State(time=0, qpos=np.array([np.pi/2, 0]), qvel=np.array([0, 0]), act=0, udd_state={})
+    new_state = State(time=0, qpos=np.array([0, np.pi]), qvel=np.array([0, 0]), act=0, udd_state={})
     sim.set_state(new_state)
 
     state_vec = np.array([new_state.qpos[0], new_state.qpos[1], new_state.qvel[0], new_state.qvel[1]])
 
     epsilon = 0.000001
-    sim.set_state(new_state)
-    J_state = np.vstack(
-        [approx_fprime(state_vec, lambda x: forward_sim_state(x)[m], epsilon)
-         for m in range(state_vec.shape[0])]
-    )
+    # sim.set_state(new_state)
+    # J_state = np.vstack(
+    #     [approx_fprime(state_vec, lambda x: forward_sim_state(x)[m], epsilon)
+    #      for m in range(state_vec.shape[0])]
+    # )
+    #
+    # print(J_state)
 
-    print(J_state)
-
     sim.set_state(new_state)
-    ctrl_vec = np.array([-0.90672, 0.3419])
+    ctrl_vec = np.array([0, 0])
     J_ctrl = np.vstack(
         [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl(x, new_state)[m], epsilon)
          for m in range(state_vec.shape[0])]
@@ -103,18 +100,18 @@ if __name__ == "__main__":
 
     print(J_ctrl)
 
-    sim.set_state(new_state)
-    ctrl_vec = np.array([0.5, 0.3])
-    J_ctrl_acc = np.vstack(
-        [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl_acc(x, new_state)[m], epsilon)
-         for m in range(sim.data.qacc.shape[0])]
-    )
+    # sim.set_state(new_state)
+    # ctrl_vec = np.array([0.5, 0.3])
+    # J_ctrl_acc = np.vstack(
+    #     [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl_acc(x, new_state)[m], epsilon)
+    #      for m in range(sim.data.qacc.shape[0])]
+    # )
 
-    print(J_ctrl_acc)
-
-    sim.set_state(new_state)
-    state_vec = np.array([new_state.qpos[0], new_state.qpos[1], new_state.qvel[0], new_state.qvel[1]])
-    J_state_acc = np.vstack(
-        [approx_fprime(state_vec, lambda x: forward_sim_acc_state(x)[m], epsilon)
-         for m in range(sim.data.qacc.shape[0])]
-    )
+    # print(J_ctrl_acc)
+    #
+    # sim.set_state(new_state)
+    # state_vec = np.array([new_state.qpos[0], new_state.qpos[1], new_state.qvel[0], new_state.qvel[1]])
+    # J_state_acc = np.vstack(
+    #     [approx_fprime(state_vec, lambda x: forward_sim_acc_state(x)[m], epsilon)
+    #      for m in range(sim.data.qacc.shape[0])]
+    # )
