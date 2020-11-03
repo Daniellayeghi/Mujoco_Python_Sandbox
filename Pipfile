@@ -11,6 +11,7 @@ scipy = "*"
 recordtype = "*"
 matplotlib = "*"
 pandas = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.6"
