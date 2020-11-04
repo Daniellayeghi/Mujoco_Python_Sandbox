@@ -33,7 +33,7 @@ class ValueGradient(object):
         self._ctrls  = ctrls
         self._values = np.zeros([states.shape[1], states.shape[1]])
 
-    def solve_disc_value_iteration(self, model: MjSim, cost_func):
+    def solve_disc_value_iteration(self, sim: MjSim, cost_func):
         [row, col] = np.shape(states)
         for iter in range(5):
             print(f"iteration: {iter}")
@@ -41,23 +41,22 @@ class ValueGradient(object):
                 for s_2 in range(col):
                     for ctrl in range(self._ctrls.shape[0]):
                         # reinitialise the state
-                        model.set_state(
+                        sim.set_state(
                             State(time=0, qpos=np.array([states[0][s_1]]), qvel=np.array([states[1][s_2]]), act=0,
                                   udd_state={})
                         )
-                        model.data.ctrl[0] = self._ctrls[ctrl]
-                        model.step()
+                        sim.data.ctrl[0] = self._ctrls[ctrl]
+                        sim.step()
                         # solve for the instantaneous cost and interpolate the value at the next state
                         value_curr = cost_func(
-                            np.append(model.data.xipos[1], model.data.qvel[0]), model.data.ctrl
+                            np.append(sim.data.xipos[1], sim.data.qvel[0]), sim.data.ctrl
                         ) + interpolate.interp2d(
                             self._states[0][:], self._states[1][:], self._values, kind='linear'
-                        )(model.data.qpos[0], model.data.qvel[0])
+                        )(sim.data.qpos[0], sim.data.qvel[0])
                         # Hacky fix for the first iteration of vi
                         if ctrl == 0 and iter == 0:
                             self._values[s_1][s_2] = value_curr
                         if value_curr < self._values[s_1][s_2]:
-                            # print(f"Difference = {value_curr - self._values[s_1][s_2]} index {s_1}{s_2}")
                             self._values[s_1][s_2] = value_curr[0]
         return self._values
 
