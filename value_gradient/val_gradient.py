@@ -1,3 +1,4 @@
+
 from collections import namedtuple
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,33 +32,53 @@ class ValueGradient(object):
 
         self._states = states
         self._ctrls  = ctrls
+        self.P, self.V = np.meshgrid(states[0][:], states[1][:])
         self._values = np.zeros([states.shape[1], states.shape[1]])
 
-    def solve_disc_value_iteration(self, sim: MjSim, cost_func):
+    def solve_disc_value_iteration(self, model: MjSim, cost_func):
         [row, col] = np.shape(states)
-        for iter in range(5):
+        for iter in range(2):
             print(f"iteration: {iter}")
             for s_1 in range(col):
                 for s_2 in range(col):
                     for ctrl in range(self._ctrls.shape[0]):
                         # reinitialise the state
-                        sim.set_state(
-                            State(time=0, qpos=np.array([states[0][s_1]]), qvel=np.array([states[1][s_2]]), act=0,
-                                  udd_state={})
+                        model.set_state(
+                            State(
+                                time=0,
+                                qpos=np.array([states[0][s_1]]),
+                                qvel=np.array([states[1][s_2]]),
+                                act=0,
+                                udd_state={}
+                            )
                         )
-                        sim.data.ctrl[0] = self._ctrls[ctrl]
-                        sim.step()
+                        model.data.ctrl[0] = self._ctrls[ctrl]
+                        model.step()
                         # solve for the instantaneous cost and interpolate the value at the next state
                         value_curr = cost_func(
-                            np.append(sim.data.xipos[1], sim.data.qvel[0]), sim.data.ctrl
-                        ) + interpolate.interp2d(
-                            self._states[0][:], self._states[1][:], self._values, kind='linear'
-                        )(sim.data.qpos[0], sim.data.qvel[0])
+                            np.append(model.data.xipos[1], model.data.qvel[0]), model.data.ctrl
+                        )
+
+                        if (self._states[0][0] < model.data.qpos[0] < self._states[0][-1]) and \
+                                self._states[1][0] < model.data.qvel[0] < self._states[1][-1]:
+                            value_curr += interpolate.griddata(
+                                np.array([self.P.ravel(), self.V.ravel()]).T, self._values.ravel(),
+                                np.array([model.data.qpos[0], model.data.qvel[0]]).T
+                            )
+                        else:
+                            rbf_net = interpolate.Rbf(
+                                self.P.ravel(), self.V.ravel(), self._values.ravel(), function="linear"
+                            )
+                            value_curr += rbf_net(model.data.qpos[0], model.data.qvel[0])
+
                         # Hacky fix for the first iteration of vi
                         if ctrl == 0 and iter == 0:
+                            if np.isnan(value_curr):
+                                value_curr = 800
                             self._values[s_1][s_2] = value_curr
                         if value_curr < self._values[s_1][s_2]:
-                            self._values[s_1][s_2] = value_curr[0]
+                            # print(f"Difference = {value_curr - self._values[s_1][s_2]} index {s_1}{s_2}")
+                            self._values[s_1][s_2] = value_curr
         return self._values
 
 
@@ -97,5 +118,3 @@ if __name__ == "__main__":
     ax.set_ylabel('Vel')
     ax.set_zlabel('Value')
     plt.show()
-
-
