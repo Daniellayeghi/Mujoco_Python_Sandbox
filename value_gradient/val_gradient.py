@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mujoco_py import load_model_from_path, MjSim
 from scipy import interpolate
+import torch
+from torch.autograd import Variable
+import torch.utils.data as Data
 
 State = namedtuple('State', 'time qpos qvel act udd_state')
 np.set_printoptions(threshold=np.inf)
@@ -53,11 +56,11 @@ class ValueGradient(object):
                             )
                         )
                         model.data.ctrl[0] = self._ctrls[ctrl]
-                        model.step()
-                        # solve for the instantaneous cost and interpolate the value at the next state
                         value_curr = cost_func(
                             np.append(model.data.xipos[1], model.data.qvel[0]), model.data.ctrl
                         )
+                        model.step()
+                        # solve for the instantaneous cost and interpolate the value at the next state
 
                         if (self._states[0][0] < model.data.qpos[0] < self._states[0][-1]) and \
                                 self._states[1][0] < model.data.qvel[0] < self._states[1][-1]:
@@ -82,6 +85,53 @@ class ValueGradient(object):
         return self._values
 
 
+class FittedValueIteration(object):
+    def __init__(self, output_val, input_state):
+        # Network parameters
+        self.value_net = torch.nn.Sequential(
+            torch.nn.Linear(2, 200),
+            torch.nn.ReLU(),
+            torch.nn.Linear(200, 400),
+            torch.nn.ReLU(),
+            torch.nn.Linear(400, 200),
+            torch.nn.ReLU(),
+            torch.nn.Linear(200, 1),
+        )
+
+        self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.0001)
+        self._loss_func = torch.nn.MSELoss()  # this is for regression mean squared los
+
+        # Generate tensors from data
+        self._output_val_t = torch.from_numpy(output_val)
+        self._input_state_t = torch.from_numpy(input_state)
+        self._output_val_t = Variable(self._output_val_t)
+        self._input_state_t = Variable(self._input_state_t)
+
+        # Create dataset for batch
+        self._torch_data_set = Data.TensorDataset(self._input_state_t, self._output_val_t)
+        self._loader = Data.DataLoader(
+            dataset=self._torch_data_set,
+            batch_size=50,
+            shuffle=True,
+            num_workers=5,
+        )
+
+    def batch_train_net(self):
+        for epoch in range(800):
+            for step, (batch_in, batch_out) in enumerate(self._loader):
+                # Compute net prediction and loss:
+                pred = self.value_net(Variable(batch_in).float())
+                loss = self._loss_func(pred, Variable(batch_out).float())
+
+                # Backprop through the net
+                self._optimizer.zero_grad()
+                loss.backward()
+                self._optimizer.step()
+
+                if epoch % 10 == 0:
+                    print(f"Loss: {loss}")
+
+
 if __name__ == "__main__":
     # Setup quadratic cost
     cost = QRCost(
@@ -91,8 +141,8 @@ if __name__ == "__main__":
     )
 
     # Setup value iteration
-    disc_state = 25
-    disc_ctrl = 25
+    disc_state = 20
+    disc_ctrl = 20
     pos_arr = (np.linspace(-np.pi, np.pi*3, disc_state))
     vel_arr = (np.linspace(-np.pi, np.pi, disc_state))
     states = np.array((pos_arr, vel_arr))
@@ -108,13 +158,36 @@ if __name__ == "__main__":
     min = np.unravel_index(values.argmin(), values.shape)
     print(f"The min value is at pos {pos_arr[min[0]]} and vel {vel_arr[min[1]]}")
 
-    # Plot the structure of cost to go
+    # Fit value grid to nn
     [P, V] = np.meshgrid(pos_arr, vel_arr)
+    v_r = values.ravel()
+    ftv = FittedValueIteration(np.reshape(v_r, (v_r.shape[0], 1)), np.vstack([P.ravel(), V.ravel()]).T)
+    # ftv.fit_network(values, np.vstack([P.ravel, vel_arr]).T)
+    ftv.batch_train_net()
+    torch.save(ftv.value_net.state_dict(), "state_dict_model.pt")
+
+    # Export model for c++
+    example = torch.zeros(1, 2)
+    traced_script_module = torch.jit.trace(ftv.value_net, example)
+    traced_script_module.save("traced_value_model.pt")
+
+    pos_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi*3, disc_state))
+    vel_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi, disc_state))
+    prediction = np.zeros((disc_state, disc_state))
+
+    for pos in range(pos_tensor.numpy().shape[0]):
+        for vel in range(vel_tensor.numpy().shape[0]):
+            prediction[pos][vel] = ftv.value_net(
+                torch.from_numpy(np.array([pos_tensor[pos], vel_tensor[vel]])
+                                 ).float()).detach().numpy()[0]
+
+    # Plot the structure of cost to go
     fig = plt.figure()
     ax = plt.axes(projection='3d')
-    ax.plot_surface(P, V, values, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    ax.plot_surface(P, V, prediction, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
     ax.set_title('surface')
     ax.set_xlabel('Pos')
     ax.set_ylabel('Vel')
-    ax.set_zlabel('Value')
     plt.show()
+    ax.set_zlabel('Value')
+
