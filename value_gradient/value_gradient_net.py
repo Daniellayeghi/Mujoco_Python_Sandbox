@@ -1,9 +1,6 @@
 import torch
 from torch.autograd import Variable
-import torch.nn.functional as F
-import torch.utils.data as Data
 import numpy as np
-from scipy import interpolate
 from scipy.optimize import approx_fprime
 import matplotlib.pyplot as plt
 from collections import namedtuple
@@ -65,13 +62,11 @@ class ValueGradient(object):
         self._input_states = torch.empty(states.shape[0], 1)
         self._output_value = torch.zeros(1, 1)
         self.value_net = torch.nn.Sequential(
-            torch.nn.Linear(2, 200),
+            torch.nn.Linear(2, 120),
             torch.nn.ReLU(),
-            torch.nn.Linear(200, 400),
+            torch.nn.Linear(120, 84),
             torch.nn.ReLU(),
-            torch.nn.Linear(400, 200),
-            torch.nn.ReLU(),
-            torch.nn.Linear(200, 1),
+            torch.nn.Linear(84, 1),
         )
 
         self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.0001)
@@ -112,7 +107,7 @@ class ValueGradient(object):
                         )
 
                         cost_func.cost_function_state(
-                            np.append(model.data.xipos[1], model.data.qvel[0])
+                            np.append(model.data.qpos[0], model.data.qvel[0])
                         )
 
                         self._input_states = torch.from_numpy(np.array([model.data.qpos, model.data.qvel]).T)
@@ -141,22 +136,22 @@ class ValueGradient(object):
 
                         if epoch % 25 == 0:
                             print(f"Loss is: {loss}")
-                            print(f"Jacobian: {j_ctrl}")
-                            print(f"Ctrl: {ctrl_vec}")
-                            print(f"dv_dx: {dv_dx.numpy()}")
+                            # print(f"Jacobian: {j_ctrl}")
+                            # print(f"Ctrl: {ctrl_vec}")
+                            # print(f"dv_dx: {dv_dx.numpy()}")
 
 
 if __name__ == "__main__":
     # Setup quadratic cost
     cost = QRCost(
-        np.diagflat(np.array([500, 0, 500, 500 * 0.05])),
+        np.diagflat(np.array([500, 500 * 0.05])),
         np.diagflat(np.array([1])),
-        np.array([1.46152155e-17, 0.00000000e+00, 1.19342291e-01, 0])
+        np.array([np.pi, 0])
     )
 
     # Setup value iteration
-    disc_state = 10
-    disc_ctrl = 10
+    disc_state = 20
+    disc_ctrl = 50
     pos_arr = (np.linspace(-np.pi, np.pi*3, disc_state))
     vel_arr = (np.linspace(-np.pi, np.pi, disc_state))
     states = np.array((pos_arr, vel_arr))
@@ -172,6 +167,11 @@ if __name__ == "__main__":
     pos_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi*3, disc_state))
     vel_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi, disc_state))
     prediction = np.zeros((disc_state, disc_state))
+
+    example = torch.zeros(1, 2)
+    traced_script_module = torch.jit.trace(vg.value_net, example)
+    traced_script_module.save("value_net_hjb.pt")
+
     for pos in range(pos_tensor.numpy().shape[0]):
         for vel in range(vel_tensor.numpy().shape[0]):
             prediction[pos][vel] = vg.value_net(

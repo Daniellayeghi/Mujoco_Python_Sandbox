@@ -40,7 +40,7 @@ class ValueGradient(object):
 
     def solve_disc_value_iteration(self, model: MjSim, cost_func):
         [row, col] = np.shape(states)
-        for iter in range(2):
+        for iter in range(5):
             print(f"iteration: {iter}")
             for s_1 in range(col):
                 for s_2 in range(col):
@@ -76,8 +76,6 @@ class ValueGradient(object):
 
                         # Hacky fix for the first iteration of vi
                         if ctrl == 0 and iter == 0:
-                            if np.isnan(value_curr):
-                                value_curr = 800
                             self._values[s_1][s_2] = value_curr
                         if value_curr < self._values[s_1][s_2]:
                             # print(f"Difference = {value_curr - self._values[s_1][s_2]} index {s_1}{s_2}")
@@ -89,16 +87,15 @@ class FittedValueIteration(object):
     def __init__(self, output_val, input_state):
         # Network parameters
         self.value_net = torch.nn.Sequential(
-            torch.nn.Linear(2, 200),
+            torch.nn.Linear(2, 96),
             torch.nn.ReLU(),
-            torch.nn.Linear(200, 400),
+            torch.nn.Linear(96, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(400, 200),
-            torch.nn.ReLU(),
-            torch.nn.Linear(200, 1),
+            torch.nn.Linear(64, 1),
+            torch.nn.Dropout(0.25)
         )
 
-        self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.0001)
+        self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.01)
         self._loss_func = torch.nn.MSELoss()  # this is for regression mean squared los
 
         # Generate tensors from data
@@ -111,7 +108,7 @@ class FittedValueIteration(object):
         self._torch_data_set = Data.TensorDataset(self._input_state_t, self._output_val_t)
         self._loader = Data.DataLoader(
             dataset=self._torch_data_set,
-            batch_size=50,
+            batch_size=5,
             shuffle=True,
             num_workers=5,
         )
@@ -135,16 +132,22 @@ class FittedValueIteration(object):
 if __name__ == "__main__":
     # Setup quadratic cost
     cost = QRCost(
-        np.diagflat(np.array([500, 0, 500, 500 * 0.05])),
+        np.diagflat(np.array([10000, 0 * 0.01])),
+        np.diagflat(np.array([1])),
+        np.array([np.pi, 0])
+    )
+
+    cost_cart = QRCost(
+        np.diagflat(np.array([20, 0, 1000, 10 * 0.01])),
         np.diagflat(np.array([1])),
         np.array([1.46152155e-17, 0.00000000e+00, 1.19342291e-01, 0])
     )
 
     # Setup value iteration
     disc_state = 20
-    disc_ctrl = 20
-    pos_arr = (np.linspace(-np.pi, np.pi*3, disc_state))
-    vel_arr = (np.linspace(-np.pi, np.pi, disc_state))
+    disc_ctrl = 9
+    pos_arr = (np.linspace(-4*np.pi, np.pi*4, disc_state))
+    vel_arr = (np.linspace(-4*np.pi, np.pi*4, disc_state))
     states = np.array((pos_arr, vel_arr))
     ctrls = np.linspace(-1, 1, disc_ctrl)
     vg = ValueGradient(states, ctrls, )
@@ -154,12 +157,22 @@ if __name__ == "__main__":
     sim = MjSim(mdl)
 
     # Solve value iteration
-    values = vg.solve_disc_value_iteration(sim, cost.cost_function)
+    values = vg.solve_disc_value_iteration(sim, cost_cart.cost_function)
     min = np.unravel_index(values.argmin(), values.shape)
     print(f"The min value is at pos {pos_arr[min[0]]} and vel {vel_arr[min[1]]}")
 
-    # Fit value grid to nn
     [P, V] = np.meshgrid(pos_arr, vel_arr)
+
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot_surface(P, V, values, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    ax.set_title('surface')
+    ax.set_xlabel('Pos')
+    ax.set_ylabel('Vel')
+    plt.show()
+    ax.set_zlabel('Value')
+
+    # Fit value grid to nn
     v_r = values.ravel()
     ftv = FittedValueIteration(np.reshape(v_r, (v_r.shape[0], 1)), np.vstack([P.ravel(), V.ravel()]).T)
     # ftv.fit_network(values, np.vstack([P.ravel, vel_arr]).T)
@@ -171,8 +184,8 @@ if __name__ == "__main__":
     traced_script_module = torch.jit.trace(ftv.value_net, example)
     traced_script_module.save("traced_value_model.pt")
 
-    pos_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi*3, disc_state))
-    vel_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi, disc_state))
+    pos_tensor = torch.from_numpy(pos_arr)
+    vel_tensor = torch.from_numpy(vel_arr)
     prediction = np.zeros((disc_state, disc_state))
 
     for pos in range(pos_tensor.numpy().shape[0]):
@@ -181,13 +194,5 @@ if __name__ == "__main__":
                 torch.from_numpy(np.array([pos_tensor[pos], vel_tensor[vel]])
                                  ).float()).detach().numpy()[0]
 
-    # Plot the structure of cost to go
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_surface(P, V, prediction, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-    ax.set_title('surface')
-    ax.set_xlabel('Pos')
-    ax.set_ylabel('Vel')
-    plt.show()
-    ax.set_zlabel('Value')
+
 
