@@ -1,7 +1,7 @@
-from mppi.mppi_control import MPPI
 from utils.utilities import State
 import numpy as np
 from mujoco_py import load_model_from_path, MjSim, MjViewer
+from mppi.mppi_control import MPPI
 
 
 class Cost(object):

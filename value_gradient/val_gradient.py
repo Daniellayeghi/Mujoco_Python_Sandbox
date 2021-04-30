@@ -40,7 +40,7 @@ class ValueGradient(object):
 
     def solve_disc_value_iteration(self, model: MjSim, cost_func):
         [row, col] = np.shape(states)
-        for iter in range(2):
+        for iter in range(6):
             print(f"iteration: {iter}")
             for s_1 in range(col):
                 for s_2 in range(col):
@@ -89,13 +89,13 @@ class FittedValueIteration(object):
     def __init__(self, output_val, input_state):
         # Network parameters
         self.value_net = torch.nn.Sequential(
-            torch.nn.Linear(2, 200),
+            torch.nn.Linear(2, 120),
             torch.nn.ReLU(),
-            torch.nn.Linear(200, 400),
+            torch.nn.Linear(120, 240),
             torch.nn.ReLU(),
-            torch.nn.Linear(400, 200),
+            torch.nn.Linear(240, 120),
             torch.nn.ReLU(),
-            torch.nn.Linear(200, 1),
+            torch.nn.Linear(120, 1),
         )
 
         self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.0001)
@@ -111,7 +111,7 @@ class FittedValueIteration(object):
         self._torch_data_set = Data.TensorDataset(self._input_state_t, self._output_val_t)
         self._loader = Data.DataLoader(
             dataset=self._torch_data_set,
-            batch_size=50,
+            batch_size=20,
             shuffle=True,
             num_workers=5,
         )
@@ -135,14 +135,14 @@ class FittedValueIteration(object):
 if __name__ == "__main__":
     # Setup quadratic cost
     cost = QRCost(
-        np.diagflat(np.array([500, 0, 500, 500 * 0.05])),
+        np.diagflat(np.array([100, 0, 5000, 10 * 0.01])),
         np.diagflat(np.array([1])),
         np.array([1.46152155e-17, 0.00000000e+00, 1.19342291e-01, 0])
     )
 
     # Setup value iteration
     disc_state = 20
-    disc_ctrl = 20
+    disc_ctrl = 10
     pos_arr = (np.linspace(-np.pi, np.pi*3, disc_state))
     vel_arr = (np.linspace(-np.pi, np.pi, disc_state))
     states = np.array((pos_arr, vel_arr))
@@ -155,8 +155,8 @@ if __name__ == "__main__":
 
     # Solve value iteration
     values = vg.solve_disc_value_iteration(sim, cost.cost_function)
-    min = np.unravel_index(values.argmin(), values.shape)
-    print(f"The min value is at pos {pos_arr[min[0]]} and vel {vel_arr[min[1]]}")
+    min_val = np.unravel_index(values.argmin(), values.shape)
+    print(f"The min value is at pos {pos_arr[min_val[0]]} and vel {vel_arr[min_val[1]]}")
 
     # Fit value grid to nn
     [P, V] = np.meshgrid(pos_arr, vel_arr)
@@ -177,17 +177,23 @@ if __name__ == "__main__":
 
     for pos in range(pos_tensor.numpy().shape[0]):
         for vel in range(vel_tensor.numpy().shape[0]):
-            prediction[pos][vel] = ftv.value_net(
+            prediction[vel][pos] = ftv.value_net(
                 torch.from_numpy(np.array([pos_tensor[pos], vel_tensor[vel]])
                                  ).float()).detach().numpy()[0]
 
     # Plot the structure of cost to go
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_surface(P, V, prediction, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-    ax.set_title('surface')
-    ax.set_xlabel('Pos')
-    ax.set_ylabel('Vel')
-    plt.show()
-    ax.set_zlabel('Value')
+    fig = plt.figure(figsize=plt.figaspect(0.5))
+    ax1 = fig.add_subplot(1, 2, 1, projection='3d')
+    ax1.plot_surface(P, V, prediction, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    ax1.set_xlabel('Pos')
+    ax1.set_ylabel('Vel')
+    ax1.set_zlabel('Value')
+    ax1.set_title("Approximation")
 
+    ax2 = fig.add_subplot(1, 2, 2, projection='3d')
+    ax2.plot_surface(P, V, values, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    ax2.set_xlabel('Pos')
+    ax2.set_ylabel('Vel')
+    ax2.set_zlabel('Value')
+    ax2.set_title("Target")
+    plt.show()
