@@ -76,8 +76,6 @@ class ValueGradient(object):
 
                         # Hacky fix for the first iteration of vi
                         if ctrl == 0 and iter == 0:
-                            if np.isnan(value_curr):
-                                value_curr = 800
                             self._values[s_1][s_2] = value_curr
                         if value_curr < self._values[s_1][s_2]:
                             # print(f"Difference = {value_curr - self._values[s_1][s_2]} index {s_1}{s_2}")
@@ -98,7 +96,7 @@ class FittedValueIteration(object):
             torch.nn.Linear(120, 1),
         )
 
-        self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.0001)
+        self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.01)
         self._loss_func = torch.nn.MSELoss()  # this is for regression mean squared los
 
         # Generate tensors from data
@@ -158,8 +156,19 @@ if __name__ == "__main__":
     min_val = np.unravel_index(values.argmin(), values.shape)
     print(f"The min value is at pos {pos_arr[min_val[0]]} and vel {vel_arr[min_val[1]]}")
 
-    # Fit value grid to nn
+
     [P, V] = np.meshgrid(pos_arr, vel_arr)
+
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot_surface(P, V, values, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    ax.set_title('surface')
+    ax.set_xlabel('Pos')
+    ax.set_ylabel('Vel')
+    plt.show()
+    ax.set_zlabel('Value')
+
+    # Fit value grid to nn
     v_r = values.ravel()
     ftv = FittedValueIteration(np.reshape(v_r, (v_r.shape[0], 1)), np.vstack([P.ravel(), V.ravel()]).T)
     # ftv.fit_network(values, np.vstack([P.ravel, vel_arr]).T)
@@ -171,8 +180,8 @@ if __name__ == "__main__":
     traced_script_module = torch.jit.trace(ftv.value_net, example)
     traced_script_module.save("traced_value_model.pt")
 
-    pos_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi*3, disc_state))
-    vel_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi, disc_state))
+    pos_tensor = torch.from_numpy(pos_arr)
+    vel_tensor = torch.from_numpy(vel_arr)
     prediction = np.zeros((disc_state, disc_state))
 
     for pos in range(pos_tensor.numpy().shape[0]):
@@ -197,3 +206,4 @@ if __name__ == "__main__":
     ax2.set_zlabel('Value')
     ax2.set_title("Target")
     plt.show()
+
