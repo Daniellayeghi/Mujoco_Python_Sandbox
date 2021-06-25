@@ -5,7 +5,7 @@ from numpy.random import multivariate_normal
 from collections import namedtuple
 
 State = namedtuple('State', 'time qpos qvel act udd_state')
-CEMParams = namedtuple('CEMParams', 'n_samples n_time mean cov')
+CEMParams = namedtuple('CEMParams', 'n_samples n_time mean cov discard')
 
 
 def set_control(ctrl, new_ctrl):
@@ -25,8 +25,7 @@ class CrossEntropy(object):
     def __init__(self, model, cem_params: CEMParams):
         self._model = model
         self._sim = MjSim(model)
-        self._samples, self._time, self._mean, self._covariance = cem_params
-        self._delta_ctrl_samples = np.zeros((self._samples, self._time * model.nu))
+        self._samples, self._time, self._mean, self._covariance, self._discard = cem_params
         self._ctrl_samples = np.zeros(self._time * model.nu)
         self._ctrl_mean = np.zeros(self._time * model.nu)
         self._ctrl_var = np.zeros((model.nu, self._time * model.nu))
@@ -36,7 +35,7 @@ class CrossEntropy(object):
         for sample in range(self._samples):
             self._delta_ctrl_samples[sample, :] = multivariate_normal(self._mean, self._covariance, self._time).T
 
-    def evaluate_traj_cost(self, intial_state, cost:CostFunction):
+    def evaluate_traj_cost(self, intial_state, cost: CostFunction):
         for sample in range(self._samples):
             self._sim.set_state(intial_state)
             for time in range(self._time):
@@ -51,15 +50,16 @@ class CrossEntropy(object):
 
     def compute_mean_cov(self):
         sort_index = np.argsort(self._sample_cost)
+        discard_size = int(self._discard * self._samples)
         for time in range(self._time):
             beg = time * self._model.nu
             end = beg + self._model.nu
-            for sample in sort_index[0:self._samples - int(self._samples*0.2)]:
+            for sample in sort_index[0:self._samples - discard_size]:
                 ctrl_sample = self._delta_ctrl_samples[sample][beg:end]
-                self._ctrl_mean[beg:end] += (ctrl_sample/(self._samples - int(self._samples*0.2)))
+                self._ctrl_mean[beg:end] += (ctrl_sample/(self._samples - discard_size))
                 self._ctrl_var[:, beg:end] += np.outer(
                     (ctrl_sample - self._mean), (ctrl_sample - self._mean)
-                )/(self._samples - int(self._samples*0.2))
+                )/(self._samples - discard_size)
 
             self._ctrl_samples[beg:end] += self._ctrl_mean[beg:end]
 
@@ -96,26 +96,25 @@ if __name__ == "__main__":
     sim = MjSim(model)
     viewer = MjViewer(sim)
     Q = np.eye(model.nq + model.nv)
-    np.fill_diagonal(Q, np.array([0, 0, 0.001, 0.001]))
+    np.fill_diagonal(Q, np.array([10, 10, 0.001, 0.001]))
     Q_terminal = np.eye(model.nq + model.nv)
     np.fill_diagonal(Q_terminal, np.array([1000000, 1000000, 10000, 10000]))
     R = np.eye(model.nu)
     np.fill_diagonal(R, np.array([0.001]))
-    start_goal = np.array([0, 0, 0, 0])
-    ctrl_goal = np.array([1])
+    state_goal = np.array([0, 0, 0, 0])
+    ctrl_goal = np.array([100])
 
-    cost_function = CostFunction(lambda state_err, ctrl_err:state_err.dot(Q).dot(state_err) + ctrl_err.dot(R).dot(ctrl_err),
-                                 lambda state_err:state_err.dot(Q_terminal).dot(state_err),start_goal,ctrl_goal)
-    cem_params = CEMParams(20, 100, np.zeros(model.nu), np.eye(model.nu)*0.5)
+    cost_function = CostFunction(lambda state_err, ctrl_err: state_err.dot(Q).dot(state_err) + ctrl_err.dot(R).dot(ctrl_err),
+                                 lambda state_err: state_err.dot(Q_terminal).dot(state_err), state_goal, ctrl_goal)
+    cem_params = CEMParams(10, 50, np.zeros(model.nu), np.eye(model.nu)*0.5, 0.4)
     cem_control = CrossEntropy(model, cem_params)
 
-    sim.set_state(State(time=0, qpos=np.array([0, 0]), qvel=np.array([0, 0]), act=0, udd_state={}))
+    sim.set_state(State(time=0, qpos=np.array([0, np.pi]), qvel=np.array([0, 0]), act=0, udd_state={}))
 
     while True:
         ctrl = cem_control.control(sim.get_state(), cost_function)
         print(ctrl)
-        for u in range(model.nu):
-            sim.data.ctrl[u] = ctrl[u]
+        set_control(sim.data.ctrl, ctrl)
         sim.step()
         viewer.render()
 
