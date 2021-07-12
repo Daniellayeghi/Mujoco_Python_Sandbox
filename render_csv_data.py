@@ -9,16 +9,27 @@ from time import sleep
 State = namedtuple('State', 'time qpos qvel act udd_state')
 if __name__ == "__main__":
 
-    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/franka_panda.xml")
-    sim = MjSim(model)
+    model = load_model_from_path(
+        "/home/daniel/Repos/OptimisationBasedControl/models/planar_3d_examples/planar_good_comp_complex.xml"
+        )
 
-    df = pd.read_csv('/home/daniel/Repos/OptimisationBasedControl/data/franka_ilqr_ctrl.csv')
+    sim = MjSim(model)
+    
+    df = pd.read_csv(
+            '/home/daniel/Repos/OptimisationBasedControl/data/planar_3_ctrl.csv'
+            )
+
     ctrl_arr = df.to_numpy()
     ctrl_arr = np.delete(ctrl_arr, sim.data.ctrl.shape[0], 1)
 
-    init = State(time=0, qpos=np.array([0, 0, 0, -1, 0, 0, 0, 0, 0, ]), qvel=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0]), act=0, udd_state={})
+    init = State(
+        time=0,
+        qpos=np.array([0, 0, -0]),
+        qvel=np.array([0, 0, 0]),
+        act=0,
+        udd_state={}
+    )
 
-    vel = []
     sim.set_state(init)
     viewer = MjViewer(sim)
 
@@ -27,4 +38,4 @@ if __name__ == "__main__":
             sim.data.ctrl[control] = ctrl_arr[time][control]
         sim.step()
         viewer.render()
-        sleep(0.005)
+        sleep(0.01)

@@ -2,11 +2,11 @@ from mujoco_py import load_model_from_path, MjSim, MjViewer
 import numpy as np
 from tests.jacobian_compute import State
 import time
-import random 
+import random
 
 
 if __name__ == "__main__":
-    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/finger.xml")
+    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/contact_comp/finger_contact_example.xml")
     sim = MjSim(model)
     viewer = MjViewer(sim)
 
