@@ -17,16 +17,18 @@ State = namedtuple('State', 'time qpos qvel act udd_state')
 
 ctrl_ddp = [0]
 ctrl_pi = [0]
+ctrl_names = ["DDP", "PI"]
 ctrl_comb = [0, 0]
 
 
 def update_plot():
-    global ctrl, list_d, nSamples, curve, data, plot, lastTime, fps, nPlots
+    global ctrl, list_d, nSamples, curve, data, plot, lastTime, nPlots, lock
     lock.acquire()
     for i in range(nPlots):
         list_d[i].append(ctrl_comb[i])
         arr = np.array(list_d[i])
         curves[i].setData(arr.reshape(nSamples))
+        curves[i].name()
         now = time()
         dt = now - lastTime
         lastTime = now
@@ -34,17 +36,18 @@ def update_plot():
 
 
 def update_mj(sim, socket, viewer=None):
-    global ctrl_ddp, ctrl_pi, ctrl_comb
+    global ctrl_ddp, ctrl_pi, ctrl_comb, lock
     prev_check = 10
     while True:
-        message = socket.recv()
+        message_ilqr = socket.recv()
+        message_pi = socket.recv()
         # print("Received request: %s" % bytearray(message))
         lock.acquire()
-        ctrl_ddp[0] = struct.unpack('d', bytearray(message)[0:8])[0]
-        ctrl_pi[0] = struct.unpack('d', bytearray(message)[8:16])[0]
-        check = struct.unpack('?', bytearray(message)[16:17])[0]
+        ctrl_ddp[0] = struct.unpack('d', bytearray(message_ilqr)[0:8])[0]
+        ctrl_pi[0] = struct.unpack('d', bytearray(message_pi)[0:8])[0]
+        check = struct.unpack('?', bytearray(message_ilqr)[8:9])[0]
         ctrl_comb = [ctrl_ddp[0], ctrl_pi[0]]
-        # print(f"{ctrl_comb}, {check}")
+        # print(f"{ctrl_ddp}, {check}")
         lock.release()
 
         if prev_check != check and viewer is not None:
@@ -62,7 +65,7 @@ if __name__ == '__main__':
         )
 
     sim = MjSim(model)
-    viewer = MjViewer(sim)
+    #viewer = MjViewer(sim)
     init = State(
         time=0,
         qpos=np.array([0, np.pi]),
@@ -72,16 +75,17 @@ if __name__ == '__main__':
     )
 
     sim.set_state(init)
-    app = QtGui.QApplication([])
+    # app = QtGui.QApplication([])
     plot = pg.plot()
+    plot.addLegend()
     plot.setWindowTitle('pyqtgraph example: MultiPlotSpeedTest')
     plot.setLabel('bottom', 'Index', units='B')
 
     nPlots = 2
-    nSamples = 400
+    nSamples = 1600
     curves = []
     for idx in range(nPlots):
-        curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3))
+        curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=ctrl_names[idx % nPlots])
         plot.addItem(curve)
         curve.setPos(0, 0)
         curves.append(curve)
@@ -101,9 +105,11 @@ if __name__ == '__main__':
     timer.start(0)
 
     import sys
-    update_mj(sim, socket, viewer)
-    # thread = threading.Thread(target=update_mj, args=(sim, socket))
-    # thread.start()
-    # if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-    #     QtGui.QApplication.instance().exec_()
-    # thread.join()
+    # update_mj(sim, socket, viewer)
+    thread = threading.Thread(target=update_mj, args=(sim, socket))
+    thread.start()
+    
+    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+        QtGui.QApplication.instance().exec_()
+    
+    thread.join()

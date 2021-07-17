@@ -10,13 +10,13 @@ State = namedtuple('State', 'time qpos qvel act udd_state')
 if __name__ == "__main__":
 
     model = load_model_from_path(
-        "/home/daniel/Repos/OptimisationBasedControl/models/planar_3d_examples/planar_good_comp_complex.xml"
+        "/home/daniel/Repos/OptimisationBasedControl/models/cartpole.xml"
         )
 
     sim = MjSim(model)
     
     df = pd.read_csv(
-            '/home/daniel/Repos/OptimisationBasedControl/data/planar_3_ctrl.csv'
+            '/home/daniel/Repos/OptimisationBasedControl/data/planar_3_ctrl_pi.csv'
             )
 
     ctrl_arr = df.to_numpy()
@@ -24,8 +24,8 @@ if __name__ == "__main__":
 
     init = State(
         time=0,
-        qpos=np.array([0, 0, -0]),
-        qvel=np.array([0, 0, 0]),
+        qpos=np.array([0, np.pi]),
+        qvel=np.array([0, 0]),
         act=0,
         udd_state={}
     )
