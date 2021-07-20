@@ -15,10 +15,11 @@ socket = context.socket(zmq.PULL)
 socket.bind("tcp://*:5555")
 State = namedtuple('State', 'time qpos qvel act udd_state')
 
-ctrl_ddp = [0]
-ctrl_pi = [0]
+ByteParams = {"NumCtrl": 2, "NumCheck": 1, "CtrlSize": 8, "CheckSize": 1}
+ctrl_ddp = [0 for _ in range(ByteParams["NumCtrl"])]
+ctrl_pi = [0 for _ in range(ByteParams["NumCtrl"])]
+ctrl_comb = [0 for _ in range(ByteParams["NumCtrl"] * 2)]
 ctrl_names = ["DDP", "PI"]
-ctrl_comb = [0, 0]
 
 
 def update_plot():
@@ -43,19 +44,22 @@ def update_mj(sim, socket, viewer=None):
         message_pi = socket.recv()
         # print("Received request: %s" % bytearray(message))
         lock.acquire()
-        ctrl_ddp[0] = struct.unpack('d', bytearray(message_ilqr)[0:8])[0]
-        ctrl_pi[0] = struct.unpack('d', bytearray(message_pi)[0:8])[0]
-        check = struct.unpack('?', bytearray(message_ilqr)[8:9])[0]
-        ctrl_comb = [ctrl_ddp[0], ctrl_pi[0]]
+        for idx in range(ByteParams["NumCtrl"]):
+            idx_1 = idx*ByteParams["CtrlSize"]
+            idx_2 = idx_1 + ByteParams["CtrlSize"]
+            ctrl_comb[idx*2] = struct.unpack('d', bytearray(message_ilqr)[idx_1:idx_2])[0]
+            ctrl_comb[(idx*2)+1] = struct.unpack('d', bytearray(message_pi)[idx_1:idx_2])[0]
+            # check = struct.unpack('?', bytearray(message_ilqr)[8:9])[0]
+            # ctrl_comb = [ctrl_ddp, ctrl_pi]
         # print(f"{ctrl_ddp}, {check}")
         lock.release()
 
-        if prev_check != check and viewer is not None:
-            prev_check = check
-            for control in range(sim.data.ctrl.shape[0]):
-                sim.data.ctrl[control] = ctrl_ddp[0]
-                sim.step()
-                viewer.render()
+        # if prev_check != check and viewer is not None:
+        #     prev_check = check
+        #     for control in range(sim.data.ctrl.shape[0]):
+        #         sim.data.ctrl[control] = ctrl_ddp[0]
+        #         sim.step()
+        #         viewer.render()
 
 
 if __name__ == '__main__':
@@ -81,13 +85,13 @@ if __name__ == '__main__':
     plot.setWindowTitle('pyqtgraph example: MultiPlotSpeedTest')
     plot.setLabel('bottom', 'Index', units='B')
 
-    nPlots = 2
+    nPlots = ByteParams["NumCtrl"] * 2
     nSamples = 1600
     curves = []
     for idx in range(nPlots):
-        curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=ctrl_names[idx % nPlots])
+        curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=ctrl_names[idx % int(nPlots/2)])
         plot.addItem(curve)
-        curve.setPos(0, 0)
+        curve.setPos(0, idx * 2)
         curves.append(curve)
 
     plot.setYRange(-2, 2)
