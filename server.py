@@ -15,11 +15,12 @@ socket = context.socket(zmq.PULL)
 socket.bind("tcp://*:5555")
 State = namedtuple('State', 'time qpos qvel act udd_state')
 
-ByteParams = {"NumCtrl": 2, "NumCheck": 1, "CtrlSize": 8, "CheckSize": 1}
+ByteParams = {"NumCtrl": 3, "NumCheck": 1, "CtrlSize": 8, "CheckSize": 1}
 ctrl_ddp = [0 for _ in range(ByteParams["NumCtrl"])]
 ctrl_pi = [0 for _ in range(ByteParams["NumCtrl"])]
 ctrl_comb = [0 for _ in range(ByteParams["NumCtrl"] * 2)]
 ctrl_names = ["DDP", "PI"]
+joints = [(i+1 + (i+1)%2)/2 for i in range(ByteParams["NumCtrl"]*2)]
 
 
 def update_plot():
@@ -89,7 +90,8 @@ if __name__ == '__main__':
     nSamples = 1600
     curves = []
     for idx in range(nPlots):
-        curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=ctrl_names[idx % int(nPlots/2)])
+        name = f"{ctrl_names[idx % (ByteParams['NumCtrl'] - 1)]} Joint {joints[idx]}"
+        curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=name)
         plot.addItem(curve)
         curve.setPos(0, idx * 2)
         curves.append(curve)
