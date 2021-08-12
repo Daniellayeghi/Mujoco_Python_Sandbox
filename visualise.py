@@ -6,7 +6,7 @@ import random
 
 
 if __name__ == "__main__":
-    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/contact_comp/finger_contact_example.xml")
+    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/contact_comp/planar_push.xml")
     sim = MjSim(model)
     viewer = MjViewer(sim)
 
@@ -17,6 +17,7 @@ if __name__ == "__main__":
         viewer.render()
         sim.step()
         time.sleep(0.01)
-
-        print(f"body {sim.data.contact[0].geom1} is in contact with {sim.data.contact[0].geom2}")
-        sim.data.ctrl[1] = 1
+        
+        for i in range(sim.data.ncon):
+            print(f"contact {i} body {model.geom_bodyid[sim.data.contact[i].geom1]} is in contact with {model.geom_bodyid[sim.data.contact[i].geom2]}")
+        sim.data.ctrl[0] = -0.2

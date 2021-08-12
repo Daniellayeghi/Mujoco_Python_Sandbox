@@ -9,6 +9,7 @@ from time import sleep
 import struct
 from collections import deque
 import threading
+import argparse
 
 context = zmq.Context()
 socket = context.socket(zmq.PULL)
@@ -16,14 +17,10 @@ socket.bind("tcp://*:5555")
 State = namedtuple('State', 'time qpos qvel act udd_state')
 
 ctrl_names = ["DDP", "PI"]
-ByteParams = {"NumCtrl": 2, "NumCheck": 1, "CtrlSize": 8, "CheckSize": 1}
-ctrl_ddp = [0 for _ in range(ByteParams["NumCtrl"])]
-ctrl_pi = [0 for _ in range(ByteParams["NumCtrl"])]
-ctrl_comb = [0 for _ in range(ByteParams["NumCtrl"] * 2)]
-joints = [(i+1 + (i+1)%len(ctrl_names))/len(ctrl_names) for i in range(ByteParams["NumCtrl"]*2)]
-
+ByteParams = {"NumCtrl": 3, "NumCheck": 1, "CtrlSize": 8, "CheckSize": 1}
 
 def update_plot():
+
     global ctrl, list_d, nSamples, curve, data, plot, lastTime, nPlots, lock
     lock.acquire()
     for i in range(nPlots):
@@ -64,6 +61,23 @@ def update_mj(sim, socket, viewer=None):
 
 
 if __name__ == '__main__':
+    my_parser = argparse.ArgumentParser(description='List the content of a folder')
+
+    # Add the arguments
+    my_parser.add_argument('nctrl',
+                       metavar='ctrl',
+                       type=int)
+
+    args = my_parser.parse_args()
+    ByteParams["NumCtrl"] = args.nctrl
+
+    ctrl_ddp = [0 for _ in range(ByteParams["NumCtrl"])]
+    ctrl_pi = [0 for _ in range(ByteParams["NumCtrl"])]
+    ctrl_comb = [0 for _ in range(ByteParams["NumCtrl"] * 2)]
+    joints = [(i+1 + (i+1)%len(ctrl_names))/len(ctrl_names) for i in range(ByteParams["NumCtrl"]*2)]
+
+
+
     lock = threading.Lock()
     model = load_model_from_path(
         "/home/daniel/Repos/OptimisationBasedControl/models/cartpole.xml"
@@ -93,7 +107,7 @@ if __name__ == '__main__':
         name = f"{ctrl_names[idx % len(ctrl_names)]} Joint {(idx+1 + (idx+1)%len(ctrl_names))/len(ctrl_names)}"
         curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=name)
         plot.addItem(curve)
-        curve.setPos(0, idx * 1.1)
+        curve.setPos(0, idx * 5.1)
         curves.append(curve)
 
     plot.setYRange(-2, 2)
