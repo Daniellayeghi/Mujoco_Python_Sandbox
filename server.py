@@ -5,7 +5,6 @@ from collections import namedtuple
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 from pyqtgraph.ptime import time
-from time import sleep
 import struct
 from collections import deque
 import threading
@@ -40,7 +39,7 @@ def update_mj(sim, socket, viewer=None):
     while True:
         message_ilqr = socket.recv()
         message_pi = socket.recv()
-        # print("Received request: %s" % bytearray(message))
+        print("Received request: %s" % bytearray(message_ilqr))
         lock.acquire()
         for idx in range(ByteParams["NumCtrl"]):
             idx_1 = idx*ByteParams["CtrlSize"]
@@ -69,7 +68,7 @@ if __name__ == '__main__':
                        type=int)
 
     args = my_parser.parse_args()
-    ByteParams["NumCtrl"] = args.nctrl
+    ByteParams["NumCtrl"] = 9 #args.nctrl
 
     ctrl_ddp = [0 for _ in range(ByteParams["NumCtrl"])]
     ctrl_pi = [0 for _ in range(ByteParams["NumCtrl"])]
@@ -107,7 +106,7 @@ if __name__ == '__main__':
         name = f"{ctrl_names[idx % len(ctrl_names)]} Joint {(idx+1 + (idx+1)%len(ctrl_names))/len(ctrl_names)}"
         curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=name)
         plot.addItem(curve)
-        curve.setPos(0, idx * 5.1)
+        curve.setPos(0, idx * 10.1)
         curves.append(curve)
 
     plot.setYRange(-2, 2)

@@ -6,6 +6,10 @@ import cma
 import matplotlib.pyplot as plt
 
 
+def lee_func(input):
+    return jnp.sin(input[:, 1]*10*jnp.pi)/(2*input[:, 1]) + (input[:, 1] - 1)**4
+
+
 def function_eval_cma(input):
     return input[0]**4
 
@@ -28,23 +32,34 @@ def hessian(function):
 
 def newtons_method(eval_func, input, eps, iter):
     delta = np.ones_like(input) * 1e10
-    while np.linalg.norm(delta) > 1e-5:
+    while np.linalg.norm(delta) > eps:
         hes = np.array(hessian(eval_func)(jnp.array(input))).reshape(input.shape[1], input.shape[1])
+        hes = hes + np.identity(input.shape[1]) * 0.00001
+        print(hes)
         jac = np.array(jacfwd(eval_func)(jnp.array(input))).reshape(input.shape[0], input.shape[1])
-        delta = (np.linalg.inv(hes).dot(jac.T)).T
+        delta = 1*(np.linalg.inv(hes).dot(jac.T)).T
         input -= delta
         iter += 1
-    return input
+        print(iter)
+    return
 
 
 if __name__ == "__main__":
     # Varying Hessian Example
     # Solve minimisation with Newton's method
-    x = np.array([[1.0]])
-    jac = jacfwd(function_eval)(jnp.array(x))
-    hes = hessian(function_eval)(jnp.array(x))
-    print(f"Jac: {jac}, Hes: {hes}")
-    result = newtons_method(function_eval, np.array([[1.0]]), 0.0001, 0)
+    # x = np.array([[1.0]])
+    # jac = jacfwd(function_eval)(jnp.array(x))
+    # hes = hessian(function_eval)(jnp.array(x))
+    # print(f"Jac: {jac}, Hes: {hes}")
+    # result = newtons_method(function_eval, np.array([[1.0]]), 0.0001, 0)
+    # print(f"Min: {result}")
+
+    # Varying Hessian Example
+    # Solve minimisation with Newton's method
+    x = np.array([[2.0]])
+    hes = hessian(lee_func)(jnp.array(x))
+    print(f"Hessiain {hes}")
+    result = newtons_method(lee_func, np.array([[2.0]]), 0.0001, 0)
     print(f"Min: {result}")
 
     # Solve minimisation with CMA

@@ -6,13 +6,13 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-mujoco-py = ">=2.0,<2.1"
+mujoco-py = "<2.1,>=2.0"
 scipy = "*"
 recordtype = "*"
 matplotlib = "*"
 pandas = "*"
 numpy = "*"
-jax = {extras = ["cpu"], version = "*"}
+jax = {extras = ["cpu"],version = "*"}
 tabulate = "*"
 cma = "*"
 pyzmq = "*"

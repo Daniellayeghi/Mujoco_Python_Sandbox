@@ -10,13 +10,9 @@ import argparse
 State = namedtuple('State', 'time qpos qvel act udd_state')
 if __name__ == "__main__":
 
-    my_parser = argparse.ArgumentParser(description='List the content of a folder')
-
     # Add the arguments
-    my_parser.add_argument('path_csv',
-                       metavar='path',
-                       type=str)
-
+    my_parser = argparse.ArgumentParser(description='List the content of a folder')
+    my_parser.add_argument('path_csv', metavar='path', type=str)
     args = my_parser.parse_args()
 
 
@@ -25,11 +21,12 @@ if __name__ == "__main__":
         )
 
     sim = MjSim(model)
-    
+   
     df = pd.read_csv(args.path_csv)
 
+    # Setup states and ctrls
     ctrl_arr = df.to_numpy()
-    ctrl_arr = np.delete(ctrl_arr, sim.data.ctrl.shape[0], 1)
+    #ctrl_arr = np.delete(ctrl_arr, sim.data.ctrl.shape[0], 1)
     pos = np.zeros(25); pos[-1] = 1.57
     init = State(
         time=0,
@@ -41,7 +38,8 @@ if __name__ == "__main__":
 
     sim.set_state(init)
     viewer = MjViewer(sim)
-
+    
+    # Main render loop
     for time in range(len(ctrl_arr)):
         for control in range(sim.data.ctrl.shape[0]):
             sim.data.ctrl[control] = ctrl_arr[time][control]
