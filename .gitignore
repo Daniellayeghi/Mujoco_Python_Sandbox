@@ -3,3 +3,4 @@
 *.npy*
 *.pt*
 *.dat*
+*__pycache__*

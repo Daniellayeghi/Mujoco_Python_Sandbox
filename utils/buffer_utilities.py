@@ -12,6 +12,7 @@ class SystemDim:
 
 
 message_ids = {"DDP": b'q', "PI": b'i', "POS": b'p', "VEL": b'v', "STATE": b's'}
+id_name_map = {b'q': "DDP",  b'i': "PI", b'p': "POS",  b'v': "VEL", b's': "STATE"}
 
 
 class MessageParser:
@@ -26,27 +27,27 @@ class MessageParser:
     def __init__(self):
         pass
 
-    def deep_parser(self, msg, result_contain: list):
+    def deep_parser(self, msg):
         id_idx = 0
         data_idx = id_idx + 1
+        result = []
         while id_idx < len(msg):
             msg_id = struct.unpack('c', msg[id_idx:data_idx])
             types = [msg_type for msg_type in self.TYPE_msg if msg_id[0] == msg_type['id']]
             data_end = data_idx + (types[0]['Size'] * types[0]['NUM'])
             parsed_msg = struct.unpack(types[0]['Type'] * types[0]['NUM'], msg[data_idx:data_end])
-            result_contain.append({'id': msg_id, 'val': parsed_msg})
+            result.append({'id': msg_id, 'val': parsed_msg})
             id_idx = data_end
             data_idx = id_idx + 1
-
+        return result
 
 if __name__ == "__main__":
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
     socket.bind("tcp://*:5555")
     msg_p = MessageParser()
-    result_contain = [{}]
     while True:
         # socket.send(b'r')
         msg = socket.recv()
-        msg_p.deep_parser(msg, result_contain)
-        print(result_contain)
+        parsed_msg = msg_p.deep_parser(msg)
+        print(parsed_msg)

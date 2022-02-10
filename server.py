@@ -1,118 +1,120 @@
 import numpy as np
 import zmq
-from collections import namedtuple
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 from pyqtgraph.ptime import time
+from time import sleep
 import struct
 from collections import deque
 import threading
-import argparse
-from utils.buffer_utilities import MessageParser, SystemDim, message_ids
+from utils.buffer_utilities import MessageParser, SystemDim, message_ids, id_name_map
 
-context = zmq.Context()
-socket = context.socket(zmq.PULL)
-socket.bind("tcp://*:5555")
-State = namedtuple('State', 'time qpos qvel act udd_state')
 
-ctrl_names = ["DDP", "PI"]
-ctrl_order = {"DDP": 0, "PI": 1}
-ByteParams = {"NumCtrl": 3, "NumCheck": 1, "CtrlSize": 8, "CheckSize": 1}
+n_samples = 1200
+list_d = [deque(np.zeros(n_samples), maxlen=n_samples) for _ in range(1)]
+res_containers = [[] for _ in range(1)]
+curves = []
+ids = []
+id_names = []
+legend = dict()
+total_plots = 0
+first_run = True
 
-ctrl_containers = [[]for _ in range (len(ctrl_names))]
+
+def build_legends(result_container):
+    ids = []
+    names = []
+    lens = []
+    for result in result_container:
+        for key in result:
+            if key == "id":
+                ids.append(result[key][0])
+                names.append(id_name_map[result[key][0]])
+            if key == "val":
+                lens.append(len(result[key]))
+
+    return ids, dict(zip(names, lens))
 
 
 def update_plot():
-    global list_d, nSamples, curve, plot, lastTime, nPlots, lock
-    lock.acquire()
-    for i in range(nPlots):
-        list_d[i].append(ctrl_comb[i])
-        arr = np.array(list_d[i])
-        curves[i].setData(arr.reshape(nSamples))
-        curves[i].name()
-        now = time()
-        dt = now - lastTime
-        lastTime = now
-    lock.release()
+    global list_d, n_samples, curve, plot, lastTime, total_plots, lock
+    with lock:
+        res_list = [list(res_containers[i]) for i in range(len(res_containers))]
+        inter_res = [val for tup in zip(*res_list) for val in tup]
+        for i in range(total_plots):
+            list_d[i].append(inter_res[i])
+            arr = np.array(list_d[i])
+            curves[i].setData(arr.reshape(n_samples))
+            curves[i].name()
+            now = time()
+            dt = now - lastTime
+            lastTime = now
 
 
-def parse_ctrl(socket, parser: MessageParser, result_container: list):
+def parse_ctrl(socket, parser: MessageParser):
+    global first_run, list_d, legend, total_plots, id_names, res_containers, ids
     while True:
         msg = socket.recv()
-        parser.deep_parser(msg, result_container)
-        print(result_container)
+        parsed_msg = parser.deep_parser(msg)
+
+        if first_run:
+            ids, legend = build_legends(parsed_msg)
+            total_plots = sum(legend.values())
+            id_names = list(legend.keys())
+            res_containers = [[] for _ in range(len(id_names))]
+            list_d = [deque(np.zeros(n_samples), maxlen=n_samples) for _ in range(total_plots)]
+            first_run = not first_run
+
         with lock:
-            for result in result_container:
-                for ids in message_ids:
-                    if ids == result['id']:
-                        ctrl_containers[ctrl_order[ids]] = result['val']
-
-            print(ctrl_containers)
-
-
-def update_mj(socket):
-    global ctrl_comb, lock
-    while True:
-        message_ilqr = socket.recv()
-        message_pi = socket.recv()
-        print("Received request: %s" % bytearray(message_ilqr))
-        with lock:
-            for idx in range(ByteParams["NumCtrl"]):
-                idx_1 = idx*ByteParams["CtrlSize"]
-                idx_2 = idx_1 + ByteParams["CtrlSize"]
-                ctrl_comb[idx*2] = struct.unpack('d', bytearray(message_ilqr)[idx_1:idx_2])[0]
-                ctrl_comb[(idx*2)+1] = struct.unpack('d', bytearray(message_pi)[idx_1:idx_2])[0]
+            for message in parsed_msg:
+                for i, id in enumerate(ids):
+                    if message['id'][0] == id:
+                        res_containers[i] = message["val"]
+        socket.send(b'r')
 
 
 if __name__ == '__main__':
-    # my_parser = argparse.ArgumentParser(description='List the content of a folder')
-    #
-    # # Add the arguments
-    # my_parser.add_argument('nctrl', metavar='ctrl', type=int)
-    #
-    # args = my_parser.parse_args()
-    ByteParams["NumCtrl"] = 9 #args.nctrl
-
-    ctrl_comb = [0 for _ in range(ByteParams["NumCtrl"] * 2)]
-
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.bind("tcp://*:5555")
     lock = threading.Lock()
-
+    socket.send(b'r')
     # app = QtGui.QApplication([])
+
+    msg_parse = MessageParser()
+    thread = threading.Thread(target=parse_ctrl, args=(socket, msg_parse))
+    thread.start()
+
+    while total_plots is 0:
+        sleep(0.0001)
+
     plot = pg.plot()
     plot.addLegend()
     plot.setWindowTitle('pyqtgraph example: MultiPlotSpeedTest')
     plot.setLabel('bottom', 'Index', units='B')
 
-    nPlots = SystemDim.CTRL_SIZE * 2
-    nSamples = 1200
-    curves = []
-    for idx in range(nPlots):
-        name = f"{ctrl_names[idx % len(ctrl_names)]} Joint {(idx+1 + (idx+1)%len(ctrl_names))/len(ctrl_names)}"
-        curve = pg.PlotCurveItem(pen=(idx, nPlots * 1.3), name=name)
+    for idx in range(total_plots):
+        name = f"{id_names[idx % len(id_names)]} Joint {(idx + 1 + (idx + 1) % len(id_names)) / len(id_names)}"
+        curve = pg.PlotCurveItem(pen=(idx, total_plots * 1.3), name=name)
         plot.addItem(curve)
         curve.setPos(0, idx * 10.1)
         curves.append(curve)
 
     plot.setYRange(-2, 2)
-    plot.setXRange(0, nSamples)
+    plot.setXRange(0, n_samples)
     plot.resize(600, 900)
 
     lastTime = time()
-    fps = None
-    count = 0
-    list_d = [deque(np.zeros(nSamples), maxlen=nSamples) for _ in range(nPlots)]
-
     timer = QtCore.QTimer()
     timer.timeout.connect(update_plot)
     timer.start(0)
 
     import sys
-    msg_parse = MessageParser()
-    result_contain = []
-    thread = threading.Thread(target=parse_ctrl, args=(socket, msg_parse, result_contain))
-    thread.start()
     
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
         QtGui.QApplication.instance().exec_()
-    
+
+    socket.close()
+    context.destroy()
     thread.join()
+
