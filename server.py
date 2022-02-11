@@ -7,9 +7,9 @@ from time import sleep
 import struct
 from collections import deque
 import threading
-from utils.buffer_utilities import MessageParser, SystemDim, message_ids, id_name_map
+from utils.buffer_utilities import MessageParser, id_name_map
 
-
+# Globals for the win
 n_samples = 1200
 list_d = [deque(np.zeros(n_samples), maxlen=n_samples) for _ in range(1)]
 res_containers = [[] for _ in range(1)]
@@ -55,7 +55,7 @@ def parse_ctrl(socket, parser: MessageParser):
     global first_run, list_d, legend, total_plots, id_names, res_containers, ids
     while True:
         msg = socket.recv()
-        parsed_msg = parser.deep_parser(msg)
+        parsed_msg = parser.parse(msg)
 
         if first_run:
             ids, legend = build_legends(parsed_msg)
@@ -70,15 +70,13 @@ def parse_ctrl(socket, parser: MessageParser):
                 for i, id in enumerate(ids):
                     if message['id'][0] == id:
                         res_containers[i] = message["val"]
-        socket.send(b'r')
 
 
 if __name__ == '__main__':
     context = zmq.Context()
-    socket = context.socket(zmq.REQ)
+    socket = context.socket(zmq.PULL)
     socket.bind("tcp://*:5555")
     lock = threading.Lock()
-    socket.send(b'r')
     # app = QtGui.QApplication([])
 
     msg_parse = MessageParser()
@@ -86,7 +84,7 @@ if __name__ == '__main__':
     thread.start()
 
     while total_plots is 0:
-        sleep(0.0001)
+        pass
 
     plot = pg.plot()
     plot.addLegend()

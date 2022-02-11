@@ -2,7 +2,7 @@ import struct
 from math import floor
 import zmq
 import numpy as np
-
+from utils.data_collector import get_data_collector, update_data_collector
 
 class SystemDim:
     CTRL_SIZE = 9
@@ -12,7 +12,7 @@ class SystemDim:
 
 
 message_ids = {"DDP": b'q', "PI": b'i', "POS": b'p', "VEL": b'v', "STATE": b's'}
-id_name_map = {b'q': "DDP",  b'i': "PI", b'p': "POS",  b'v': "VEL", b's': "STATE"}
+id_name_map = {v: k for k, v in message_ids.items()}
 
 
 class MessageParser:
@@ -27,7 +27,7 @@ class MessageParser:
     def __init__(self):
         pass
 
-    def deep_parser(self, msg):
+    def parse(self, msg):
         id_idx = 0
         data_idx = id_idx + 1
         result = []
@@ -41,13 +41,20 @@ class MessageParser:
             data_idx = id_idx + 1
         return result
 
+
 if __name__ == "__main__":
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
     socket.bind("tcp://*:5555")
     msg_p = MessageParser()
+    dc = get_data_collector()
+
     while True:
         # socket.send(b'r')
         msg = socket.recv()
-        parsed_msg = msg_p.deep_parser(msg)
-        print(parsed_msg)
+        parsed_msgs = msg_p.parse(msg)
+        print(parsed_msgs)
+        for pars_msg in parsed_msgs:
+            update_data_collector(dc, pars_msg)
+
+        print(dc.ctrl_list)
