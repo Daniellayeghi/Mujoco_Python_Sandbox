@@ -3,8 +3,6 @@ import zmq
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 from pyqtgraph.ptime import time
-from time import sleep
-import struct
 from collections import deque
 import threading
 from utils.buffer_utilities import MessageParser, id_name_map
