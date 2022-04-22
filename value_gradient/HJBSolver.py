@@ -28,11 +28,13 @@ def dynamics_model(sim, state: State, ctrl: np.ndarray):
 class HJBSolver(object):
     def __init__(self, model_file: str, simulator, state_ctrl_size: tuple):
         self.value_function = torch.nn.Sequential(
-            torch.nn.Linear(2, 120),
+            torch.nn.Linear(2, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(120, 84),
+            torch.nn.Linear(64, 120),
             torch.nn.ReLU(),
-            torch.nn.Linear(84, 1),
+            torch.nn.Linear(120, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(64, 1),
         )
 
         self.value_function.load_state_dict(torch.load("state_dict_model.pt"))
@@ -58,12 +60,13 @@ class HJBSolver(object):
         dv_dx = torch.autograd.grad(current_value, self._input_states_var, retain_graph=True)[0]
 
         current_state = State(
-                                time=0,
-                                qpos=np.array([state[0]]),
-                                qvel=np.array([state[1]]),
-                                act=0,
-                                udd_state={}
-                            )
+            time=0,
+            qpos=np.array([state[0]]),
+            qvel=np.array([state[1]]),
+            act=0,
+            udd_state={}
+        )
+
         j_ctrl = np.vstack(
             [approx_fprime(
                 self.ctrl_vec, lambda x: dynamics_model(self.simul, current_state, x)[m], 1e-6)
@@ -76,12 +79,12 @@ class HJBSolver(object):
 
 
 if __name__ == "__main__":
-    model = load_model_from_path("../xmls/Pendulum.xml")
+    model = load_model_from_path("../xmls/doubleintegrator.xml")
     sim = MjSim(model)
     sim_cp = MjSim(model)
 
     viewer = MjViewer(sim)
-    state = State(time=0, qpos=np.array([np.pi+1]), qvel=np.array([0]), act=0, udd_state={})
+    state = State(time=0, qpos=np.array([1]), qvel=np.array([0]), act=0, udd_state={})
     sim.set_state(state)
 
     hjb_solver = HJBSolver("state_dict_model.pt", sim_cp, (2, 1))

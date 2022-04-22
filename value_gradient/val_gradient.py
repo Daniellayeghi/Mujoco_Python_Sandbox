@@ -40,7 +40,7 @@ class ValueGradient(object):
 
     def solve_disc_value_iteration(self, model: MjSim, cost_func):
         [row, col] = np.shape(states)
-        for iter in range(6):
+        for iter in range(2):
             print(f"iteration: {iter}")
             for s_1 in range(col):
                 for s_2 in range(col):
@@ -57,7 +57,7 @@ class ValueGradient(object):
                         )
                         model.data.ctrl[0] = self._ctrls[ctrl]
                         value_curr = cost_func(
-                            np.append(model.data.xipos[1], model.data.qvel[0]), model.data.ctrl
+                            np.append(model.data.qpos[0], model.data.qvel[0]), model.data.ctrl
                         )
                         model.step()
                         # solve for the instantaneous cost and interpolate the value at the next state
@@ -87,16 +87,16 @@ class FittedValueIteration(object):
     def __init__(self, output_val, input_state):
         # Network parameters
         self.value_net = torch.nn.Sequential(
-            torch.nn.Linear(2, 120),
+            torch.nn.Linear(2, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(120, 240),
+            torch.nn.Linear(64, 120),
             torch.nn.ReLU(),
-            torch.nn.Linear(240, 120),
+            torch.nn.Linear(120, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(120, 1),
+            torch.nn.Linear(64, 1),
         )
 
-        self._optimizer = torch.optim.Adam(self.value_net.parameters(), lr=0.01)
+        self._optimizer = torch.optim.SGD(self.value_net.parameters(), lr=1e-6)
         self._loss_func = torch.nn.MSELoss()  # this is for regression mean squared los
 
         # Generate tensors from data
@@ -109,7 +109,7 @@ class FittedValueIteration(object):
         self._torch_data_set = Data.TensorDataset(self._input_state_t, self._output_val_t)
         self._loader = Data.DataLoader(
             dataset=self._torch_data_set,
-            batch_size=20,
+            batch_size=100,
             shuffle=True,
             num_workers=5,
         )
@@ -133,22 +133,22 @@ class FittedValueIteration(object):
 if __name__ == "__main__":
     # Setup quadratic cost
     cost = QRCost(
-        np.diagflat(np.array([100, 0, 5000, 10 * 0.01])),
+        np.diagflat(np.array([100, 1])),
         np.diagflat(np.array([1])),
-        np.array([1.46152155e-17, 0.00000000e+00, 1.19342291e-01, 0])
+        np.array([0, 0])
     )
 
     # Setup value iteration
     disc_state = 20
     disc_ctrl = 10
-    pos_arr = (np.linspace(-np.pi, np.pi*3, disc_state))
+    pos_arr = (np.linspace(-np.pi, np.pi, disc_state))
     vel_arr = (np.linspace(-np.pi, np.pi, disc_state))
     states = np.array((pos_arr, vel_arr))
     ctrls = np.linspace(-1, 1, disc_ctrl)
     vg = ValueGradient(states, ctrls, )
 
     # Load environment
-    mdl = load_model_from_path("../xmls/Pendulum.xml")
+    mdl = load_model_from_path("../xmls/doubleintegrator.xml")
     sim = MjSim(mdl)
 
     # Solve value iteration

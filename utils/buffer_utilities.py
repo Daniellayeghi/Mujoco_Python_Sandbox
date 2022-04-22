@@ -5,9 +5,9 @@ from utils.data_collector import get_data_collector, update_data_collector
 
 
 class SystemDim:
-    CTRL_SIZE = 9
-    POS_SIZE = 16
-    VEL_SIZE = 15
+    CTRL_SIZE = 1
+    POS_SIZE = 1
+    VEL_SIZE = 1
     STATE_SIZE = POS_SIZE + VEL_SIZE
 
 

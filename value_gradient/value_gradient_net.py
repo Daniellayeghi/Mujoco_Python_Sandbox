@@ -159,12 +159,12 @@ if __name__ == "__main__":
     vg = ValueGradient(states, ctrls)
 
     # Load environment
-    mdl = load_model_from_path("../xmls/Pendulum.xml")
+    mdl = load_model_from_path("../xmls/doubleintegrator.xml")
     sim = MjSim(mdl)
 
     # Solve value iteration
     vg.solve_disc_value_iteration(sim, cost)
-    pos_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi*3, disc_state))
+    pos_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi, disc_state))
     vel_tensor = torch.from_numpy(np.linspace(-np.pi, np.pi, disc_state))
     prediction = np.zeros((disc_state, disc_state))
 
