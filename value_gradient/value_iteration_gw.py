@@ -1,5 +1,7 @@
-import numpy as np
 from collections import namedtuple
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 GridParams = namedtuple(
     'GridParams',
@@ -37,39 +39,54 @@ class GridWorld:
 
 
 class ValueIteration:
-    def __init__(self, world: GridWorld, actions: list, states: list):
+    def __init__(self, world: GridWorld, actions: list, states: list, it_lim: int):
         self._world = world
         self._actions = actions
         self._states = states
         self._values = np.zeros_like(self._world.cost_grid())
+        self._iteration_limit = it_lim
 
     def compute_values(self):
-        for iteration in range(10):
+        for iteration in range(self._iteration_limit):
             for s1 in self._states[0]:
                 for s2 in self._states[1]:
                     v = []
                     for a in self._actions:
-                        state, cost = self._world.step(a, np.array([s1, s2]))
-                        n_v = cost + self._values[state[0], state[1]]
+                        state, cost = self._world.step(a, np.array([int(s1), int(s2)]))
+                        n_v = cost + self._values[int(state[0]), int(state[1])]
                         v.append(n_v)
 
-                    self._values[s1, s2] += min(v)
+                    self._values[int(s1), int(s2)] = min(v)
 
         return self._values
 
 
 if __name__ == "__main__":
     gp = GridParams(
-        row_col=[5, 5],
+        row_col=[40, 40],
         def_cost=1,
         min_cost=0,
-        cost_spread={(0, 0): 0},
+        cost_spread={(0, 0): 0, (30, 20): 30},
         goal=np.array([0, 0])
     )
+    total_size = gp.row_col[0] * gp.row_col[1]
 
     gw = GridWorld(gp)
     actions = ["up", "down", "left", "right"]
-    states = [[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]]
-    vi = ValueIteration(gw, actions, states)
+
+    x = np.linspace(0, gp.row_col[0]-1, gp.row_col[0])
+    y = np.linspace(0, gp.row_col[1]-1, gp.row_col[1])
+
+    states = [x.tolist(), y.tolist()]
+    vi = ValueIteration(gw, actions, states, gp.row_col[0] * 2)
     values = vi.compute_values()
     print(f"values : {values}")
+
+    fig = plt.imshow(
+        values,
+        interpolation=None,
+        extent=[min(states[0]), max(states[0])+1, min(states[1]), max(states[1])+1]
+    )
+
+    plt.colorbar()
+    plt.show()
