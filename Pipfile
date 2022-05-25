@@ -4,9 +4,9 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [[source]]
-url = "https://download.pytorch.org/whl/cu113/"
-verify_ssl = true
-name = "downloadpytorch"
+url = "https://download.pytorch.org/whl/"
+verify_ssl = false
+name = "torch"
 
 [dev-packages]
 
@@ -22,8 +22,10 @@ cma = "*"
 pyzmq = "*"
 pyqtgraph = "*"
 pyqt5 = "*"
-torch = "==1.10.1+cu113"
 mujoco-py = "*"
+pysindy = "*"
+tensorflow = "*"
+tensorflow-probability = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

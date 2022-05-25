@@ -1,153 +1,82 @@
+import pandas as pd
 import torch
-from base_vae import BaseVAE
-from torch import nn
-from torch.nn import functional as F
-from .types_ import *
+torch.manual_seed(0)
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.utils
+import torch.distributions
+import numpy as np
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-class VanillaVAE(BaseVAE):
+class Decoder(nn.Module):
+    def __init__(self, latent_dims, input_dim, hds):
+        super(Decoder, self).__init__()
+        self.linear1 = nn.Linear(latent_dims, hds[0])
+        self.linear2 = nn.Linear(hds[0], input_dim)
 
-    def __init__(self,
-                 in_channels: int,
-                 latent_dim: int,
-                 hidden_dims: List = None,
-                 **kwargs) -> None:
-        super(VanillaVAE, self).__init__()
-
-        self.latent_dim = latent_dim
-
-        modules = []
-        if hidden_dims is None:
-            hidden_dims = [32, 64, 128, 256, 512]
-
-        # Build Encoder
-        for h_dim in hidden_dims:
-            modules.append(
-                nn.Sequential(
-                    nn.Linear(in_channels, h_dim),
-                    nn.LeakyReLU())
-            )
-            in_channels = h_dim
-
-        self.encoder = nn.Sequential(*modules)
-        self.fc_mu = nn.Linear(hidden_dims[-1]*4, latent_dim)
-        self.fc_var = nn.Linear(hidden_dims[-1]*4, latent_dim)
-
-        # Build Decoder
-        modules = []
-        self.decoder_input = nn.Linear(latent_dim, hidden_dims[-1] * 4)
-        hidden_dims.reverse()
-
-        for i in range(len(hidden_dims) - 1):
-            modules.append(
-                nn.Sequential(
-                    nn.Linear(hidden_dims[i], hidden_dims[i + 1]),
-                    nn.LeakyReLU())
-            )
-
-        self.decoder = nn.Sequential(*modules)
-
-        self.final_layer = nn.Sequential(
-            nn.Linear(hidden_dims[-1], hidden_dims[-1]),
-            nn.LeakyReLU(),
-            nn.Linear(hidden_dims[-1], in_channels),
-            nn.Tanh()
-        )
-
-    def encode(self, input: Tensor) -> List[Tensor]:
-        """
-        Encodes the input by passing through the encoder network
-        and returns the latent codes.
-        :param input: (Tensor) Input tensor to encoder [N x C x H x W]
-        :return: (Tensor) List of latent codes
-        """
-        result = self.encoder(input)
-        result = torch.flatten(result, start_dim=1)
-
-        # Split the result into mu and var components
-        # of the latent Gaussian distribution
-        mu = self.fc_mu(result)
-        log_var = self.fc_var(result)
-
-        return [mu, log_var]
-
-    def decode(self, z: Tensor) -> Tensor:
-        """
-        Maps the given latent codes
-        onto the image space.
-        :param z: (Tensor) [B x D]
-        :return: (Tensor) [B x C x H x W]
-        """
-        result = self.decoder_input(z)
-        result = result.view(-1, 512, 2, 2)
-        result = self.decoder(result)
-        result = self.final_layer(result)
-        return result
-
-    def reparameterize(self, mu: Tensor, logvar: Tensor) -> Tensor:
-        """
-        Reparameterization trick to sample from N(mu, var) from
-        N(0,1).
-        :param mu: (Tensor) Mean of the latent Gaussian [B x D]
-        :param logvar: (Tensor) Standard deviation of the latent Gaussian [B x D]
-        :return: (Tensor) [B x D]
-        """
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return eps * std + mu
-
-    def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
-        mu, log_var = self.encode(input)
-        z = self.reparameterize(mu, log_var)
-        return  [self.decode(z), input, mu, log_var]
-
-    def loss_function(self,
-                      *args,
-                      **kwargs) -> dict:
-        """
-        Computes the VAE loss function.
-        KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        recons = args[0]
-        input = args[1]
-        mu = args[2]
-        log_var = args[3]
-
-        kld_weight = kwargs['M_N'] # Account for the minibatch samples from the dataset
-        recons_loss =F.mse_loss(recons, input)
+    def forward(self, z):
+        z = F.relu(self.linear1(z))
+        z = torch.sigmoid(self.linear2(z))
+        return z
 
 
-        kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim = 1), dim = 0)
+class VariationalEncoder(nn.Module):
+    def __init__(self, latent_dims, input_dim, hds:list):
+        super(VariationalEncoder, self).__init__()
+        self.linear1 = nn.Linear(input_dim, hds[0])
+        self.linear2 = nn.Linear(hds[0], latent_dims)
+        self.linear3 = nn.Linear(hds[0], latent_dims)
 
-        loss = recons_loss + kld_weight * kld_loss
-        return {'loss': loss, 'Reconstruction_Loss':recons_loss.detach(), 'KLD':-kld_loss.detach()}
+        self.N = torch.distributions.Normal(0, 1)
+        self.N.loc = self.N.loc.cuda() # hack to get sampling on the GPU
+        self.N.scale = self.N.scale.cuda()
+        self.kl = 0
 
-    def sample(self,
-               num_samples:int,
-               current_device: int, **kwargs) -> Tensor:
-        """
-        Samples from the latent space and return the corresponding
-        image space map.
-        :param num_samples: (Int) Number of samples
-        :param current_device: (Int) Device to run the model
-        :return: (Tensor)
-        """
-        z = torch.randn(num_samples,
-                        self.latent_dim)
+    def forward(self, x):
+        x = F.relu(self.linear1(x))
+        mu = self.linear2(x)
+        sigma = torch.exp(self.linear3(x))
+        z = mu + sigma*self.N.sample(mu.shape)
+        self.kl = (sigma**2 + mu**2 - torch.log(sigma) - 1/2).sum()
+        return z
 
-        z = z.to(current_device)
 
-        samples = self.decode(z)
-        return samples
+class VariationalAutoencoder(nn.Module):
+    def __init__(self, latent_dims, input_dims, hds):
+        super(VariationalAutoencoder, self).__init__()
+        self.encoder = VariationalEncoder(latent_dims, input_dims, hds)
+        self.decoder = Decoder(latent_dims, input_dims, hds)
 
-    def generate(self, x: Tensor, **kwargs) -> Tensor:
-        """
-        Given an input image x, returns the reconstructed image
-        :param x: (Tensor) [B x C x H x W]
-        :return: (Tensor) [B x C x H x W]
-        """
+    def forward(self, x):
+        z = self.encoder(x)
+        return self.decoder(z)
 
-        return self.forward(x)[0]
+
+def train(autoencoder, data, epochs=500):
+    opt = torch.optim.SGD(autoencoder.parameters(), 1e-5)
+    for epoch in range(epochs):
+        for cols in range(data.shape[1]):
+            x = torch.tensor(data[:, cols], dtype=torch.float)
+            x = x.to(device)
+            opt.zero_grad()
+            x_hat = autoencoder(x)
+            loss = ((x - x_hat)**2).sum() + autoencoder.encoder.kl
+            if epoch % 25 == 0:
+                print(f"epoch: {epoch} loss: {loss} \n")
+            loss.backward()
+            opt.step()
+    return autoencoder
+
+
+if __name__ == "__main__":
+    parent = "/home/daniel/Repos/OptimisationBasedControl/data"
+    f_sv = pd.read_csv(f"{parent}/di_data_size_313_data_num_19.csv").to_numpy()
+    n_state, n_data, total_size = 2, int(f_sv.shape[1]/(2+1)), int(f_sv.shape[0] * (2+1))
+    f_sv_c = np.zeros((total_size, n_data))
+
+    for i in range(n_data):
+        j = i * (n_state + 1)
+        f_sv_c[:, i] = f_sv[:, j:j+n_state+1].reshape(total_size)
+
+

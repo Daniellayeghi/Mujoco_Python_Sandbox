@@ -1,13 +1,7 @@
-import random
 from recordtype import recordtype
 import matplotlib.pyplot as plt
 import numpy as np
-import torch; torch.manual_seed(0)
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.utils
-import torch.distributions
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+from vanilla_vae import *
 
 GridParams = recordtype(
     'GridParams',
@@ -67,66 +61,6 @@ class ValueIteration:
         return self._values
 
 
-class Decoder(nn.Module):
-    def __init__(self, latent_dims, input_dim, hds):
-        super(Decoder, self).__init__()
-        self.linear1 = nn.Linear(latent_dims, hds[0])
-        self.linear2 = nn.Linear(hds[0], input_dim)
-
-    def forward(self, z):
-        z = F.relu(self.linear1(z))
-        z = torch.sigmoid(self.linear2(z))
-        return z
-
-
-class VariationalEncoder(nn.Module):
-    def __init__(self, latent_dims, input_dim, hds:list):
-        super(VariationalEncoder, self).__init__()
-        self.linear1 = nn.Linear(input_dim, hds[0])
-        self.linear2 = nn.Linear(hds[0], latent_dims)
-        self.linear3 = nn.Linear(hds[0], latent_dims)
-
-        self.N = torch.distributions.Normal(0, 1)
-        self.N.loc = self.N.loc.cuda() # hack to get sampling on the GPU
-        self.N.scale = self.N.scale.cuda()
-        self.kl = 0
-
-    def forward(self, x):
-        x = F.relu(self.linear1(x))
-        mu = self.linear2(x)
-        sigma = torch.exp(self.linear3(x))
-        z = mu + sigma*self.N.sample(mu.shape)
-        self.kl = (sigma**2 + mu**2 - torch.log(sigma) - 1/2).sum()
-        return z
-
-
-class VariationalAutoencoder(nn.Module):
-    def __init__(self, latent_dims, input_dims, hds):
-        super(VariationalAutoencoder, self).__init__()
-        self.encoder = VariationalEncoder(latent_dims, input_dims, hds)
-        self.decoder = Decoder(latent_dims, input_dims, hds)
-
-    def forward(self, x):
-        z = self.encoder(x)
-        return z, self.decoder(z)
-
-
-def train(autoencoder, data, epochs=100):
-    opt = torch.optim.Adam(autoencoder.parameters(), 1e-5)
-    for epoch in range(epochs):
-        for cols in range(data.shape[1]):
-            x = torch.tensor(data[:, cols], dtype=torch.float)
-            x = x.to(device)
-            opt.zero_grad()
-            x_hat = autoencoder(x)
-            loss = ((x - x_hat)**2).sum() + autoencoder.encoder.kl + ((x - x_hat)**2).sum()
-            if epoch % 25 == 0:
-                print(f"epoch: {epoch} loss: {loss} \n")
-            loss.backward()
-            opt.step()
-    return autoencoder
-
-
 def generate_values(autoencoder, r0, r1):
     values_data = []
     for x in r0:
@@ -147,6 +81,22 @@ def plot_value(values: np.array, min_max: list, title: str):
     )
     plt.title(title)
     plt.show()
+
+
+def train(autoencoder, data, epochs=100):
+    opt = torch.optim.Adam(autoencoder.parameters(), 1e-5)
+    for epoch in range(epochs):
+        for cols in range(data.shape[1]):
+            x = torch.tensor(data[:, cols], dtype=torch.float)
+            x = x.to(device)
+            opt.zero_grad()
+            x_hat = autoencoder(x)
+            loss = ((x - x_hat)**2).sum() + autoencoder.encoder.kl
+            if epoch % 25 == 0:
+                print(f"epoch: {epoch} loss: {loss} \n")
+            loss.backward()
+            opt.step()
+    return autoencoder
 
 
 if __name__ == "__main__":
