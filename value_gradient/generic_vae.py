@@ -10,9 +10,7 @@ import matplotlib.patches as patches
 from collections import namedtuple
 
 __attr_names = ["in_dim", "out_dim", "e_hl_dim", "d_hl_dim", "latent_dim"]
-__attr_vals = [[None, 139], 6, [512, 512], [512, 512], 3]
 LayerInfo = namedtuple("LayerInfo", __attr_names)
-LayerInfo(*__attr_vals)
 
 
 class CVAE(tf.keras.Model):
@@ -42,6 +40,7 @@ class CVAE(tf.keras.Model):
                 tf.keras.layers.Dense(self.layer_inf.out_dim)
             ]
         )
+
 
     @tf.function
     def sample(self, eps=None):
@@ -76,11 +75,10 @@ def compute_loss(model, x):
     mean, logvar = model.encode(x)
     z = model.reparameterize(mean, logvar)
     x_logit = model.decode(z)
-    cross_ent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x_logit, labels=x)
-    logpx_z = -tf.reduce_sum(cross_ent, axis=[1, 2, 3])
-    logpz = log_normal_pdf(z, 0., 0.)
-    logqz_x = log_normal_pdf(z, mean, logvar)
-    return -tf.reduce_mean(logpx_z + logpz - logqz_x)
+    recon = tf.keras.losses.mean_squared_error()
+    rl = recon(x, x_logit, sample_weight = [1, 1, 1, 0.5, 0.5, 0.5])
+    kl_loss = 10 ** -4 * 2 * tf.reduce_sum(tf.exp(logvar) + mean ** 2 - 1. - logvar, 1)
+    return tf.reduce_mean(kl_loss + rl)
 
 
 @tf.function
@@ -97,43 +95,37 @@ def train_step(model, x, optimizer):
 
 if __name__ == "__main__":
     # Constants
-    epochs, it, numTrain, mb_size, dim = 1000, 0, 7000, 256, 6
+    epochs, it, numTrain, mb_size, dim, dimW = 1000, 0, 7000, 256, 6, 3
     dataElements = dim + 3 * 3 + 2 * dim
+
     # Load the data
-    occ_grid = np.load("../../LearnedSamplingDistributions/occ_grid.npy")
-    XC = pd.read_csv("./../../LearnedSamplingDistributions/narrowDataFile.txt", sep=',').to_numpy()
+    parent_path = "../../LearnedSamplingDistributions/"
+    occ_grid = np.load(parent_path + "occ_grid.npy")
+    XC = pd.read_csv(parent_path + "narrowDataFile.txt", sep=',', header=None).to_numpy()
     XC = np.delete(XC, -1, axis=1)
-    X = XC[0:numTrain, 0:dim]
-    C = XC[0:numTrain, dim:dataElements]
-    # Batch the data to combine the consecutive elements into batches
+    X_train = XC[0:numTrain, 0:dim]
+    C_train = XC[0:numTrain, dim:dataElements]
+    X_test = XC[numTrain:XC.shape[0], 0:dim]
+    C_test = XC[numTrain:XC.shape[0], dim:dataElements]
 
-    # Model setup
-    model = CVAE(LayerInfo(*__attr_vals))
+    cs = np.concatenate((XC[0:XC.shape[0], dim + 3 * dimW:dataElements], occ_grid), axis=1)  # occ, init, goal
+    c_dim = cs.shape[1]
+    c_gapsInitGoal = C_test
+    C_train = cs[0:numTrain, :]
+    C_test = cs[numTrain:XC.shape[0], :]
 
+    # Build model
+    layers_size = [[None, 139], 6, [512, 512], [512, 512], 3]
+    model = CVAE(LayerInfo(*layers_size))
 
-    # for epoch in range(1, epochs + 1):
-    #     start_time = time.time()
-    #     for train_x in train_dataset:
-    #         train_step(model, train_x, optimizer)
-    #     end_time = time.time()
-    #
-    #     loss = tf.keras.metrics.Mean()
-    #     for test_x in test_dataset:
-    #         loss(compute_loss(model, test_x))
-    #     elbo = -loss.result()
-    #     display.clear_output(wait=False)
-    #     print('Epoch: {}, Test set ELBO: {}, time elapse for current epoch: {}'
-    #           .format(epoch, elbo, end_time - start_time))
-    #
-    # for it in range(it, it + epochs):
-    #     # randomly generate batches
-    #     batch_elements = [randint(0, numTrain - 1) for n in range(0, mb_size)]
-    #     X_mb = X_train[batch_elements, :]
-    #     c_mb = c_train[batch_elements, :]
-    #
-    #     _, loss = sess.run([train_step, cvae_loss], feed_dict={X: X_mb, c: c_mb})
-    #
-    #     if it % 1000 == 0:
-    #         print('Iter: {}'.format(it))
-    #         print('Loss: {:.4}'.format(loss))
-    #         print()
+    # Data pipeline
+    train_dataset = tf.data.Dataset.from_tensor_slices((X_train, C_train))
+    train_dataset = train_dataset.batch(256)
+
+    # Train net
+    optimizer = tf.keras.optimizers.Adam(1e-4)
+    for epoch in range(1, epochs + 1):
+        start_time = time.time()
+        for xc in train_dataset:
+            train_step(model, train_x, optimizer)
+        end_time = time.time()
