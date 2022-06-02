@@ -1,10 +1,11 @@
-import torch
-from torch.autograd import Variable
-import numpy as np
-from scipy.optimize import approx_fprime
-import matplotlib.pyplot as plt
 from collections import namedtuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
 from mujoco_py import load_model_from_path, MjSim
+from scipy.optimize import approx_fprime
+from torch.autograd import Variable
 
 State = namedtuple('State', 'time qpos qvel act udd_state')
 np.set_printoptions(threshold=np.inf)

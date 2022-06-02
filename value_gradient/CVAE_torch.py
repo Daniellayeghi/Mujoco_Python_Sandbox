@@ -1,4 +1,3 @@
-import pandas as pd
 import torch
 torch.manual_seed(0)
 import torch.nn as nn

@@ -1,12 +1,13 @@
 
 from collections import namedtuple
+
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+import torch.utils.data as Data
 from mujoco_py import load_model_from_path, MjSim
 from scipy import interpolate
-import torch
 from torch.autograd import Variable
-import torch.utils.data as Data
 
 State = namedtuple('State', 'time qpos qvel act udd_state')
 np.set_printoptions(threshold=np.inf)

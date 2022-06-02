@@ -1,7 +1,6 @@
-from recordtype import recordtype
 import matplotlib.pyplot as plt
 import numpy as np
-from vanilla_vae import *
+from recordtype import recordtype
 
 GridParams = recordtype(
     'GridParams',
@@ -61,17 +60,6 @@ class ValueIteration:
         return self._values
 
 
-def generate_values(autoencoder, r0, r1):
-    values_data = []
-    for x in r0:
-        for y in r1:
-            z = torch.Tensor([[x, y]]).to(device)
-            x_hat = autoencoder.decoder(z)
-            x_hat = x_hat.reshape(gp.row_col[0], gp.row_col[1]).to('cpu').detach().numpy()
-            values_data.append(([x, y], x_hat))
-    return values_data
-
-
 def plot_value(values: np.array, min_max: list, title: str):
     plt.figure()
     plt.imshow(
@@ -81,22 +69,6 @@ def plot_value(values: np.array, min_max: list, title: str):
     )
     plt.title(title)
     plt.show()
-
-
-def train(autoencoder, data, epochs=100):
-    opt = torch.optim.Adam(autoencoder.parameters(), 1e-5)
-    for epoch in range(epochs):
-        for cols in range(data.shape[1]):
-            x = torch.tensor(data[:, cols], dtype=torch.float)
-            x = x.to(device)
-            opt.zero_grad()
-            x_hat = autoencoder(x)
-            loss = ((x - x_hat)**2).sum() + autoencoder.encoder.kl
-            if epoch % 25 == 0:
-                print(f"epoch: {epoch} loss: {loss} \n")
-            loss.backward()
-            opt.step()
-    return autoencoder
 
 
 if __name__ == "__main__":
@@ -137,30 +109,3 @@ if __name__ == "__main__":
             vi = ValueIteration(gw, actions, states, 40)
             values = vi.compute_values()
             results[:, i*ex_per_sample + j] = values.reshape(np.size(values))
-
-    print("----------------Training VAE-----------------")
-    vae = VariationalAutoencoder(2, total_size, [16]).to(device)
-    vae = train(vae, results)
-    value_data = generate_values(vae, x, y)
-
-    while True:
-        goal = input("What goal position")
-        try:
-            goal = goal.split(sep=",")
-            goal = [int(goal[0]), int(goal[1])]
-        except Exception as e:
-            print("Wrong Goal")
-
-        z = torch.Tensor([[goal[0], goal[1]]]).to(device)
-        x_hat = vae.decoder(z)
-        x_hat = x_hat.reshape(row, col).to('cpu').detach().numpy()
-
-        plt.figure()
-        plt.imshow(
-            x_hat,
-            interpolation=None,
-            extent=[min(states[0]), max(states[0])+1, max(states[1])+1, min(states[1])]
-        )
-
-        plt.title(f"goal at {goal[0], goal[1]}")
-        plt.show()
