@@ -39,8 +39,6 @@ if __name__ == "__main__":
         try:
             # Train network
             for epoch in range(50000):
-                if not TRAIN:
-                    break
                 train_loss, n = 0.0, 0
                 for b_inq in d_loader:
                     b_inq = b_inq[0].to(device)
@@ -84,6 +82,10 @@ if __name__ == "__main__":
     out = (x_out.cpu().detach().numpy()).transpose()
     div = int(out.shape[0]/(n_states + 1))
     x, xd, v = out[0: div, :], out[div: div*2, :], out[div*2:, :]
+    x_mean, x_var = np.mean(x[-1, :]), np.var(x[-1, :])
+    xd_mean, xd_var = np.mean(xd[-1, :]), np.var(xd[-1, :])
+
+    print(f"MEAN and COV of x: \n{(x_mean, x_var)}, \nMEAN and COV of xd : \n{xd_mean, xd_var}")
 
     fig = plt.figure()
     ax = plt.axes(projection='3d')

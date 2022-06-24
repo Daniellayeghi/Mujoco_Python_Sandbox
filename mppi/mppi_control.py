@@ -125,13 +125,15 @@ if __name__ == "__main__":
     pi = MPPI(sim, Params["Samples"], Params["Horizon"], cost, Params["Variance"], plant, Params["Time"])
     pi.simulate()
 
-    np.save(f'mppi/results/working_controls_finger_{Params["R"]}_'
-            f'                                     {Params["Lamda"]}_'
-            f'                                     {Params["Samples"]}_'
-            f'                                     {Params["Horizon"]}_'
-            f'                                     {Params["Time"]}_'
-            f'                                     {Params["variance"]}.npy',
-                                                   pi.plant_control[:])
+    np.save(
+        f'mppi/results/working_controls_finger_{Params["R"]}_'
+        f'                                     {Params["Lamda"]}_'
+        f'                                     {Params["Samples"]}_'
+        f'                                     {Params["Horizon"]}_'
+        f'                                     {Params["Time"]}_'
+        f'                                     {Params["variance"]}.npy',
+                                               pi.plant_control[:]
+    )
 
     rec = input("Visualise ?")
     print("Visualising")
