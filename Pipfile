@@ -22,10 +22,10 @@ cma = "*"
 pyzmq = "*"
 pyqtgraph = "*"
 pyqt5 = "*"
-mujoco-py = "*"
 pysindy = "*"
 tensorflow = "*"
 tensorflow-probability = "*"
+mujoco-py = "*"
 
 [requires]
 python_version = "3.7"
