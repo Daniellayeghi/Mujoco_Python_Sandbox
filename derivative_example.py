@@ -29,43 +29,34 @@ def scroll(window, x_off, y_off):
     mujoco.mjv_moveCamera(m, 5, 0, -0.05*y_off, scn=scn, cam=cam)
 
 
+def control_cb(model: mujoco.MjModel, data: mujoco.MjData):
+    # Implements a simple double integrator policy centered at 0
+    d.ctrl[0] = -d.qpos - math.sqrt(3) * d.qvel
+
+
+def dummy_control_cb(model: mujoco.MjModel, data: mujoco.MjData):
+    pass
+
+
+def step(m, d):
+    mujoco.set_mjcb_control(control_cb)
+    mujoco.mj_step(m, d)
+    mujoco.set_mjcb_control(dummy_control_cb)
+
+
 glfw.set_scroll_callback(glfw.get_current_context(), scroll)
 
-
 if __name__ == "__main__":
-    print(m.nD)
     d_vec = derivative.MjDataVecView(m, d)
     params = derivative.MjDerivativeParams(1e-6, derivative.WRT.CTRL)
-    mj_deriv = derivative.MjDerivative(m, params)
-    print(mj_deriv.dyn_derivative(d_vec))
-    mujoco.mj_step(m, d)
-    print(mj_deriv.dyn_derivative(d_vec))
-    mujoco.mj_step(m, d)
-    print(mj_deriv.dyn_derivative(d_vec))
-    mujoco.mj_step(m, d)
-    print(mj_deriv.dyn_derivative(d_vec))
-
-    u_d = list()
-
-    # Control callback
-    def control_cb(model: mujoco.MjModel, data: mujoco.MjData):
-        # Implements a simple double integrator policy centered at 0
-        d.ctrl[0] = -d.qpos - math.sqrt(3) * d.qvel
-
-    def dummy_control_cb(model: mujoco.MjModel, data: mujoco.MjData):
-        pass
-
-    def step(m, d):
-        mujoco.set_mjcb_control(control_cb)
-        mujoco.mj_step(m, d)
-        mujoco.set_mjcb_control(dummy_control_cb)
-
+    du = derivative.MjDerivative(m, params)
+    dx_du = list()
 
     while not glfw.window_should_close(glfw.get_current_context()):
         sim_start = d.time
         while(d.time - sim_start) < 1.0/60.0:
             step(m, d)
-            print(mj_deriv.dyn_derivative(d_vec))
+            dx_du.append(du.wrt_dynamics(d_vec)[0])
 
         time.sleep(0.001)
         view = mujoco.MjrRect(0, 0, 0, 0)
@@ -75,6 +66,8 @@ if __name__ == "__main__":
         glfw.swap_buffers(glfw.get_current_context())
         glfw.poll_events()
 
+    plt.plot(dx_du)
+    plt.title("dpos/du")
     plt.show()
     ctx.free()
     con.free()
