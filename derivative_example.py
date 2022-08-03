@@ -1,3 +1,5 @@
+import random
+
 import mujoco
 from mujoco import derivative
 import matplotlib.pyplot as plt
@@ -8,9 +10,10 @@ import math
 '''
 This file tests the derivative bindings.
 '''
-m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
+m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator_sparse.xml")
 d = mujoco.MjData(m)
 d.qpos = np.random.random(m.nq) * 5
+print(m.nbody)
 
 ctx = mujoco.GLContext(1200, 1200)
 ctx.make_current()
@@ -31,7 +34,8 @@ def scroll(window, x_off, y_off):
 
 def control_cb(model: mujoco.MjModel, data: mujoco.MjData):
     # Implements a simple double integrator policy centered at 0
-    d.ctrl[0] = -d.qpos - math.sqrt(3) * d.qvel
+    # d.ctrl[0] = -d.qpos[0] - math.sqrt(3) * d.qvel[0]
+    pass
 
 
 def dummy_control_cb(model: mujoco.MjModel, data: mujoco.MjData):
@@ -56,6 +60,7 @@ if __name__ == "__main__":
         sim_start = d.time
         while(d.time - sim_start) < 1.0/60.0:
             step(m, d)
+            d.xfrc_applied[2] = - np.random.random(1) * 5
             dx_du.append(du.wrt_dynamics(d_vec)[0])
 
         time.sleep(0.001)

@@ -26,6 +26,7 @@ pysindy = "*"
 tensorflow = "*"
 tensorflow-probability = "*"
 mujoco-py = "*"
+joblib = "*"
 
 [requires]
 python_version = "3.7"
