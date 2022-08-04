@@ -11,18 +11,16 @@ import torch.nn.functional as F
 # from mujoco import derivative
 
 # Load Data
-parent_path = "../../sr3-matlab/demo/"
-values = pd.read_csv(parent_path + "di_values.csv", sep=',', header=None).to_numpy()
-states = pd.read_csv(parent_path + "di_states.csv", sep=',', header=None).to_numpy()
-desc = pd.read_csv(parent_path + "di_conds.csv", sep=',', header=None).to_numpy()  # init; goal
+parent_path = "../../OptimisationBasedControl/data/"
+data = pd.read_csv(parent_path + "di_data_value.csv", sep=',', header=None).to_numpy()
 n_traj, n_train = 5000, int(5000 * 0.75)
-input_q = np.vstack((states, values, desc))
-d_train = input_q[:, 0:n_train]
-d_test = input_q[:, n_train:]
-d_train_d = TensorDataset(torch.Tensor(d_train.transpose()))
+
+d_train = data[0:n_train, :]
+d_test = data[n_train:, :]
+d_train_d = TensorDataset(torch.Tensor(d_train))
 d_loader = DataLoader(d_train_d, batch_size=64, shuffle=True)
 DataParams = namedtuple('DataParams', 'n_state, n_pos, n_vel, n_ctrl, n_desc, n_batch')
-d_params = DataParams(2, 1, 1, 1, desc.size, d_loader.batch_size)
+d_params = DataParams(2, 1, 1, 1, 2, d_loader.batch_size)
 
 # Value network
 val_input, value_output = d_params.n_state + d_params.n_desc, d_params.n_ctrl
@@ -35,35 +33,64 @@ p_layers = [[val_input, 16, 16, value_output], [], 0]
 policy_net = MLP(LayerInfo(*p_layers))
 
 
+class ValueFunction(MLP):
+    def __init__(self, data_params: DataParams, layer_info: LayerInfo, apply_sigmoid=False):
+        super(ValueFunction, self).__init__(layer_info, apply_sigmoid)
+        self.loss = list()
+        self._data_params = data_params
+    def compute_loss(self, x_curr, x_next, x_goal):
+        self.loss.append()
+
+    def goal_loss(self, x_goal):
+        return 10 * self.forward(x_goal)
+
+    def descent_loss(self, x_curr, x_next, u_curr):
+
+
+
 class OptimalPolicy(torch.nn.Module):
-    def __init__(self, policy: MLP, value: MLP, n_params: DataParams, integrate=lambda x1, x2, delta=.01: x1 + x2 * delta):
+    def __init__(
+            self, policy: MLP, value: MLP, params: DataParams,
+            derivative=lambda x1, x2, dt=.01: (x2 - x1) / dt,
+            integrate=lambda x1, x2, dt=0.01: x1 + x2 * dt
+    ):
         super(OptimalPolicy, self).__init__()
         self.policy = policy
         self.value = value
-        self.derivative = integrate
-        self.n_params = n_params
-        # self.x_new = torch.zeros((self.n_params.))
+        self.derivative = derivative
+        self.integrate = integrate
+        self.params = params
+        self.final_pos = torch.zeros((self.params.n_pos, self.params.n_batch))
+        self.final_vel = torch.zeros((self.params.n_vel, self.params.n_batch))
+        self.final_acc = torch.zeros((self.params.n_vel, self.params.n_batch))
+        self.final_state = torch.zeros((self.params.n_vel * 2, self.params.n_batch))
 
-    # Policy net need to output acceleration. From there integration can compute state.
+    # Policy net need to output positions. From there derivatives can compute velocity.
     # Projection onto value function computes new acceleration, then integrate to get state
     def forward(self, inputs):
-        pos, vel = inputs[0:self.n_params.n_pos], inputs[self.n_params.n_pos:self.n_params.n_vel + self.n_params.n_pos]
-        acc = self.policy(inputs)
+        pos, vel = inputs[0:self.params.n_pos], inputs[self.params.n_pos:self.params.n_vel + self.params.n_pos]
+        self.final_pos = self.policy(inputs)
         value = self.value(inputs)
-        vel_new = self.integrate(vel, acc)
-        pos_new = self.integrate(pos, vel)
-        x_new = torch.vstack((pos_new, vel_new))
+        self.final_state[0, self.params.n_vel, :] = self.derivative(pos, self.final_pos)
+        self.final_state[self.params.n_vel, 2*self.params.n_vel] = self.derivative(
+            vel, self.self.final_state[0, self.params.n_vel, :]
+        )
 
         # Compute network derivative w.r.t state
         d_value = torch.autograd.grad(
-            [a for a in value], [inputs[0:inputs.size()[0]-self.n_params.n_desc]], create_graph=True, only_inputs=True
+            [a for a in value], [inputs[0:inputs.size()[0]-self.params.n_desc]], create_graph=True, only_inputs=True
         )[0]
 
-        # Return the policy(acc) projection onto value network
-        return x_new - d_value * (F.relu((d_value*x_new).sum(dim=1))/(d_value**2).sum(dim=1))[:, None]
+        # Return the new state form
+        self.final_state = self.final_state - d_value * (F.relu(
+            (d_value*self.final_state).sum(dim=1)
+        )/(d_value**2).sum(dim=1))[:, None]
 
-    def loss(self, input):
+        self.final_acc = self.final_state[self.params.n_vel:, :]
+        self.final_vel = self.integrate(vel, self.final_state[self.params.n_vel:, :])
+        self.final_pos = self.integrate(pos, self.final_vel)
 
+        return self.final_pos, self.final_vel, self.final_acc
 
 
 # Convert to dataset
