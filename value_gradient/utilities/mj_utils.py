@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 import mujoco
+import numpy as np
 import torch
 from mujoco import MjModel, MjData
 from typing import List
@@ -17,6 +18,13 @@ def mj_copy_data(m: MjModel, d_src: MjData, d_target: MjData):
     mujoco.mj_forward(m, d_target)
 
 
+def mj_acc_from_state(pos: torch.Tensor, vel: torch.Tensor, d: MjData, m: MjModel):
+    d.qpos = pos
+    d.qvel = vel
+    mujoco.mj_step(m, d)
+    return d.qacc
+
+
 def mj_frc_from_inverse(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, m: MjModel):
     d.qpos = pos
     d.qvel = vel
@@ -25,8 +33,7 @@ def mj_frc_from_inverse(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor,
     return torch.Tensor(d.qfrc_inverse)
 
 
-def mj_batch_inverse(frc_applied: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d, m: MjModel, params):
-    d_cp = MjData(m)
+def mj_batch_inverse(frc_applied: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel, params):
     for i in range(pos.size()[0]):
         mj_copy_data(m, d, d_cp)
         beg_frc, end_frc = params.n_ctrl * i, (params.n_ctrl * i) + params.n_ctrl
@@ -39,4 +46,14 @@ def mj_batch_inverse(frc_applied: torch.Tensor, pos: torch.Tensor, vel: torch.Te
             m
         )
 
-def mj_batch_derivative()
+
+def mj_batch_step(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel, params):
+    for i in range(pos.size()[0]):
+        mj_copy_data(m, d, d_cp)
+        beg_state, end_state = params.n_pos * i, (params.n_pos * i) + params.n_pos
+        acc[beg_state:end_state] = mj_acc_from_state(
+            pos[beg_state:end_state],
+            vel[beg_state:end_state],
+            d_cp,
+            m
+        )
