@@ -1,11 +1,10 @@
-from collections import namedtuple
 
 import mujoco
-import numpy as np
-import torch
 from mujoco import MjModel, MjData
+from mujoco import derivative
+import torch
+import numpy as np
 from typing import List
-from joblib import parallel_backend, Parallel, delayed
 
 
 def mj_copy_data(m: MjModel, d_src: MjData, d_target: MjData):
@@ -18,42 +17,57 @@ def mj_copy_data(m: MjModel, d_src: MjData, d_target: MjData):
     mujoco.mj_forward(m, d_target)
 
 
-def mj_acc_from_state(pos: torch.Tensor, vel: torch.Tensor, d: MjData, m: MjModel):
+def f(pos: torch.Tensor, vel: torch.Tensor, u: torch.Tensor, d: MjData, m: MjModel):
     d.qpos = pos
     d.qvel = vel
+    d.ctrl = u
     mujoco.mj_step(m, d)
-    return d.qacc
+    return torch.Tensor(np.hstack((d.vel, d.qacc)))
 
 
-def mj_frc_from_inverse(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, m: MjModel):
-    d.qpos = pos
-    d.qvel = vel
-    d.qacc = acc
+def f_inv(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, m: MjModel):
+    d.qpos, d.qvel, d.qacc = pos, vel, acc
     mujoco.mj_inverse(m, d)
     return torch.Tensor(d.qfrc_inverse)
 
 
-def mj_batch_inverse(frc_applied: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel, params):
+def batch_f_inv(frc_applied: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel):
     for i in range(pos.size()[0]):
         mj_copy_data(m, d, d_cp)
-        beg_frc, end_frc = params.n_ctrl * i, (params.n_ctrl * i) + params.n_ctrl
-        beg_state, end_state = params.n_pos * i, (params.n_pos * i) + params.n_pos
-        frc_applied[beg_frc:end_frc] = mj_frc_from_inverse(
-            pos[beg_state:end_state],
-            vel[beg_state:end_state],
-            acc[beg_state:end_state],
-            d_cp,
-            m
-        )
+        mujoco.mj_inverse(m, d_cp)
+        frc_applied[i, :] = f_inv(pos[i, :], vel[i, :], acc[i, :], d_cp, m)
 
 
-def mj_batch_step(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel, params):
+def batch_f_inv2(frc_applied: torch.Tensor, x: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel, params):
+    for i in range(x.size()[0]):
+        mj_copy_data(m, d, d_cp)
+        mujoco.mj_inverse(m, d_cp)
+        pos, vel, acc = x[i, :params.n_pos], x[i, params.n_pos:params.n_vel], x[i, params.n_vel:]
+        frc_applied[i, :] = f_inv(pos, vel, acc, d_cp, m)
+
+
+def batch_f(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, u: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel):
     for i in range(pos.size()[0]):
         mj_copy_data(m, d, d_cp)
-        beg_state, end_state = params.n_pos * i, (params.n_pos * i) + params.n_pos
-        acc[beg_state:end_state] = mj_acc_from_state(
-            pos[beg_state:end_state],
-            vel[beg_state:end_state],
-            d_cp,
-            m
-        )
+        mujoco.mj_forward(m, d_cp)
+        acc[i, :] = f(pos[i, :], vel[i, :], u[i, :], d_cp, m)
+
+
+def batch_f2(x_d: torch.Tensor, x: torch.Tensor, u: torch.Tensor, d: MjData, d_cp: MjData, m: MjModel, params):
+    for i in range(x.size()[0]):
+        mj_copy_data(m, d, d_cp)
+        mujoco.mj_forward(m, d_cp)
+        pos, vel, ctrl = x[i, :params.n_pos], x[i, params.n_pos:params.n_vel], u[i, :]
+        x_d[i, :] = f(pos, vel, ctrl, d_cp, m)
+
+
+def df_inv_dx(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: derivative.MjDataVecView, dx: List[derivative.MjDerivative], params):
+        d.qpos, d.qvel, d.qacc = pos, vel, acc
+        for d in dx:
+            d.wrt_dynamics(d)
+
+
+def df_dx(pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor, d: derivative.MjDataVecView, dx: List[derivative.MjDerivative], params):
+    d.qpos, d.qvel, d.qacc = pos, vel, acc
+    for d in dx:
+        d.wrt_dynamics(d)

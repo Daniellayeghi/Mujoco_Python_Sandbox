@@ -4,6 +4,7 @@ from utilities import mj_utils
 from utilities.torch_utils import to_variable
 from collections import namedtuple
 from mujoco import MjModel, MjData
+from mujoco import derivative
 import pandas as pd
 import numpy as np
 import torch
@@ -40,6 +41,13 @@ policy_input, policy_output = d_params.n_state + d_params.n_desc, d_params.n_pos
 p_layers = [[val_input, 16, 16, value_output], [], 0]
 policy_net = MLP(LayerInfo(*p_layers)).to(device)
 
+# Derivative values
+m = MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
+d = MjData(m)
+d_vec = derivative.MjDataVecView(m, d)
+params = derivative.MjDerivativeParams(1e-6, derivative.Wrt.Ctrl, derivative.Mode.Fwd)
+du = derivative.MjDerivative(m, params)
+
 
 class ValueFunction(MLP):
     def __init__(self, data_params: DataParams, layer_info: LayerInfo, apply_sigmoid=False):
@@ -49,30 +57,6 @@ class ValueFunction(MLP):
         self._lie_v_wrt_f = torch.zeros()
         self._lie_v_wrt_u = torch.zeros()
         self._value_derivative = torch.zeros()
-
-    def compute_loss(self, x_curr, x_next, x_goal):
-        # self.loss.append()
-        pass
-
-    def goal_loss(self, x_goal):
-        return 10 * self.forward(x_goal)
-
-    def lie_derivative_loss(self, x_d_curr, u_curr):
-        """
-        :param x_d_curr: state derivative of the input (vel, acc)
-        :param u_curr: ctrl computed from inverse
-        :return:
-        """
-        pass
-
-    def time_derivative_loss(self, x_curr, x_next, dt):
-        """
-        :param x_curr: input state
-        :param x_next: next state computed by policy net (projected onto the value function)
-        :param dt: time period of simulation
-        :return: soft_loss(dv/dt <= 0)
-        """
-        return (F.relu(1 + (self.forward(x_curr) - self.forward(x_next)) / dt)).mean()
 
 
 class OptimalPolicy(torch.nn.Module):
