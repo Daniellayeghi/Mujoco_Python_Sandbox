@@ -23,6 +23,7 @@ n_traj, n_train = 5000, int(5000 * 0.75)
 
 d_train = to_variable(torch.Tensor(data[0:n_train, :]), torch.cuda.is_available())
 d_test = data[n_train:, :]
+
 # for value derivative
 d_train.requires_grad = True
 print(d_train.requires_grad)
@@ -45,8 +46,10 @@ policy_net = MLP(LayerInfo(*p_layers)).to(device)
 m = MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 d = MjData(m)
 d_vec = derivative.MjDataVecView(m, d)
-params = derivative.MjDerivativeParams(1e-6, derivative.Wrt.Ctrl, derivative.Mode.Fwd)
+params = derivative.MjDerivativeParams(1e-6, derivative.Wrt.State, derivative.Mode.Inv)
 du = derivative.MjDerivative(m, params)
+res = np.array((m.nv, 3*m.nv))
+res = du.func(d_vec)
 
 
 class ValueFunction(MLP):

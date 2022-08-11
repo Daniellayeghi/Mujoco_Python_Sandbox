@@ -87,13 +87,13 @@ if __name__ == "__main__":
     state_vec = np.array([new_state.qpos[0], new_state.qpos[1], new_state.qvel[0], new_state.qvel[1]])
 
     epsilon = 1e-6
-    # sim.set_state(new_state)
-    # J_state = np.vstack(
-    #     [approx_fprime(state_vec, lambda x: forward_sim_state(x)[m], epsilon)
-    #      for m in range(state_vec.shape[0])]
-    # )
-    #
-    # print(J_state)
+    sim.set_state(new_state)
+    J_state = np.vstack(
+        [approx_fprime(state_vec, lambda x: forward_sim_state(x)[m], epsilon)
+         for m in range(state_vec.shape[0])]
+    )
+
+    print(J_state)
 
     sim.set_state(new_state)
     ctrl_vec = np.array([0, 0])
