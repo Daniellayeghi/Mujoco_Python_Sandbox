@@ -49,40 +49,40 @@ class MjBatchOps:
         self._mj_set_ctrl(u)
         self._mj_set_state(x[:self.params.n_pos], x[self.params.n_pos:self.params.n_state])
 
-    def f_fwd(self):
+    def f(self):
         mujoco.mj_step(self.model, self.data)
         return torch.Tensor(np.hstack((self.data.qvel, self.data.qacc)).flatten())
 
-    def f_inv(self):
+    def finv(self):
         mujoco.mj_inverse(self.model, self.data)
         return torch.Tensor(self.data.qfrc_inverse.flatten())
 
     def b_finv_full_x_decomp(self, frc_applied: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor):
         for i in range(pos.size()[0]):
             self._mj_set_full_x_decomp(pos[i, :], vel[i, :], acc[i, :])
-            frc_applied[i, :] = self.f_inv()
+            frc_applied[i, :] = self.finv()
 
     def b_finv_full_x(self, frc_applied: torch.Tensor, full_x: torch.Tensor):
         for i in range(full_x.size()[0]):
             self._mj_set_full_x(full_x[i, :])
-            frc_applied[i, :] = self.f_inv()
+            frc_applied[i, :] = self.finv()
 
     def b_f_x_decomp(self, x_d: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, u: torch.Tensor):
         for i in range(pos.size()[0]):
             self._mj_set_x_decomp_ctrl(pos[i, :], vel[i, :], u[i, :])
-            x_d[i, :] = self.f_fwd()
+            x_d[i, :] = self.f()
 
     def b_f_x(self, x_d: torch.Tensor, x: torch.Tensor, u: torch.Tensor):
         for i in range(x.size()[0]):
             self._mj_set_x_ctrl(x[i, :], u[i, :])
-            x_d[i, :] = self.f_fwd()
+            x_d[i, :] = self.f()
 
-    def b_dfinv_full_x(self, res: torch.Tensor, x_full: torch.Tensor):
+    def b_dfinvdx_full(self, res: torch.Tensor, x_full: torch.Tensor):
         for i in range(x_full.size()[0]):
             self._mj_set_full_x(x_full[i, :])
             res[i, :] = torch.Tensor(self.dfinvdx.func().flatten())
 
-    def b_dfinvdfull_x_decomp(self, res: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor):
+    def b_dfinvdx_full_decomp(self, res: torch.Tensor, pos: torch.Tensor, vel: torch.Tensor, acc: torch.Tensor):
         for i in range(pos.size()[0]):
             self._mj_set_full_x_decomp(pos[i, :], vel[i, :], acc[i, :])
             res[i, :] = torch.Tensor(self.dfinvdx.func().flatten())

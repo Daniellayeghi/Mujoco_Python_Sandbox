@@ -12,8 +12,8 @@ if __name__ == "__main__":
     )
 
     batch_size = 2
-    DataParams = namedtuple('DataParams', 'n_state, n_pos, n_vel, n_ctrl, n_desc, n_batch')
-    d_params = DataParams(4, 2, 2, 1, 2, batch_size)
+    DataParams = namedtuple('DataParams', 'n_full_state, n_state, n_pos, n_vel, n_ctrl, n_desc, n_batch')
+    d_params = DataParams(6, 4, 2, 2, 1, 2, batch_size)
     d = mujoco.MjData(m)
     bo = MjBatchOps(m, d_params)
     x = torch.zeros(batch_size, d_params.n_state)
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     bo.b_dfdx(res_dfdx, x, u)
     bo.b_dfdu(res_dfdu, x, u)
-    bo.b_dfinv_full_x(res_dfinvdx, full_x)
+    bo.b_dfinvdx_full(res_dfinvdx, full_x)
     bo.b_f_x(res_dfdt, x, u)
     bo.b_finv_full_x(res_qfrc, full_x)
 

@@ -69,41 +69,42 @@ class OptimalPolicy(torch.nn.Module):
     ):
         super(OptimalPolicy, self).__init__()
         self._policy_net = policy
-        self._value_net = value
+        self._v_net = value
         self._params = params
         self._derivative = derivative
         self._integrate = integrate
         self._final_pos = torch.zeros((self._params.n_batch, self._params.n_pos)).to(device)
-        self._final_state = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
-        self._final_state_d = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
-        self._value = to_variable(torch.zeros((self._params.n_batch, 1)))
-        self._value_d = to_variable(torch.zeros((self._params.n_batch, self._params.n_state)))
+        #TODO: final_x can be finall_x_full for efficiency
+        self._final_x = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
+        self._final_dxdt = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
+        self._v = to_variable(torch.zeros((self._params.n_batch, 1)))
+        self._dvdx = to_variable(torch.zeros((self._params.n_batch, self._params.n_state)))
 
     # Policy net need to output positions. From there derivatives can compute velocity.
     # Projection onto value function computes new acceleration, then integrate to get state
     def forward(self, inputs):
         pos, vel = inputs[:, 0:self._params.n_pos], inputs[:, self._params.n_pos:self._params.n_vel + self._params.n_pos]
         self._final_pos = self._policy_net(inputs)
-        self._value = self._value_net(inputs)
-        self._final_state_d[:, :self._params.n_vel] = self._derivative(pos, self._final_pos)
-        self._final_state_d[:, self._params.n_vel:] = self._derivative(
-            vel, self._final_state_d[:, :self._params.n_vel]
+        self._v = self._v_net(inputs)
+        self._final_dxdt[:, :self._params.n_vel] = self._derivative(pos, self._final_pos)
+        self._final_dxdt[:, self._params.n_vel:] = self._derivative(
+            vel, self._final_dxdt[:, :self._params.n_vel]
         )
 
         # Compute network derivative w.r.t state
-        self._value_d = torch.autograd.grad(
-            [a for a in self._value], [inputs], create_graph=True, only_inputs=True
+        self._dvdx = torch.autograd.grad(
+            [a for a in self._v], [inputs], create_graph=True, only_inputs=True
         )[0][:, :self._params.n_state]
 
         # Return the new state form
-        self._final_state_d = self._final_state_d - self._value_d * (F.relu(
-            (self._value_d * self._final_state_d).sum(dim=1)
-        )/(self._value_d ** 2).sum(dim=1))[:, None]
+        self._final_dxdt = self._final_dxdt - self._dvdx * (F.relu(
+            (self._dvdx * self._final_dxdt).sum(dim=1)
+        ) / (self._dvdx ** 2).sum(dim=1))[:, None]
 
-        self._final_state[:, self._params.n_vel:] = self._final_state_d[:, self._params.n_vel:]
-        self._final_state[:, :self._params.n_vel] = self._integrate(pos, self._final_state[:, self._params.n_vel:])
+        self._final_x[:, self._params.n_vel:] = self._final_dxdt[:, self._params.n_vel:]
+        self._final_x[:, :self._params.n_vel] = self._integrate(pos, self._final_x[:, self._params.n_vel:])
 
-        return self._final_state, self._final_state_d
+        return self._final_x, self._final_dxdt
 
 
 opt_policy = OptimalPolicy(policy_net, value_net, d_params).to(device)

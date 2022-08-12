@@ -23,7 +23,7 @@ def value_goal_loss(goal, value_func):
 
 class value_lie_loss(Function):
     @staticmethod
-    def forward(ctx, x, u, value_func, data, data_cp, model):
+    def forward(ctx, x, u, value_func):
         pass
 
     @staticmethod
@@ -33,26 +33,30 @@ class value_lie_loss(Function):
 
 class ctrl_effort_loss(Function):
     @staticmethod
-    def forward(ctx, x, frc, data, data_cp, model, params):
-        batch_f_inv2(frc, x, data, data_cp, model, params)
-        ctx.save_for_backward(frc)
-        torch.square_(frc)
+    def forward(ctx, x_full, frc, dfinv_dx, op: MjBatchOps):
+        op.b_finv_full_x(frc, x_full)
+        ctx.save_for_backward(frc, x_full, dfinv_dx, op)
+        return torch.square_(frc)
 
     @staticmethod
     def backward(ctx, grad_output):
-        pass
+        frcs, x_full, dfinv_dx, op = ctx.saved_tensors
+        op.b_dfinvdx_full(dfinv_dx, x_full)
+        return grad_output * 2 * frcs * dfinv_dx.reshape(op.params.n_vel, op.params.n_full_state)
 
 
 class ctrl_clone_loss(Function):
     @staticmethod
-    def forward(ctx, x, u_new, u_star, data, data_cp, model, params):
-        batch_f_inv2(u_new, x, data, data_cp, model, params)
-        ctx.save_for_backward(x, u_star)
-        return torch.square_(u_star - u_new)
+    def forward(ctx, x_full, frc, u_star, dfinv_dx, op):
+        op.b_dfinvdx_full(frc, x_full)
+        ctx.save_for_backward(x_full, u_star)
+        ctx.save_for_backward(frc, u_star, x_full, dfinv_dx, op)
+        return torch.square_(u_star - frc)
 
     @staticmethod
     def backward(ctx, grad_output):
-        x, u_star = ctx.saved_tensors
-        return grad_output
+        frc, u_star, x_full, dfinv_dx, op = ctx.saved_tensors
+        op.b_dfinvdx_full(dfinv_dx, x_full)
+        return grad_output * 2*(frc - u_star)*dfinv_dx
 
 
