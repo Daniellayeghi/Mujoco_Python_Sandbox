@@ -1,7 +1,15 @@
 import torch
 import torch.nn.functional as F
 from torch.autograd import Function
-from utilities.mj_utils import batch_f, batch_f_inv2
+from utilities.mj_utils import MjBatchOps
+from mujoco.derivative import MjDerivative
+
+__batch_op = None
+
+
+def __set_derivative_operator__(op: MjDerivative):
+    global __batch_op
+    __batch_op = op
 
 
 def value_dt_loss(v_curr, v_next, dt, value_func):

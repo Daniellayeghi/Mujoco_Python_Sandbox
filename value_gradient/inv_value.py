@@ -45,11 +45,10 @@ policy_net = MLP(LayerInfo(*p_layers)).to(device)
 # Derivative values
 m = MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 d = MjData(m)
-d_vec = derivative.MjDataVecView(m, d)
 params = derivative.MjDerivativeParams(1e-6, derivative.Wrt.State, derivative.Mode.Inv)
-du = derivative.MjDerivative(m, params)
+du = derivative.MjDerivative(m, d, params)
 res = np.array((m.nv, 3*m.nv))
-res = du.func(d_vec)
+res = du.func()
 
 
 class ValueFunction(MLP):
@@ -102,7 +101,7 @@ class OptimalPolicy(torch.nn.Module):
         )/(self._value_d ** 2).sum(dim=1))[:, None]
 
         self._final_state[:, self._params.n_vel:] = self._final_state_d[:, self._params.n_vel:]
-        self._final_state[:, :self._params.n_vel] = self._integrate(pos, self._final_vel)
+        self._final_state[:, :self._params.n_vel] = self._integrate(pos, self._final_state[:, self._params.n_vel:])
 
         return self._final_state, self._final_state_d
 
