@@ -74,7 +74,7 @@ class OptimalPolicy(torch.nn.Module):
         self._derivative = derivative
         self._integrate = integrate
         self._final_pos = torch.zeros((self._params.n_batch, self._params.n_pos)).to(device)
-        #TODO: final_x can be finall_x_full for efficiency
+        # TODO: final_x can be final_x_full for efficiency
         self._final_x = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
         self._final_dxdt = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
         self._v = to_variable(torch.zeros((self._params.n_batch, 1)))
