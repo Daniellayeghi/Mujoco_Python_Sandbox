@@ -4,8 +4,6 @@ from utilities.mj_utils import MjBatchOps
 from collections import namedtuple
 import mujoco
 import torch
-from .utilities.torch_utils import *
-from mujoco.derivative import *
 import cProfile
 
 m = mujoco.MjModel.from_xml_path(
@@ -24,17 +22,12 @@ def main():
     x = torch.zeros(batch_size, d_params.n_state)
     full_x = torch.zeros(batch_size, d_params.n_state + d_params.n_vel)
     u = torch.zeros(batch_size, d_params.n_ctrl)
-    res_dfdx = torch.zeros(batch_size, d_params.n_state * d_params.n_state)
-    res_dfdu = torch.zeros(batch_size, d_params.n_state * d_params.n_ctrl)
-    res_dfinvdx = torch.zeros(batch_size, (d_params.n_state + d_params.n_vel) * d_params.n_vel)
-    res_dfdt = torch.zeros(batch_size, d_params.n_state)
-    res_qfrc = torch.zeros(batch_size, d_params.n_vel)
 
-    bo.b_dfdx(res_dfdx, x, u)
-    bo.b_dfdu(res_dfdu, x, u)
-    bo.b_dfinvdx_full(res_dfinvdx, full_x)
-    bo.b_f_x(res_dfdt, x, u)
-    bo.b_finv_x_full(res_qfrc, full_x)
+    res_dfdx = bo.b_dfdx(x, u)
+    res_dfdu = bo.b_dfdu(x, u)
+    res_dfinvdx = bo.b_dfinvdx_full(full_x)
+    res_dfdt = bo.b_dxdt(x, u)
+    res_qfrc = bo.b_qfrcs(full_x)
 
     print(res_dfdx[0].reshape((d_params.n_state, d_params.n_state)))
     print(res_dfdu[0].reshape((d_params.n_state, d_params.n_ctrl)))

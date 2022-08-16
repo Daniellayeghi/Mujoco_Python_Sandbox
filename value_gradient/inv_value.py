@@ -106,6 +106,13 @@ class OptimalPolicy(torch.nn.Module):
 
         return self._final_x, self._final_dxdt
 
+    def dvdx(self, inputs):
+        # Compute network derivative w.r.t state
+        self._v = self._v_net(inputs)
+        return torch.autograd.grad(
+            [a for a in self._v], [inputs], create_graph=True, only_inputs=True
+        )[0]
+
 
 opt_policy = OptimalPolicy(policy_net, value_net, d_params).to(device)
 lr = 1e-4
