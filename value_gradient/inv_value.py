@@ -12,6 +12,7 @@ import torch
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn.functional as F
+from torch.autograd.functional import jacobian
 
 # import mujoco
 # from mujoco import derivative

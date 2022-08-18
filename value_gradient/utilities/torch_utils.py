@@ -20,3 +20,7 @@ def np_to_tensor(x: np.ndarray, cuda=False, grad=False):
     if grad:
         x_np = x_np.requires_grad_()
     return x_np
+
+
+def tensor_to_np(x: torch.Tensor):
+    return x.detach().cpu().numpy().astype('float64') if x.is_cuda else x.detach().numpy().astype('float64')

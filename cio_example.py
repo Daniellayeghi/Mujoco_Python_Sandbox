@@ -23,7 +23,6 @@ xdd_2 = deriv(d.qvel[1], xd_2, dt)
 d.qpos = np.array([2, des_pos])
 d.qvel = np.array([0, xd_2])
 d.qacc = np.array([0, xdd_2])
-d.xfrc_applied = np.zeros((m.nbody, 6))
 
 mujoco.mj_inverse(m, d)
 print(d.qfrc_inverse)

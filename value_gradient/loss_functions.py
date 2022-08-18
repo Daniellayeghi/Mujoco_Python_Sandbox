@@ -31,10 +31,13 @@ class value_lie_loss(Function):
     @staticmethod
     def forward(ctx, x, u):
         ctx.constant = u
-        x_full_cpu, u_cpu = x.cpu(), u.cpu()
-        x_full_np = x.detach().numpy().astype('float64')
-        u_np = u.detach().numpy().astype('float64')
-        dvdx_np = _value_net_.dvdx(x).detach().numpy().astype('float64')
+        x_cpu, u_cpu = x.cpu(), u.cpu()
+        x_np = tensor_to_np(x)
+        u_np = tensor_to_np(u)
+        dvdx_np = tensor_to_np(_value_net_.dvdx(x))
+        gu = _batch_op_.b_gu(u_np)
+        dxdt = _batch_op_.b_dxdt(x)
+        return dvdx_np * gu + dvdx_np * dxdt
 
 
     @staticmethod
@@ -42,24 +45,27 @@ class value_lie_loss(Function):
         pass
 
 
+
+
+
 class ctrl_effort_loss(Function):
     @staticmethod
     def forward(ctx, x_full):
         x_full_cpu = x_full.cpu()
-        x_full_np = x_full.detach().numpy().astype('float64')
+        x_full_np = tensor_to_np(x_full)
         qfrcs = _batch_op_.b_qfrcs(x_full_np)
         ctx.save_for_backward(x_full_cpu, np_to_tensor(qfrcs))
-        loss = torch.square(torch.tensor(qfrcs, device=device, dtype=dtype))
+        loss = torch.sum(torch.square(torch.tensor(qfrcs, device=device, dtype=dtype)))
         return loss
 
     @staticmethod
     def backward(ctx, grad_output):
         x_full, qfrcs = ctx.saved_tensors
-        frcs_np = qfrcs.detach().numpy().astype('float64')
-        x_full_np = x_full.detach().numpy().astype('float64')
+        frcs_np = tensor_to_np(qfrcs)
+        x_full_np = tensor_to_np(x_full)
         dfinvdx = _batch_op_.b_dfinvdx_full(x_full_np)
         grad_1 = grad_output * 2 * frcs_np * dfinvdx.reshape(
-            _batch_op_.params.n_vel, _batch_op_.params.n_full_state
+            _batch_op_.params.n_batch, _batch_op_.params.n_vel, _batch_op_.params.n_full_state
         )
         return grad_1
 
@@ -70,10 +76,10 @@ class ctrl_clone_loss(Function):
         ctx.constant = u_star
         x_full_cpu = x_full.cpu()
         u_star_cpu = u_star.cpu()
-        x_full_np = x_full.detach().numpy().astype('float64')
+        x_full_np = tensor_to_np(x_full)
         qfrcs = _batch_op_.b_qfrcs(x_full_np)
         ctx.save_for_backward(x_full_cpu, np_to_tensor(qfrcs), u_star_cpu)
-        return torch.square(u_star - qfrcs)
+        return torch.sum(torch.square(u_star - qfrcs))
 
     @staticmethod
     def backward(ctx, grad_output):

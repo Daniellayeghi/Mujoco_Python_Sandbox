@@ -27,6 +27,7 @@ tensorflow = "*"
 tensorflow-probability = "*"
 mujoco-py = "*"
 joblib = "*"
+functorch = "*"
 
 [requires]
 python_version = "3.7"
