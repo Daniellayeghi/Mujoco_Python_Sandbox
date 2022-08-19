@@ -64,7 +64,10 @@ class MjBatchOps:
             return operation.func().flatten()
 
     def _mj_set_ctrl(self, u):
-        self._data.ctrl = u
+        if u is not None:
+            self._data.ctrl = u
+        else:
+            self._data.ctrl[:] = 0
 
     def _mj_set_x_full_decomp(self, pos, vel, acc):
         self._data.qpos, self._data.qvel, self._data.qacc = pos, vel, acc
@@ -168,6 +171,15 @@ class MjBatchOps:
             res = self._dfdx_t if tensor else self._dfdx_np
             for i in range(x.shape[0]):
                 self._mj_set_x_ctrl(x[i, :], u[i, :])
+                res[i, :] = self._get_result(self._dfdx, tensor)
+        return res
+
+    def b_df_uncontrolleddx(self, x):
+        tensor = type(x) is torch.Tensor
+        with torch.no_grad():
+            res = self._dfdx_t if tensor else self._dfdx_np
+            for i in range(x.shape[0]):
+                self._mj_set_x_ctrl(x[i, :], None)
                 res[i, :] = self._get_result(self._dfdx, tensor)
         return res
 

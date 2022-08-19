@@ -3,6 +3,8 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from utilities.mj_utils import MjBatchOps
 from utilities.torch_utils import *
+from inv_value import ValueFunction
+
 from mujoco.derivative import MjDerivative
 import mujoco
 from collections import namedtuple
@@ -19,6 +21,11 @@ def set_batch_ops__(b_ops: MjBatchOps):
     _batch_op_ = b_ops
 
 
+def set_value_net__(value_net: ValueFunction):
+    global _value_net_
+    _value_net_ = value_net
+
+
 def value_dt_loss(v_curr, v_next, dt, value_func):
     return (F.relu(1 + (value_func(v_curr) - value_func(v_next)) / dt)).mean()
 
@@ -29,23 +36,24 @@ def value_goal_loss(goal, value_func):
 
 class value_lie_loss(Function):
     @staticmethod
-    def forward(ctx, x, u):
+    def forward(ctx, x_desc, u):
         ctx.constant = u
-        x_cpu, u_cpu = x.cpu(), u.cpu()
-        x_np = tensor_to_np(x)
-        u_np = tensor_to_np(u)
-        dvdx_np = tensor_to_np(_value_net_.dvdx(x))
-        gu = _batch_op_.b_gu(u_np)
-        dxdt = _batch_op_.b_dxdt(x)
-        return dvdx_np * gu + dvdx_np * dxdt
-
+        x_cpu, u_cpu = x_desc[:, :_batch_op_.params.n_state].cpu(), u.cpu()
+        x_np, u_np = tensor_to_np(x_desc[:, :_batch_op_.params.n_state]), tensor_to_np(u)
+        dvdx_np = tensor_to_np(_value_net_.dvdx(x_desc))
+        gu_np = _batch_op_.b_gu(u_np)
+        dxdt_np = _batch_op_.b_dxdt(x_np, u_np)
+        ctx.save_for_backward(
+            x_desc, x_cpu, gu_np, dxdt_np, dvdx_np
+        )
+        return dvdx_np * gu_np + dvdx_np * dxdt_np
 
     @staticmethod
     def backward(ctx, grad_output):
-        pass
-
-
-
+        x_desc, x_cpu, gu_np, dxdt_np, dvdx_np = ctx.saved_tensors
+        dvdxx_np = tensor_to_np(_value_net_.dvdxx(x_desc))
+        dfdx_np = _batch_op_.b_df_uncontrolleddx(tensor_to_np(x_cpu), None)
+        return grad_output * torch.Tensor(dvdxx_np * gu_np + dvdxx_np * dxdt_np + dvdx_np * dfdx_np), None
 
 
 class ctrl_effort_loss(Function):

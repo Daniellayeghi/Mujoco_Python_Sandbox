@@ -33,38 +33,35 @@ d_loader = DataLoader(d_train_d, batch_size=2, shuffle=True)
 DataParams = namedtuple('DataParams', 'n_state, n_pos, n_vel, n_ctrl, n_desc, n_batch')
 d_params = DataParams(2, 1, 1, 1, 2, d_loader.batch_size)
 
-# Value network
-val_input, value_output = d_params.n_state + d_params.n_desc, d_params.n_ctrl
-v_layers = [[val_input, 16, value_output], [], 0]
-value_net = MLP(LayerInfo(*v_layers)).to(device)
-
-# Policy network
-policy_input, policy_output = d_params.n_state + d_params.n_desc, d_params.n_pos
-p_layers = [[val_input, 16, 16, value_output], [], 0]
-policy_net = MLP(LayerInfo(*p_layers)).to(device)
-
-# Derivative values
-m = MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
-d = MjData(m)
-params = derivative.MjDerivativeParams(1e-6, derivative.Wrt.State, derivative.Mode.Inv)
-du = derivative.MjDerivative(m, d, params)
-res = np.array((m.nv, 3*m.nv))
-res = du.func()
-
 
 class ValueFunction(MLP):
     def __init__(self, data_params: DataParams, layer_info: LayerInfo, apply_sigmoid=False):
         super(ValueFunction, self).__init__(layer_info, apply_sigmoid)
         self.loss = list()
-        self._data_params = data_params
-        self._lie_v_wrt_f = torch.zeros()
-        self._lie_v_wrt_u = torch.zeros()
-        self._value_derivative = torch.zeros()
+        self._params = data_params
+        self._v = to_variable(torch.zeros((self._params.n_batch, 1)))
+        self._dvdx = to_variable(torch.zeros((self._params.n_batch, self._params.n_state)))
+        self._dvdxx = to_variable(torch.zeros((self._params.n_batch, self._params.n_state**2)))
+
+    def dvdx(self, inputs):
+        # Compute network derivative w.r.t state
+        self._v = self.forward(inputs)
+        self._dvdx = torch.autograd.grad(
+            [a for a in self._v], [inputs], create_graph=True, only_inputs=True
+        )[0]
+        return self._dvdx
+
+    def dvdxx(self, inputs):
+        self.dvdx(inputs)
+        self._dvdxx = torch.autograd.grad(
+            self._dvdx, [inputs], create_graph=True, only_inputs=True
+        )[0]
+        return self._dvdxx
 
 
 class OptimalPolicy(torch.nn.Module):
     def __init__(
-            self, policy: MLP, value: MLP, params: DataParams,
+            self, policy: MLP, value: ValueFunction, params: DataParams,
             derivative=lambda x1, x2, dt=.01: (x2 - x1) / dt,
             integrate=lambda x1, x2, dt=0.01: x1 + x2 * dt
     ):
@@ -79,7 +76,6 @@ class OptimalPolicy(torch.nn.Module):
         self._final_x = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
         self._final_dxdt = torch.zeros((self._params.n_batch, self._params.n_vel * 2)).to(device)
         self._v = to_variable(torch.zeros((self._params.n_batch, 1)))
-        self._dvdx = to_variable(torch.zeros((self._params.n_batch, self._params.n_state)))
 
     # Policy net need to output positions. From there derivatives can compute velocity.
     # Projection onto value function computes new acceleration, then integrate to get state
@@ -93,27 +89,27 @@ class OptimalPolicy(torch.nn.Module):
         )
 
         # Compute network derivative w.r.t state
-        self._dvdx = torch.autograd.grad(
-            [a for a in self._v], [inputs], create_graph=True, only_inputs=True
-        )[0][:, :self._params.n_state]
+        dvdx = self._v_net.dvdx(inputs)
 
         # Return the new state form
-        self._final_dxdt = self._final_dxdt - self._dvdx * (F.relu(
-            (self._dvdx * self._final_dxdt).sum(dim=1)
-        ) / (self._dvdx ** 2).sum(dim=1))[:, None]
+        self._final_dxdt = self._final_dxdt - dvdx * (F.relu(
+            (dvdx * self._final_dxdt).sum(dim=1)
+        ) / (dvdx ** 2).sum(dim=1))[:, None]
 
         self._final_x[:, self._params.n_vel:] = self._final_dxdt[:, self._params.n_vel:]
         self._final_x[:, :self._params.n_vel] = self._integrate(pos, self._final_x[:, self._params.n_vel:])
 
         return self._final_x, self._final_dxdt
 
-    def dvdx(self, inputs):
-        # Compute network derivative w.r.t state
-        self._v = self._v_net(inputs)
-        return torch.autograd.grad(
-            [a for a in self._v], [inputs], create_graph=True, only_inputs=True
-        )[0]
 
+# Value network
+val_input, value_output = d_params.n_state + d_params.n_desc, d_params.n_ctrl
+v_layers = [[val_input, 16, value_output], [], 0]
+value_net = ValueFunction(d_params, LayerInfo(*v_layers)).to(device)
+
+policy_input, policy_output = d_params.n_state + d_params.n_desc, d_params.n_pos
+p_layers = [[val_input, 16, 16, value_output], [], 0]
+policy_net = MLP(LayerInfo(*p_layers)).to(device)
 
 opt_policy = OptimalPolicy(policy_net, value_net, d_params).to(device)
 lr = 1e-4

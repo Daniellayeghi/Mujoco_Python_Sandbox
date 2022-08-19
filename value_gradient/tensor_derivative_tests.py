@@ -3,13 +3,12 @@ from scipy.optimize import approx_fprime
 from utilities.mj_utils import MjBatchOps
 from collections import namedtuple
 from utilities.torch_utils import *
+from mujoco import MjData
 import mujoco
 import torch
 import cProfile
 
-m = mujoco.MjModel.from_xml_path(
-    "/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml"
-)
+m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 
 batch_size = 1
 DataParams = namedtuple('DataParams', 'n_full_state, n_state, n_pos, n_vel, n_ctrl, n_desc, idx_g_act, n_batch')
@@ -22,35 +21,22 @@ x_full[0, :] = torch.tensor([0.5442, -1.03142738, -0.02782536])
 u_star = torch.zeros(batch_size, d_params.n_state + d_params.n_vel, dtype=torch.double)
 
 
-def f_inv(xf):
+def set_xfull(d: MjData, xf):
     d.qpos = xf[:d_params.n_pos]
     d.qvel = xf[d_params.n_pos:d_params.n_state]
     d.qacc = xf[d_params.n_state:]
+
+
+def f_inv(xf):
+    set_xfull(d, xf)
     mujoco.mj_inverse(m, d)
     return d.qfrc_inverse
 
 
 def effort_loss(xf):
-    d.qpos = xf[:d_params.n_pos]
-    d.qvel = xf[d_params.n_pos:d_params.n_state]
-    d.qacc = xf[d_params.n_state:]
+    set_xfull(d, xf)
     mujoco.mj_inverse(m, d)
     return np.sum(np.square(d.qfrc_inverse))
-
-
-def main():
-    res_dfdx = bo.b_dfdx(x, u)
-    res_dfdu = bo.b_dfdu(x, u)
-    res_dfinvdx = bo.b_dfinvdx_full(x_full)
-    res_dfdt = bo.b_dxdt(x, u)
-    res_qfrc = bo.b_qfrcs(x_full)
-
-    print(res_dfdx[0].reshape((d_params.n_state, d_params.n_state)))
-    print(res_dfdu[0].reshape((d_params.n_state, d_params.n_ctrl)))
-    print(res_dfinvdx[0].reshape((d_params.n_vel, d_params.n_state + d_params.n_vel)))
-    print(res_dfdt[0])
-    print(res_qfrc[0])
-    print("DONE!")
 
 
 if __name__ == "__main__":
@@ -63,7 +49,4 @@ if __name__ == "__main__":
 
     print(f"Effort Scipy deriv:\n{J_effort}, for loss {effort_loss(x_full_np)}")
     print(f"Effort FD deriv:\n{2 * bo.b_qfrcs(x_full) * bo.b_dfinvdx_full(x_full)}")
-
-    # cProfile.run('main()')
-
 
