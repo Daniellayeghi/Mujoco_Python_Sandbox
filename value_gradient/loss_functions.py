@@ -1,13 +1,9 @@
-import torch
 import torch.nn.functional as F
 from torch.autograd import Function
 from utilities.mj_utils import MjBatchOps
 from utilities.torch_utils import *
-from inv_value import ValueFunction
+from networks import ValueFunction
 
-from mujoco.derivative import MjDerivative
-import mujoco
-from collections import namedtuple
 
 _value_net_ = None
 _batch_op_ = None
@@ -40,20 +36,25 @@ class value_lie_loss(Function):
         ctx.constant = u
         x_cpu, u_cpu = x_desc[:, :_batch_op_.params.n_state].cpu(), u.cpu()
         x_np, u_np = tensor_to_np(x_desc[:, :_batch_op_.params.n_state]), tensor_to_np(u)
-        dvdx_np = tensor_to_np(_value_net_.dvdx(x_desc))
-        gu_np = _batch_op_.b_gu(u_np)
+        dvdx_np = tensor_to_np(_value_net_._dvdx)
+        dvdxx_np = tensor_to_np(_value_net_._dvdxx)
+        gu_np = _batch_op_.b_gu(u_np).reshape((_batch_op_.params.n_batch, _batch_op_.params.n_state))
         dxdt_np = _batch_op_.b_dxdt(x_np, u_np)
         ctx.save_for_backward(
-            x_desc, x_cpu, gu_np, dxdt_np, dvdx_np
+            x_desc, np_to_tensor(x_cpu), np_to_tensor(gu_np), np_to_tensor(dxdt_np), np_to_tensor(dvdx_np), np_to_tensor(dvdxx_np)
         )
-        return dvdx_np * gu_np + dvdx_np * dxdt_np
+        return torch.Tensor(
+            dvdx_np[:, :_batch_op_.params.n_state].dot(gu_np.T) + dvdx_np[:, :_batch_op_.params.n_state].dot(dxdt_np.T)
+        )
 
     @staticmethod
     def backward(ctx, grad_output):
-        x_desc, x_cpu, gu_np, dxdt_np, dvdx_np = ctx.saved_tensors
-        dvdxx_np = tensor_to_np(_value_net_.dvdxx(x_desc))
-        dfdx_np = _batch_op_.b_df_uncontrolleddx(tensor_to_np(x_cpu), None)
-        return grad_output * torch.Tensor(dvdxx_np * gu_np + dvdxx_np * dxdt_np + dvdx_np * dfdx_np), None
+        x_desc, x_cpu, gu, dxdt, dvdx, dvdxx = ctx.saved_tensors
+        dvdxx = dvdxx.reshape(_batch_op_.params.n_batch)
+        dfdx = _batch_op_.b_dfdx(x_cpu)
+        return grad_output * torch.Tensor(
+            dvdxx * gu + dvdxx * dxdt + dvdx * dfdx
+        ), None
 
 
 class ctrl_effort_loss(Function):
@@ -91,7 +92,7 @@ class ctrl_clone_loss(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        x_full, qfrc, u_star, = ctx.saved_tensors
+        x_full, qfrc, u_star = ctx.saved_tensors
         x_full_np = x_full.detach().numpy().astype('float64')
         dfinvdx = _batch_op_.b_dfinvdx_full(x_full_np)
         grad_1 = grad_output * 2 * (qfrc - u_star) * dfinvdx

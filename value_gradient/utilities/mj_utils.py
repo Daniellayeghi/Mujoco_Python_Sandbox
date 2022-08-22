@@ -16,31 +16,31 @@ class MjBatchOps:
         self._dfinvdx = MjDerivative(m, self._data, MjDerivativeParams(1e-6, Wrt.State, Mode.Inv))
 
         self._qfrc_t = torch.zeros(
-            (self.params.n_batch, self.params.n_vel), dtype=torch.double
+            (self.params.n_batch, self.params.n_vel), dtype=torch.float
         ).requires_grad_()
 
         self._dxdt_t = torch.zeros(
-            (self.params.n_batch, self.params.n_vel * 2), dtype=torch.double
+            (self.params.n_batch, self.params.n_vel * 2), dtype=torch.float
         ).requires_grad_()
 
         self._dfinvdx_t = torch.zeros(
-            (self.params.n_batch, self.params.n_full_state * self.params.n_vel), dtype=torch.double
+            (self.params.n_batch, self.params.n_full_state * self.params.n_vel), dtype=torch.float
         ).requires_grad_()
 
         self._dfdx_t = torch.zeros(
-            (self.params.n_batch, self.params.n_state**2), dtype=torch.double
+            (self.params.n_batch, self.params.n_state**2), dtype=torch.float
         ).requires_grad_()
 
         self._dfdu_t = torch.zeros(
-            (self.params.n_batch, self.params.n_ctrl*self.params.n_state), dtype=torch.double
+            (self.params.n_batch, self.params.n_ctrl*self.params.n_state), dtype=torch.float
         ).requires_grad_()
 
         self._gu_t = torch.zeros(
-            (self.params.n_batch, self.params.n_state, self.params.n_ctrl), dtype=torch.double
+            (self.params.n_batch, self.params.n_state, self.params.n_ctrl), dtype=torch.float
         )
 
         self._u_t = torch.zeros(
-            (self.params.n_batch, self.params.n_ctrl), dtype=torch.double
+            (self.params.n_batch, self.params.n_ctrl, 1), dtype=torch.float
         ).requires_grad_()
 
         self._gu_t[:, self.params.idx_g_act[0]:self.params.idx_g_act[1], :] = 1
@@ -165,7 +165,7 @@ class MjBatchOps:
                 res[i, :] = self._get_result(self._dfinvdx, tensor)
         return  res
 
-    def b_dfdx(self, x, u):
+    def b_dfdx_u(self, x, u):
         tensor = type(x) is torch.Tensor
         with torch.no_grad():
             res = self._dfdx_t if tensor else self._dfdx_np
@@ -174,7 +174,7 @@ class MjBatchOps:
                 res[i, :] = self._get_result(self._dfdx, tensor)
         return res
 
-    def b_df_uncontrolleddx(self, x):
+    def b_dfdx(self, x):
         tensor = type(x) is torch.Tensor
         with torch.no_grad():
             res = self._dfdx_t if tensor else self._dfdx_np
@@ -204,10 +204,8 @@ class MjBatchOps:
     def b_gu(self, u):
         tensor = type(u) is torch.Tensor
         res = self._gu_t
-        self._u_t = torch.tensor(u)
-        self._u_t.reshape((self.params.n_batch, self.params.n_ctrl, 1))
-        with torch.no_grad:
-            return torch.bmm(res, self._u_t) if tensor else torch.bmm(res, self._u_t).numpy()
+        u_t = torch.tensor(u, dtype=torch.float).reshape((self.params.n_batch, self.params.n_ctrl, 1))
+        return torch.bmm(res, u_t) if tensor else torch.bmm(res, u_t).numpy()
 
 
 

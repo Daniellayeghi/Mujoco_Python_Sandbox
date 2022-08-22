@@ -27,4 +27,4 @@ def to_cuda(x: torch.Tensor, grad=False):
 
 
 def tensor_to_np(x: torch.Tensor):
-    return x.detach().cpu().numpy().astype('float64') if x.is_cuda else x.detach().numpy().astype('float64')
+    return x.detach().cpu().numpy().astype('float') if x.is_cuda else x.detach().numpy().astype('float')
