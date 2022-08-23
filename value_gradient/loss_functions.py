@@ -50,7 +50,9 @@ class value_lie_loss(Function):
     @staticmethod
     def backward(ctx, grad_output):
         x_desc, x_cpu, gu, dxdt, dvdx, dvdxx = ctx.saved_tensors
-        dvdxx = dvdxx.reshape(_batch_op_.params.n_batch)
+        dvdxx = dvdxx.reshape(
+            _batch_op_.params.n_batch, _batch_op_.params.n_state + _batch_op_.params.n_desc, _batch_op_.params.n_state + _batch_op_.params.n_desc
+        )
         dfdx = _batch_op_.b_dfdx(x_cpu)
         return grad_output * torch.Tensor(
             dvdxx * gu + dvdxx * dxdt + dvdx * dfdx

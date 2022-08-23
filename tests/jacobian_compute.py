@@ -74,7 +74,6 @@ def forward_sim_ctrl_acc(ctrl_vector: np.array, state: State):
     return result
 
 
-import sys; print(sys.executable)
 if __name__ == "__main__":
     model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/cartpole.xml")
 

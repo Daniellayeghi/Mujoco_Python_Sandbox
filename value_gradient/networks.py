@@ -34,11 +34,14 @@ class ValueFunction(MLP):
 
     def update_grads(self, inputs):
         self._v = self.forward(inputs).requires_grad_()
-        d = torch.autograd.grad(
-            self._v, inputs, grad_outputs=torch.ones_like(self._v), create_graph=True
-        )[0].requires_grad_()
 
-        dd = torch.autograd.functional.hessian(
+        d = torch.autograd.grad(
+                self._v, inputs, grad_outputs=torch.ones_like(self._v), create_graph=True
+            )[0].requires_grad_()
+
+        dd = torch.autograd.grad(d, inputs, grad_outputs=torch.ones_like(d), retain_graph=True, create_graph=False)[0]
+
+        dd = torch.autograd.functional.jacobian(
             self.forward, inputs, create_graph=False
         ).reshape(
             (self._params.n_batch, (self._params.n_state + self._params.n_desc) ** 2)
