@@ -36,15 +36,15 @@ class value_lie_loss(Function):
         ctx.constant = u
         x_cpu, u_cpu = x_desc[:, :_batch_op_.params.n_state].cpu(), u.cpu()
         x_np, u_np = tensor_to_np(x_desc[:, :_batch_op_.params.n_state]), tensor_to_np(u)
-        dvdx_np = tensor_to_np(_value_net_._dvdx)
-        dvdxx_np = tensor_to_np(_value_net_._dvdxx)
-        gu_np = _batch_op_.b_gu(u_np).reshape((_batch_op_.params.n_batch, _batch_op_.params.n_state))
-        dxdt_np = _batch_op_.b_dxdt(x_np, u_np)
+        dvdx = _value_net_._dvdx
+        dvdxx = _value_net_._dvdxx
+        gu = _batch_op_.b_gu(u_cpu).reshape((_batch_op_.params.n_batch, _batch_op_.params.n_state))
+        dxdt = _batch_op_.b_dxdt(x_cpu, u_cpu)
         ctx.save_for_backward(
-            x_desc, np_to_tensor(x_cpu), np_to_tensor(gu_np), np_to_tensor(dxdt_np), np_to_tensor(dvdx_np), np_to_tensor(dvdxx_np)
+            x_desc, x_cpu, gu, dxdt, dvdx, dvdxx
         )
         return torch.Tensor(
-            dvdx_np[:, :_batch_op_.params.n_state].dot(gu_np.T) + dvdx_np[:, :_batch_op_.params.n_state].dot(dxdt_np.T)
+            torch.bmm(dvdx[:, :_batch_op_.params.n_state], gu) + torch.bmm(dvdx[:, :_batch_op_.params.n_state], dxdt)
         )
 
     @staticmethod
@@ -61,20 +61,17 @@ class ctrl_effort_loss(Function):
     @staticmethod
     def forward(ctx, x_full):
         x_full_cpu = x_full.cpu()
-        x_full_np = tensor_to_np(x_full)
-        qfrcs = _batch_op_.b_qfrcs(x_full_np)
-        ctx.save_for_backward(x_full_cpu, np_to_tensor(qfrcs))
-        loss = torch.sum(torch.square(torch.tensor(qfrcs, device=device, dtype=dtype)))
+        qfrcs = np_to_tensor(_batch_op_.b_qfrcs(tensor_to_np(x_full_cpu)))
+        ctx.save_for_backward(x_full_cpu, qfrcs)
+        loss = torch.sum(torch.square(qfrcs))
         return loss
 
     @staticmethod
     def backward(ctx, grad_output):
         x_full, qfrcs = ctx.saved_tensors
-        frcs_np = tensor_to_np(qfrcs)
-        x_full_np = tensor_to_np(x_full)
-        dfinvdx = _batch_op_.b_dfinvdx_full(x_full_np)
-        grad_1 = grad_output * 2 * frcs_np * dfinvdx.reshape(
-            _batch_op_.params.n_batch, _batch_op_.params.n_vel, _batch_op_.params.n_full_state
+        dfinvdx = np_to_tensor(_batch_op_.b_dfinvdx_full(np_to_tensor(x_full)))
+        grad_1 = grad_output * 2 * qfrcs * dfinvdx.reshape(
+            (_batch_op_.params.n_batch, _batch_op_.params.n_vel, _batch_op_.params.n_full_state)
         )
         return grad_1
 
@@ -85,16 +82,14 @@ class ctrl_clone_loss(Function):
         ctx.constant = u_star
         x_full_cpu = x_full.cpu()
         u_star_cpu = u_star.cpu()
-        x_full_np = tensor_to_np(x_full)
-        qfrcs = _batch_op_.b_qfrcs(x_full_np)
-        ctx.save_for_backward(x_full_cpu, np_to_tensor(qfrcs), u_star_cpu)
+        qfrcs = _batch_op_.b_qfrcs(x_full_cpu)
+        ctx.save_for_backward(x_full_cpu, qfrcs, u_star_cpu)
         return torch.sum(torch.square(u_star - qfrcs))
 
     @staticmethod
     def backward(ctx, grad_output):
         x_full, qfrc, u_star = ctx.saved_tensors
-        x_full_np = x_full.detach().numpy().astype('float64')
-        dfinvdx = _batch_op_.b_dfinvdx_full(x_full_np)
+        dfinvdx = _batch_op_.b_dfinvdx_full(x_full)
         grad_1 = grad_output * 2 * (qfrc - u_star) * dfinvdx
         return grad_1, None
 

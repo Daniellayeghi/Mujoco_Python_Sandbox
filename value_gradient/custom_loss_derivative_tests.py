@@ -22,7 +22,7 @@ m = mujoco.MjModel.from_xml_path(
 # d_train = to_variable(torch.Tensor(data[0:n_train, :]), torch.cuda.is_available()).requires_grad_()
 # d_test = data[n_train:, :]
 
-batch_size = 1
+batch_size = 2
 d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], batch_size)
 
 # d_train_d = TensorDataset(d_train)
