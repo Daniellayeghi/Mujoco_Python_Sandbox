@@ -89,7 +89,7 @@ class MjBatchOps:
         self._mj_set_ctrl(u)
         self._mj_set_state(pos, vel)
 
-    def _mj_set_x_ctrl(self, x, u):
+    def  _mj_set_x_ctrl(self, x, u):
         self._mj_set_ctrl(u)
         self._mj_set_state(x[:self.params.n_pos], x[self.params.n_pos:self.params.n_state])
 

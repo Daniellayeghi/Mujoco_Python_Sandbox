@@ -36,27 +36,30 @@ class value_lie_loss(Function):
         ctx.constant = u
         x_cpu, u_cpu = x_desc[:, :_batch_op_.params.n_state].cpu(), u.cpu()
         x_np, u_np = tensor_to_np(x_desc[:, :_batch_op_.params.n_state]), tensor_to_np(u)
-        dvdx_np = tensor_to_np(_value_net_._dvdx)
-        dvdxx_np = tensor_to_np(_value_net_._dvdxx)
-        gu_np = _batch_op_.b_gu(u_np).reshape((_batch_op_.params.n_batch, _batch_op_.params.n_state))
-        dxdt_np = _batch_op_.b_dxdt(x_np, u_np)
+        dvdx = _value_net_._dvdx.cpu()
+        dvdxx = _value_net_._dvdxx.cpu()
+        gu = _batch_op_.b_gu(u_cpu).reshape((_batch_op_.params.n_batch, _batch_op_.params.n_state))
+        dxdt = np_to_tensor(_batch_op_.b_dxdt(x_np, u_np))
         ctx.save_for_backward(
-            x_desc, np_to_tensor(x_cpu), np_to_tensor(gu_np), np_to_tensor(dxdt_np), np_to_tensor(dvdx_np), np_to_tensor(dvdxx_np)
+            x_desc, x_cpu, gu, dxdt, dvdx, dvdxx
         )
-        return torch.Tensor(
-            dvdx_np[:, :_batch_op_.params.n_state].dot(gu_np.T) + dvdx_np[:, :_batch_op_.params.n_state].dot(dxdt_np.T)
-        )
+        return F.relu(torch.sum(
+            torch.bmm(
+                dvdx.view(_batch_op_.params.n_batch, 1, _batch_op_.params.n_state),
+                gu.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1) +
+                dxdt.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1)
+            )
+        ))
 
+
+#TODO: final addition needs to be transposed
     @staticmethod
     def backward(ctx, grad_output):
         x_desc, x_cpu, gu, dxdt, dvdx, dvdxx = ctx.saved_tensors
-        dvdxx = dvdxx.reshape(
-            _batch_op_.params.n_batch, _batch_op_.params.n_state + _batch_op_.params.n_desc, _batch_op_.params.n_state + _batch_op_.params.n_desc
-        )
         dfdx = _batch_op_.b_dfdx(x_cpu)
-        return grad_output * torch.Tensor(
-            dvdxx * gu + dvdxx * dxdt + dvdx * dfdx
-        ), None
+        return (grad_output * torch.bmm(dvdxx, (gu + dxdt).view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1))
+                + torch.bmm(dvdx.view(_batch_op_.params.n_batch, 1, _batch_op_.params.n_state),
+                            dfdx.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, _batch_op_.params.n_state))), None
 
 
 class ctrl_effort_loss(Function):
