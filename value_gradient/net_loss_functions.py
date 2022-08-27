@@ -4,7 +4,6 @@ from utilities.mj_utils import MjBatchOps
 from utilities.torch_utils import *
 from networks import ValueFunction
 
-
 _value_net_ = None
 _batch_op_ = None
 
@@ -36,25 +35,31 @@ class value_lie_loss(Function):
         ctx.constant = u
         x_cpu, u_cpu = x_desc[:, :_batch_op_.params.n_state].cpu(), u.cpu()
         x_np, u_np = tensor_to_np(x_desc[:, :_batch_op_.params.n_state]), tensor_to_np(u)
-        dvdx = _value_net_._dvdx
-        dvdxx = _value_net_._dvdxx
+        dvdx = _value_net_._dvdx.cpu()
+        dvdxx = _value_net_._dvdxx.cpu()
         gu = _batch_op_.b_gu(u_cpu).reshape((_batch_op_.params.n_batch, _batch_op_.params.n_state))
-        dxdt = _batch_op_.b_dxdt(x_cpu, u_cpu)
+        dxdt = np_to_tensor(_batch_op_.b_dxdt(x_np, u_np))
         ctx.save_for_backward(
             x_desc, x_cpu, gu, dxdt, dvdx, dvdxx
         )
-        return torch.Tensor(
-            torch.bmm(dvdx[:, :_batch_op_.params.n_state], gu) + torch.bmm(dvdx[:, :_batch_op_.params.n_state], dxdt)
-        )
+        return F.relu(torch.sum(
+            torch.bmm(
+                dvdx.view(_batch_op_.params.n_batch, 1, _batch_op_.params.n_state),
+                gu.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1) +
+                dxdt.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1)
+            )
+        ))
 
+    # TODO: final addition needs to be transposed
     @staticmethod
     def backward(ctx, grad_output):
         x_desc, x_cpu, gu, dxdt, dvdx, dvdxx = ctx.saved_tensors
-        dvdxx = dvdxx.reshape(_batch_op_.params.n_batch)
         dfdx = _batch_op_.b_dfdx(x_cpu)
-        return grad_output * torch.Tensor(
-            dvdxx * gu + dvdxx * dxdt + dvdx * dfdx
-        ), None
+        return (grad_output * torch.bmm(dvdxx,
+                                        (gu + dxdt).view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1))
+                + torch.bmm(dvdx.view(_batch_op_.params.n_batch, 1, _batch_op_.params.n_state),
+                            dfdx.view(_batch_op_.params.n_batch, _batch_op_.params.n_state,
+                                      _batch_op_.params.n_state))), None
 
 
 class ctrl_effort_loss(Function):
@@ -92,5 +97,3 @@ class ctrl_clone_loss(Function):
         dfinvdx = _batch_op_.b_dfinvdx_full(x_full)
         grad_1 = grad_output * 2 * (qfrc - u_star) * dfinvdx
         return grad_1, None
-
-

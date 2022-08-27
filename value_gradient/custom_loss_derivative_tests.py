@@ -4,8 +4,8 @@ from utilities.data_utils import *
 from torch.utils.data import TensorDataset, DataLoader
 import pandas as pd
 from net_utils_torch import LayerInfo
-from loss_functions import *
-import loss_functions
+from net_loss_functions import *
+import net_loss_functions
 import mujoco
 torch.autograd.set_detect_anomaly(True)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -44,9 +44,10 @@ x_desc_np = tensor_to_np(x_desc)
 u_star = torch.ones(batch_size, d_params.n_ctrl, dtype=torch.float)
 
 if __name__ == "__main__":
-    loss_functions.set_value_net__(value_net)
-    loss_functions.set_batch_ops__(batch_op)
+    net_loss_functions.set_value_net__(value_net)
+    net_loss_functions.set_batch_ops__(batch_op)
     torch.autograd.gradcheck(ctrl_effort_loss.apply, (x_full), rtol=1e-1, atol=1e-1)
     torch.autograd.gradcheck(ctrl_clone_loss.apply, (x_full, u_star), rtol=1e1, atol=1e1)
+    value_net.dvdxx(x_desc)
     value_net.update_grads(x_desc)
     torch.autograd.gradcheck(value_lie_loss.apply, (x_desc, u_star), rtol=1e-6, atol=1e-6)
