@@ -1,5 +1,6 @@
+import numpy
 import torch
-
+from scipy.optimize import approx_fprime
 from utilities.data_utils import *
 from torch.utils.data import TensorDataset, DataLoader
 import pandas as pd
@@ -43,6 +44,14 @@ x_desc = torch.randn(batch_size, d_params.n_state + d_params.n_desc).to(device).
 x_desc_np = tensor_to_np(x_desc)
 u_star = torch.ones(batch_size, d_params.n_ctrl, dtype=torch.float)
 
+
+def f(inputs: np.ndarray):
+    inputs_torch = np_to_tensor(inputs, True, True)
+    u_star = torch.ones(batch_size, d_params.n_ctrl, dtype=torch.float)
+    LV = value_lie_loss.apply
+    return tensor_to_np(LV(inputs_torch, u_star))
+
+
 if __name__ == "__main__":
     net_loss_functions.set_value_net__(value_net)
     net_loss_functions.set_batch_ops__(batch_op)
@@ -51,3 +60,6 @@ if __name__ == "__main__":
     value_net.dvdxx(x_desc)
     value_net.update_grads(x_desc)
     torch.autograd.gradcheck(value_lie_loss.apply, (x_desc, u_star), rtol=1e-6, atol=1e-6)
+
+    J_v_lie = approx_fprime(x_desc_np, f, 1e-6)
+    print(f"Jacobian of lie V:\n{J_v_lie}")

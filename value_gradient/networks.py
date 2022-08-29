@@ -29,9 +29,9 @@ class ValueFunction(MLP):
     def dvdxx(self, inputs):
         self.dvdx(inputs)
         for i in range(self._params.n_batch):
-            self._dvdxx[i] = torch.autograd.functional.hessian(self.forward, inputs[i])[
-                             :self._params.n_state, :self._params.n_state
-                             ]
+            self._dvdxx[i] = torch.autograd.functional.hessian(
+                self.forward, inputs[i]
+            )[:self._params.n_state, :self._params.n_state]
 
         return self._dvdxx
 
