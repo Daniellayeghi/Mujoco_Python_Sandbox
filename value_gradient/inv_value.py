@@ -1,16 +1,23 @@
 from mlp_torch import MLP
 from net_utils_torch import LayerInfo
-from utilities.torch_utils import to_variable
+import mujoco
 from utilities.data_utils import *
 from networks import ValueFunction, OptimalPolicy
+from net_loss_functions import *
+from task_loss_functions import *
 import pandas as pd
 import torch
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from torch.utils.data import TensorDataset, DataLoader
 
+# Data params
+batch_size = 1
+d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], batch_size)
 
-d_params = DataParams(3, 2, 1, 1, 1, 2, [], 2)
-
+# Mujoco models
+m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
+d = mujoco.MjData(m)
+batch_op = MjBatchOps(m, d_params)
 
 # Value network
 val_input, value_output = d_params.n_state + d_params.n_desc, d_params.n_ctrl
@@ -30,16 +37,63 @@ parent_path = "../../OptimisationBasedControl/data/"
 data = pd.read_csv(parent_path + "di_data_value.csv", sep=',', header=None).to_numpy()
 n_traj, n_train = 5000, int(5000 * 0.75)
 
-d_train = to_variable(torch.Tensor(data[0:n_train, :]), torch.cuda.is_available())
+d_train = gradify(torch.Tensor(data[0:n_train, :]), torch.cuda.is_available())
 d_test = data[n_train:, :]
 
 # for value derivative
 d_train.requires_grad = True
 print(d_train.requires_grad)
 d_train_d = TensorDataset(d_train)
-d_loader = DataLoader(d_train_d, batch_size=2, shuffle=True)
+d_loader = DataLoader(d_train_d, batch_size=d_params.n_batch, shuffle=True)
 
-for d in d_loader:
-    # TODO: Maybe this copy is unnecessary
-    x_c = to_variable(d[0][:, :-d_params.n_ctrl], torch.cuda.is_available())
-    opt_policy(x_c)
+# Set up networks loss
+set_value_net__(value_net)
+set_batch_ops__(batch_op)
+set_dt_(0.01)
+clone_loss = ctrl_clone_loss.apply
+effort_loss = ctrl_effort_loss.apply
+value_lie_loss = value_lie_loss.apply
+value_time_loss = value_dt_loss.apply
+
+# Setup task loss
+x_gain = torch.diag(torch.tensor([10, .1])).repeat(d_params.n_batch, 1, 1)
+set_gains__(torch.diag(torch.tensor([10, .1])), d_params.n_batch)
+
+
+def b_full_loss(x_desc_curr: torch.Tensor,
+                x_desc_next: torch.Tensor,
+                x_full_next: torch.Tensor,
+                u_star: torch.Tensor,
+                goal: torch.Tensor):
+    return torch.mean(
+        clone_loss(x_full_next, u_star) +
+        effort_loss(x_full_next) +
+        value_lie_loss(x_desc_next, u_star) +
+        value_time_loss(x_desc_next, x_desc_curr) +
+        value_goal_loss(goal) +
+    )
+
+
+goal = torch.zeros((d_params.n_batch, d_params.n_state + d_params.n_desc)).to(device)
+running_loss = 0
+for epoch in range(100):
+    for i, d in enumerate(d_loader):
+        # TODO: Maybe this copy is unnecessary
+        x_desc_curr = gradify(d[0][:, :-d_params.n_ctrl], torch.cuda.is_available())
+        goal[:, :d_params.n_pos] = d[0][:, d_params.n_state + 1:-d_params.n_ctrl]
+        goal[:, d_params.n_state:] = d[0][:, d_params.n_state:-d_params.n_ctrl]
+        u_star = to_cuda(d[0][:, d_params.n_state + d_params.n_desc:])
+        x_full_next, x_desc_next = opt_policy(x_desc_curr)
+        x_next = gradify(x_full_next[:, :d_params.n_state])
+        value_net.update_grads(x_desc_next)
+        # Detach x_desc_curr so its derivatives are ignored
+        loss = b_full_loss(x_desc_curr.detach(), x_desc_next, x_full_next, u_star, goal)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+        if i % 1000 == 999:
+            last_loss = running_loss / 1000 # loss per batch
+            print('batch {} loss: {}'.format(i + 1, last_loss))
+            tb_x = epoch * len(d_loader) + i + 1
+            running_loss = 0.
+

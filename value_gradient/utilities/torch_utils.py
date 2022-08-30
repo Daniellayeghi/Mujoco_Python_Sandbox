@@ -3,11 +3,10 @@ import torch
 from torch.autograd import Variable
 
 
-def to_variable(x, cuda=False):
+def gradify(x, cuda=False):
     if isinstance(x, (tuple, list)):
-        return tuple(to_variable(x) for x in x)
+        return tuple(gradify(x) for x in x)
     else:
-        x = Variable(x)
         if cuda:
             return x.cuda().requires_grad_()
         return x.requires_grad_()

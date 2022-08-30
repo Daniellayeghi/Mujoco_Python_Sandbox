@@ -8,6 +8,7 @@ from networks import ValueFunction
 
 _value_net_ = None
 _batch_op_ = None
+_dt_ = None
 
 dtype = torch.float
 device = torch.device("cpu")
@@ -23,12 +24,38 @@ def set_value_net__(value_net: ValueFunction):
     _value_net_ = value_net
 
 
-def value_dt_loss(v_curr, v_next, dt, value_func):
-    return (F.relu(1 + (value_func(v_curr) - value_func(v_next)) / dt)).mean()
+def set_dt_(dt: float):
+    global _dt_
+    _dt_ = dt
 
 
-def value_goal_loss(goal, value_func):
-    return 10 * value_func(goal)
+def value_goal_loss(goal):
+    return 10 * _value_net_(goal)
+
+
+class value_dt_loss(Function):
+    @staticmethod
+    def forward(ctx, x_next, x_curr):
+        ctx.constant = x_curr
+        real_loss = 1 + (_value_net_(x_curr) - _value_net_(x_next)) /_dt_
+        dvdx_desc = _value_net_._dvdx_desc
+        ctx.save_for_backward(x_next, real_loss, dvdx_desc)
+        positive_loss = F.relu(real_loss)
+
+        return positive_loss
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x_next, real_loss, dvdx_desc = ctx.saved_tensors
+        dldv = 1/_dt_ * _value_net_(x_next).view((_batch_op_.params.n_batch, 1, 1))
+        drelu_dloss = (1 * (real_loss > 0)).view((_batch_op_.params.n_batch, 1))
+
+        grad_1 = (drelu_dloss * torch.bmm(
+            dvdx_desc.view((_batch_op_.params.n_batch, _batch_op_.params.n_state + _batch_op_.params.n_desc, 1)), dldv
+        )).view((_batch_op_.params.n_batch, _batch_op_.params.n_state + _batch_op_.params.n_desc))
+
+        grad_1.to(x_next.device)
+        return grad_output * grad_1, None
 
 
 class value_lie_loss(Function):
@@ -42,34 +69,33 @@ class value_lie_loss(Function):
         gu = _batch_op_.b_gu(u_cpu).reshape((_batch_op_.params.n_batch, _batch_op_.params.n_state))
         dxdt = np_to_tensor(_batch_op_.b_dxdt(x_np, u_np))
 
-        loss = F.relu(
-            torch.bmm(
+        real_loss = torch.bmm(
                 dvdx.view(_batch_op_.params.n_batch, 1, _batch_op_.params.n_state),
                 gu.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1) +
                 dxdt.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1)
             )
-        ).view(_batch_op_.params.n_batch, 1).to(x_desc.device)
+
+        positive_loss = F.relu(real_loss).view(_batch_op_.params.n_batch, 1)
 
         ctx.save_for_backward(
-            x_desc, x_cpu, gu, dxdt, dvdx, dvdxx, loss
+            x_desc, x_cpu, gu, dxdt, dvdx, dvdxx, real_loss
         )
 
-        return loss
+        return positive_loss.to(x_desc.device)
 
     @staticmethod
     def backward(ctx, grad_output):
-        x_desc, x_cpu, gu, dxdt, dvdx, dvdxx, relu_lie = ctx.saved_tensors
+        x_desc, x_cpu, gu, dxdt, dvdx, dvdxx, real_loss = ctx.saved_tensors
         dfdx = _batch_op_.b_dfdx(x_cpu)
+        dlie_dx = torch.zeros((_batch_op_.params.n_batch, _batch_op_.params.n_state + _batch_op_.params.n_desc))
+        drelu_dx = 1 * (real_loss > 0).view((_batch_op_.params.n_batch, 1))
 
-        print(1 * (relu_lie > 0))
-        dlie_dx = torch.ones((_batch_op_.params.n_batch, _batch_op_.params.n_state + _batch_op_.params.n_desc))
-        dlie_dx[:, :_batch_op_.params.n_state] = (torch.bmm(
+        dlie_dx[:, :_batch_op_.params.n_state] = drelu_dx * (torch.bmm(
             dvdxx, (gu + dxdt).view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1)
         ) + torch.bmm(
             dfdx.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, _batch_op_.params.n_state),
             dvdx.view(_batch_op_.params.n_batch, _batch_op_.params.n_state, 1)
         )).view((_batch_op_.params.n_batch, _batch_op_.params.n_state))
-
 
         return grad_output * dlie_dx.to(x_desc.device), None
 
@@ -82,6 +108,7 @@ class ctrl_effort_loss(Function):
         qfrcs = _batch_op_.b_qfrcs(x_full_np)
         ctx.save_for_backward(x_full_cpu, np_to_tensor(qfrcs))
         loss = torch.sum(torch.square(torch.tensor(qfrcs, device=device, dtype=dtype)), 1).to(x_full.device)
+
         return loss
 
     @staticmethod
@@ -94,6 +121,7 @@ class ctrl_effort_loss(Function):
             dfinvdx.view(_batch_op_.params.n_batch, _batch_op_.params.n_vel, _batch_op_.params.n_full_state)
         )
         grad_1 = (2 * grad_1.view(_batch_op_.params.n_batch, _batch_op_.params.n_full_state)).to(x_full.device)
+
         return grad_output.view(_batch_op_.params.n_batch, 1) * grad_1
 
 
@@ -106,7 +134,7 @@ class ctrl_clone_loss(Function):
         x_full_np = tensor_to_np(x_full)
         qfrcs = np_to_tensor(_batch_op_.b_qfrcs(x_full_np))
         ctx.save_for_backward(x_full_cpu, qfrcs, u_star_cpu)
-        loss = torch.sum(torch.square(u_star - qfrcs), 1).to(x_full.device)
+        loss = torch.sum(torch.square(u_star_cpu - qfrcs), 1).to(x_full.device)
         return loss
 
     @staticmethod
@@ -118,9 +146,9 @@ class ctrl_clone_loss(Function):
             (qfrcs - u_star).view(_batch_op_.params.n_batch, 1, _batch_op_.params.n_vel),
             dfinvdx.view(_batch_op_.params.n_batch, _batch_op_.params.n_vel, _batch_op_.params.n_full_state)
         )
-
         grad_1 = (2 * grad_1.view(_batch_op_.params.n_batch, _batch_op_.params.n_full_state)).to(x_full.device)
 
         return grad_output.view(_batch_op_.params.n_batch, 1) * grad_1, None
+
 
 

@@ -3,7 +3,7 @@ import torch
 _di_x_gain = None
 
 
-def set_gains(running_gain, batch_size):
+def set_gains__(running_gain, batch_size):
     global _di_x_gain
     rc = len(running_gain)
     _di_x_gain = torch.diag(torch.tensor(running_gain))
