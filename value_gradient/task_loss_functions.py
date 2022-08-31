@@ -3,12 +3,9 @@ import torch
 _di_x_gain = None
 
 
-def set_gains(running_gain, batch_size):
+def set_gains__(x_gain):
     global _di_x_gain
-    rc = len(running_gain)
-    _di_x_gain = torch.diag(torch.tensor(running_gain))
-    _di_x_gain = _di_x_gain.reshape((1, rc, rc))
-    _di_x_gain = _di_x_gain.repeat(batch_size, 1, 1)
+    _di_x_gain = x_gain
 
 
 def task_loss(x: torch.Tensor):
