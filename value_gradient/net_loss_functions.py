@@ -107,7 +107,7 @@ class ctrl_effort_loss(Function):
         x_full_cpu = x_full.cpu()
         x_full_np = tensor_to_np(x_full)
         qfrcs = np_to_tensor(_batch_op_.b_qfrcs(x_full_np))
-        ctx.save_for_backward(x_full_cpu, np_to_tensor(qfrcs))
+        ctx.save_for_backward(x_full_cpu, qfrcs)
         loss = torch.sum(torch.square(qfrcs), 1).to(x_full.device)
 
         return loss

@@ -5,9 +5,9 @@ from utilities.data_utils import *
 from networks import ValueFunction, OptimalPolicy
 from net_loss_functions import *
 from task_loss_functions import *
+from torch_device import device, is_cuda
 import pandas as pd
 import torch
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from torch.utils.data import TensorDataset, DataLoader
 
 # Data params
@@ -36,7 +36,7 @@ optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, policy_net.parame
 parent_path = "../../OptimisationBasedControl/data/"
 data = pd.read_csv(parent_path + "di_data_value.csv", sep=',', header=None).to_numpy()
 n_traj, n_train = 5000, int(5000 * 0.75)
-d_train = gradify(torch.Tensor(data[0:n_train, :]), torch.cuda.is_available()).requires_grad_()
+d_train = torch.Tensor(data[0:n_train, :])
 d_test = data[n_train:, :]
 
 # for value derivative
@@ -57,35 +57,40 @@ x_gain = torch.diag(torch.tensor([10, .1])).repeat(d_params.n_batch, 1, 1)
 set_gains__(x_gain)
 
 
-def b_full_loss(x_desc_curr: torch.Tensor,
-                x_desc_next: torch.Tensor,
+def b_full_loss(x_desc_next: torch.Tensor,
+                x_desc_curr: torch.Tensor,
                 x_full_next: torch.Tensor,
                 u_star: torch.Tensor,
                 goal: torch.Tensor):
     return torch.mean(
-        clone_loss(x_full_next, u_star) +
+        # clone_loss(x_full_next, u_star) +
         # effort_loss(x_full_next) +
         # value_lie_loss(x_desc_next, u_star) +
-        # value_time_loss(x_desc_next, x_desc_curr) +
+        value_time_loss(x_desc_next, x_desc_curr) +
         value_goal_loss(goal)
     )
 
 
+def b_full_loss(x_full_next: torch.Tensor, goal: torch.Tensor):
+    return torch.mean(effort_loss(x_full_next) + value_goal_loss(goal))
+
+
 running_loss = 0
+goals = torch.zeros((d_params.n_batch, d_params.n_state + d_params.n_desc), requires_grad=False).to(device)
 
 for epoch in range(100):
     for i, d in enumerate(d_loader):
-        goal = torch.zeros((d_params.n_batch, d_params.n_state + d_params.n_desc)).to(device)
         # TODO: Maybe this copy is unnecessary
-        x_desc_curr = gradify(d[0][:, :-d_params.n_ctrl], torch.cuda.is_available())
-        goal[:, :d_params.n_pos] = d[0][:, d_params.n_state + 1:-d_params.n_ctrl]
-        goal[:, d_params.n_state:] = d[0][:, d_params.n_state:-d_params.n_ctrl]
-        u_star = to_cuda(d[0][:, d_params.n_state + d_params.n_desc:])
+        x_desc_curr = d[0][:, :-d_params.n_ctrl]
+        goals[:, :d_params.n_pos] = d[0][:, d_params.n_state + 1:-d_params.n_ctrl]
+        goals[:, d_params.n_state:] = d[0][:, d_params.n_state:-d_params.n_ctrl]
+        u_star = (d[0][:, d_params.n_state + d_params.n_desc:]).to(device)
         x_full_next, x_desc_next = opt_policy(x_desc_curr)
-        x_next = gradify(x_full_next[:, :d_params.n_state])
+        x_next = x_full_next[:, :d_params.n_state]
         value_net.update_grads(x_desc_next)
         # Detach x_desc_curr so its derivatives are ignored
-        loss = b_full_loss(x_desc_curr.detach(), x_desc_next, x_full_next, u_star, goal)
+        # loss = b_full_loss(x_full_next.detach(), goal)
+        loss = b_full_loss(x_full_next, goals)
         loss.backward()
         optimizer.step()
         running_loss += loss.item()

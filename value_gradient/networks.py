@@ -4,7 +4,7 @@ from utilities.torch_utils import gradify
 from utilities.data_utils import *
 import torch
 import torch.nn.functional as F
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+from torch_device import device, is_cuda
 
 
 class ValueFunction(MLP):
@@ -12,8 +12,8 @@ class ValueFunction(MLP):
         super(ValueFunction, self).__init__(layer_info, apply_sigmoid)
         self.loss = list()
         self._params = data_params
-        self._v = torch.Tensor((self._params.n_batch, 1)).requires_grad_()
-        self._dvdx = torch.Tensor(self._params.n_batch, self._params.n_state).requires_grad_()
+        self._v = torch.Tensor((self._params.n_batch, 1))
+        self._dvdx = torch.Tensor(self._params.n_batch, self._params.n_state)
         self._dvdxx = torch.Tensor(self._params.n_batch, self._params.n_state, self._params.n_state)
         self._dvdx_desc = torch.Tensor(self._params.n_batch, self._params.n_state + self._params.n_desc)
 
@@ -22,7 +22,7 @@ class ValueFunction(MLP):
         self._v = self.forward(inputs).requires_grad_()
         self._dvdx = torch.autograd.grad(
             self._v, inputs, grad_outputs=torch.ones_like(self._v), create_graph=True
-        )[0][:, :self._params.n_state].requires_grad_()
+        )[0][:, :self._params.n_state]
         return self._dvdx
 
     def dvdxx(self, inputs):
@@ -88,6 +88,7 @@ class OptimalPolicy(torch.nn.Module):
     # Policy net need to output positions. From there derivatives can compute velocity.
     # Projection onto value function computes new acceleration, then integrate to get state
     def forward(self, inputs):
+        inputs.requires_grad_()
         pos, vel = inputs[:, 0:self._params.n_pos], inputs[:, self._params.n_pos:self._params.n_vel + self._params.n_pos]
         self._final_pos = self._policy_net(inputs)
         self._v = self._v_net(inputs)
@@ -100,11 +101,11 @@ class OptimalPolicy(torch.nn.Module):
         dvdx = self._v_net.dvdx(inputs)
 
         # Return the new state form
-        self._final_full_x[:, self._params.n_pos:] = self._final_dxdt - dvdx * (F.relu(
+        xd = self._final_dxdt - dvdx * (F.relu(
             (dvdx * self._final_dxdt).sum(dim=1)
         ) / (dvdx ** 2).sum(dim=1))[:, None]
 
-        self._final_full_x[:, :self._params.n_vel] = self._integrate(
+        pos = self._integrate(
             pos, self._final_full_x[:, self._params.n_pos:self._params.n_state]
         )
 
