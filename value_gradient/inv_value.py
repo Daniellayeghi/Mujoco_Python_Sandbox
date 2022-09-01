@@ -20,6 +20,7 @@ d = mujoco.MjData(m)
 batch_op = MjBatchOps(m, d_params)
 
 # Value network
+# TODO output layer must be RELU for > +
 val_input, value_output = d_params.n_state + d_params.n_desc, d_params.n_ctrl
 v_layers = [[val_input, 16, value_output], [], 0]
 value_net = ValueFunction(d_params, LayerInfo(*v_layers)).to(device)
@@ -71,7 +72,7 @@ def b_full_loss(x_desc_next: torch.Tensor,
     )
 
 
-def b_full_loss(x_full_next: torch.Tensor, goal: torch.Tensor):
+def b_full_loss(x_full_next, goal: torch.Tensor):
     return torch.mean(effort_loss(x_full_next) + value_goal_loss(goal))
 
 
@@ -91,6 +92,7 @@ for epoch in range(100):
         # Detach x_desc_curr so its derivatives are ignored
         # loss = b_full_loss(x_full_next.detach(), goal)
         loss = b_full_loss(x_full_next, goals)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         running_loss += loss.item()

@@ -19,27 +19,27 @@ class ValueFunction(MLP):
 
     def dvdx(self, inputs):
         # Compute network derivative w.r.t state
-        self._v = self.forward(inputs).requires_grad_()
-        self._dvdx = torch.autograd.grad(
-            self._v, inputs, grad_outputs=torch.ones_like(self._v), create_graph=True
+        v = self.forward(inputs).requires_grad_()
+        dvdx = torch.autograd.grad(
+            v, inputs, grad_outputs=torch.ones_like(v), create_graph=True
         )[0][:, :self._params.n_state]
-        return self._dvdx
+        return dvdx
 
     def dvdxx(self, inputs):
-        self.dvdx(inputs)
+        dvdxx = torch.Tensor(self._params.n_batch, self._params.n_state, self._params.n_state)
         for i in range(self._params.n_batch):
-            self._dvdxx[i] = torch.autograd.functional.hessian(
+            dvdxx[i] = torch.autograd.functional.hessian(
                 self.forward, inputs[i]
             )[:self._params.n_state, :self._params.n_state]
 
         return self._dvdxx
 
     def dvdx_desc(self, inputs):
-        self._v = self.forward(inputs).requires_grad_()
-        self._dvdx_desc = torch.autograd.grad(
-            self._v, inputs, grad_outputs=torch.ones_like(self._v), create_graph=True
+        v = self.forward(inputs).requires_grad_()
+        dvdx_desc = torch.autograd.grad(
+            v, inputs, grad_outputs=torch.ones_like(v), create_graph=True
         )[0]
-        return self._dvdx_desc
+        return dvdx_desc
 
     def get_dvdx(self, inputs):
         return self.dvdx(inputs).detach().clone()
@@ -48,13 +48,13 @@ class ValueFunction(MLP):
         return self.dvdxx(inputs).detach().clone()
 
     def update_grads_x(self, inputs):
-        self._dvdx = self.dvdx(inputs).detach().clone()
-        self._dvdxx = self.dvdxx(inputs).detach().clone()
+        self.update_dvdx(inputs)
+        self.update_dvdxx(inputs)
 
     def update_grads(self, inputs):
-        self._dvdx = self.dvdx(inputs).detach().clone()
-        self._dvdxx = self.dvdxx(inputs).detach().clone()
-        self._dvdx_desc = self.dvdx_desc(inputs).detach().clone()
+        self.update_dvdx(inputs)
+        self.update_dvdxx(inputs)
+        self.update_dvdx_desc(inputs)
 
     def update_dvdx(self, inputs):
         self._dvdx = self.dvdx(inputs).detach().clone()
@@ -101,11 +101,11 @@ class OptimalPolicy(torch.nn.Module):
         dvdx = self._v_net.dvdx(inputs)
 
         # Return the new state form
-        xd = self._final_dxdt - dvdx * (F.relu(
+        self._final_full_x[:, self._params.n_pos:] = self._final_dxdt - dvdx * (F.relu(
             (dvdx * self._final_dxdt).sum(dim=1)
         ) / (dvdx ** 2).sum(dim=1))[:, None]
 
-        pos = self._integrate(
+        self._final_full_x[:, :self._params.n_vel] = self._integrate(
             pos, self._final_full_x[:, self._params.n_pos:self._params.n_state]
         )
 
