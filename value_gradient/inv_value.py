@@ -1,17 +1,18 @@
+import sys
 from mlp_torch import MLP
 from net_utils_torch import LayerInfo
-import mujoco
 from utilities.data_utils import *
-from networks import ValueFunction, OptimalPolicy
 from net_loss_functions import *
 from task_loss_functions import *
+from networks import ValueFunction, OptimalPolicy
 from torch_device import device, is_cuda
+import mujoco
 import pandas as pd
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 # Data params
-batch_size = 10
+batch_size = 20
 d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], batch_size)
 
 # Mujoco models
@@ -22,11 +23,12 @@ batch_op = MjBatchOps(m, d_params)
 # Value network
 # TODO output layer must be RELU for > +
 val_input, value_output = d_params.n_state + d_params.n_desc, d_params.n_ctrl
-v_layers = [[val_input, 16, value_output], [], 0]
+layer_dims = [val_input, 16, value_output]
+v_layers = [layer_dims, [], 0, [torch.nn.ReLU() for _ in range(len(layer_dims) - 1)]]
 value_net = ValueFunction(d_params, LayerInfo(*v_layers)).to(device)
 
 policy_input, policy_output = d_params.n_state + d_params.n_desc, d_params.n_pos
-p_layers = [[val_input, 16, 16, value_output], [], 0]
+p_layers = [[val_input, 16, 16, value_output], [], 0, [torch.nn.ReLU(), torch.nn.ReLU(), None]]
 policy_net = MLP(LayerInfo(*p_layers)).to(device)
 
 opt_policy = OptimalPolicy(policy_net, value_net, d_params).to(device)
@@ -37,12 +39,13 @@ optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, policy_net.parame
 parent_path = "../../OptimisationBasedControl/data/"
 data = pd.read_csv(parent_path + "di_data_value.csv", sep=',', header=None).to_numpy()
 n_traj, n_train = 5000, int(5000 * 0.75)
-d_train = torch.Tensor(data[0:n_train, :])
+d_train = torch.Tensor(data[0:n_train, :]).to(device)
 d_test = data[n_train:, :]
 
 # for value derivative
 d_train_d = TensorDataset(d_train)
-d_loader = DataLoader(d_train_d, batch_size=d_params.n_batch, shuffle=True)
+d_loader = DataLoader(d_train_d, batch_size=d_params.n_batch, shuffle=True, drop_last=True
+                      )
 
 # Set up networks loss and params
 set_value_net__(value_net)
@@ -63,42 +66,52 @@ def b_full_loss(x_desc_next: torch.Tensor,
                 x_full_next: torch.Tensor,
                 u_star: torch.Tensor,
                 goal: torch.Tensor):
-    return torch.mean(
-        # clone_loss(x_full_next, u_star) +
-        # effort_loss(x_full_next) +
-        # value_lie_loss(x_desc_next, u_star) +
-        value_time_loss(x_desc_next, x_desc_curr) +
-        value_goal_loss(goal)
-    )
+    clone = torch.mean(clone_loss(x_full_next, u_star))
+    effort = torch.mean(effort_loss(x_full_next))
+    dvdfdu = torch.mean(value_lie_loss(x_desc_next, u_star)) * 1000
+    dvdt = torch.mean(value_dt_loss_auto(x_desc_next, x_desc_curr)) * 1000
+    goal = torch.mean(value_goal_loss(goal)) * 1000
 
-
-def b_full_loss(x_full_next, goal: torch.Tensor):
-    return torch.mean(effort_loss(x_full_next) + value_goal_loss(goal))
+    return torch.mean(clone + effort + dvdfdu + dvdt + goal), (clone, effort, dvdfdu, dvdt, goal)
 
 
 running_loss = 0
 goals = torch.zeros((d_params.n_batch, d_params.n_state + d_params.n_desc), requires_grad=False).to(device)
 
-for epoch in range(100):
-    for i, d in enumerate(d_loader):
-        # TODO: Maybe this copy is unnecessary
-        x_desc_curr = d[0][:, :-d_params.n_ctrl]
-        goals[:, :d_params.n_pos] = d[0][:, d_params.n_state + 1:-d_params.n_ctrl]
-        goals[:, d_params.n_state:] = d[0][:, d_params.n_state:-d_params.n_ctrl]
-        u_star = (d[0][:, d_params.n_state + d_params.n_desc:]).to(device)
-        x_full_next, x_desc_next = opt_policy(x_desc_curr)
-        x_next = x_full_next[:, :d_params.n_state]
-        value_net.update_grads(x_desc_next)
-        # Detach x_desc_curr so its derivatives are ignored
-        # loss = b_full_loss(x_full_next.detach(), goal)
-        loss = b_full_loss(x_full_next, goals)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
+try:
+    for epoch in range(150):
+        for i, d in enumerate(d_loader):
+            # TODO: Maybe this copy is unnecessary
+            x_desc_curr = (d[0][:, :-d_params.n_ctrl]).requires_grad_()
+            goals[:, :d_params.n_pos] = d[0][:, d_params.n_state + 1:-d_params.n_ctrl]
+            goals[:, d_params.n_state:] = d[0][:, d_params.n_state:-d_params.n_ctrl]
+            u_star = d[0][:, d_params.n_state + d_params.n_desc:]
+            x_full_next, x_desc_next = opt_policy(x_desc_curr)
+            value_net.update_grads(x_desc_next)
+            # Detach x_desc_curr so its derivatives are ignored
+            loss, each_loss = b_full_loss(x_desc_next, x_desc_curr.detach(), x_full_next, u_star, goals)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
 
-        if i % 100 == 0:
-            last_loss = running_loss / 100
-            print('batch {} loss: {}'.format(i + 1, last_loss))
-            running_loss = 0.
+            if i % 20 == 0:
+                last_loss = running_loss / 20
+                print('batch {} loss: {} epoch{}'.format(i + 1, last_loss, epoch))
+                print(
+                    f"clone {each_loss[0]}, effort {each_loss[1]},"
+                    f" dvdfdu {each_loss[2]}, dvdt {each_loss[3]},"
+                    f" goal {each_loss[4]}"
+                )
+                running_loss = 0.
 
+    stored_exception = sys.exc_info()
+    print("########## Saving Trace ##########")
+    torch.save(opt_policy.state_dict(), "./op_policy.pt")
+    torch.save(value_net.state_dict(), "./op_value.pt")
+
+except KeyboardInterrupt:
+    stored_exception = sys.exc_info()
+    print("########## Saving Trace ##########")
+    torch.save(opt_policy.state_dict(), "./op_policy.pt")
+    torch.save(value_net.state_dict(), "./op_value.pt")

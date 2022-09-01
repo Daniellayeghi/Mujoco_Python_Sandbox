@@ -14,6 +14,7 @@ class ValueFunction(MLP):
         self._params = data_params
         self._v = torch.Tensor((self._params.n_batch, 1))
         self._dvdx = torch.Tensor(self._params.n_batch, self._params.n_state)
+        self._damping = torch.ones(self._params.n_batch, self._params.n_state).to(device) * 1e-6
         self._dvdxx = torch.Tensor(self._params.n_batch, self._params.n_state, self._params.n_state)
         self._dvdx_desc = torch.Tensor(self._params.n_batch, self._params.n_state + self._params.n_desc)
 
@@ -22,7 +23,7 @@ class ValueFunction(MLP):
         v = self.forward(inputs).requires_grad_()
         dvdx = torch.autograd.grad(
             v, inputs, grad_outputs=torch.ones_like(v), create_graph=True
-        )[0][:, :self._params.n_state]
+        )[0][:, :self._params.n_state] + self._damping
         return dvdx
 
     def dvdxx(self, inputs):
@@ -88,29 +89,29 @@ class OptimalPolicy(torch.nn.Module):
     # Policy net need to output positions. From there derivatives can compute velocity.
     # Projection onto value function computes new acceleration, then integrate to get state
     def forward(self, inputs):
-        inputs.requires_grad_()
         pos, vel = inputs[:, 0:self._params.n_pos], inputs[:, self._params.n_pos:self._params.n_vel + self._params.n_pos]
-        self._final_pos = self._policy_net(inputs)
-        self._v = self._v_net(inputs)
-        self._final_dxdt[:, :self._params.n_vel] = self._derivative(pos, self._final_pos)
-        self._final_dxdt[:, self._params.n_vel:] = self._derivative(
-            vel, self._final_dxdt[:, :self._params.n_vel]
-        )
+        pos_next = self._policy_net(inputs)
+        vel_next = self._derivative(pos, pos_next)
+        acc_next = self._derivative(vel, vel_next)
+
+        dxdt = torch.column_stack((vel_next, acc_next))
 
         # Compute network derivative w.r.t state
         dvdx = self._v_net.dvdx(inputs)
 
         # Return the new state form
-        self._final_full_x[:, self._params.n_pos:] = self._final_dxdt - dvdx * (F.relu(
-            (dvdx * self._final_dxdt).sum(dim=1)
+        dxdt = dxdt - dvdx * (F.relu(
+            (dvdx * dxdt).sum(dim=1)
         ) / (dvdx ** 2).sum(dim=1))[:, None]
 
-        self._final_full_x[:, :self._params.n_vel] = self._integrate(
-            pos, self._final_full_x[:, self._params.n_pos:self._params.n_state]
+        pos_next = self._integrate(
+            pos, dxdt[:, self._params.n_pos:self._params.n_state]
         )
 
-        self._final_x_desc = torch.column_stack(
-            (self._final_full_x[:, :self._params.n_state], inputs[:, self._params.n_state:])
+        x_full_next = torch.column_stack((pos_next, vel_next, acc_next))
+
+        x_desc_next = torch.column_stack(
+            (x_full_next[:, :self._params.n_state], inputs[:, self._params.n_state:])
         )
 
-        return self._final_full_x, self._final_x_desc
+        return x_full_next, x_desc_next

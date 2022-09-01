@@ -32,6 +32,13 @@ def value_goal_loss(goal):
     return 10 * _value_net_(goal)
 
 
+def value_dt_loss_auto(x_next, x_curr):
+    real_loss = 1 + (_value_net_(x_curr) - _value_net_(x_next)) / _dt_
+    positive_loss = F.relu(real_loss)
+
+    return positive_loss
+
+
 class value_dt_loss(Function):
     @staticmethod
     def forward(ctx, x_next, x_curr):

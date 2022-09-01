@@ -6,7 +6,7 @@ import torch.distributions
 from collections import namedtuple
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-__attr_names = ["layer_dims", "drop_id", "drop_rate"]
+__attr_names = ["layer_dims", "drop_id", "drop_rate", "act_funcs"]
 LayerInfo = namedtuple("LayerInfo", __attr_names)
 
 
@@ -18,9 +18,13 @@ class InitNetwork(nn.Module):
 
         for l_idx in range(len(layers)-1):
             if l_idx == len(layers)-2:
-                args = [nn.Linear(layers[l_idx], layers[l_idx + 1])]
+                if layer_info.act_funcs[l_idx] is None:
+                    args = [nn.Linear(layers[l_idx], layers[l_idx + 1])]
+                else:
+                    args = [nn.Linear(layers[l_idx], layers[l_idx + 1]), layer_info.act_funcs[l_idx]]
+
             else:
-                args = [nn.Linear(layers[l_idx], layers[l_idx + 1]), nn.ReLU()]
+                args = [nn.Linear(layers[l_idx], layers[l_idx + 1]), layer_info.act_funcs[l_idx]]
 
             modules.extend(
                 args
