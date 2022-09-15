@@ -1,8 +1,9 @@
-import torch
+
 import torch.nn.functional as F
 from torch.autograd import Function
 from utilities.mj_utils import MjBatchOps
 from utilities.torch_utils import *
+from task_loss_functions import task_loss
 from networks import ValueFunction
 
 
@@ -37,6 +38,24 @@ def value_dt_loss_auto(x_next, x_curr):
     positive_loss = F.relu(real_loss)
 
     return positive_loss
+
+
+class value_descent_loss(Function):
+    @staticmethod
+    def forward(ctx, x, u):
+        dfdt = _batch_op_.b_dxdt(x, u).view(_batch_op_.params.n_batch, _batch_op_.params.n_vel * 2, 1)
+        loss = torch.sum(_value_net_._dvdx * dfdt)
+        ctx.save_for_backward(x, u, _value_net_._dvdx, _value_net_._dvdxx, dfdt)
+        return loss
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        x, u, dvdx, dvdxx, dfdt = ctx.saved_tensors
+        dfdx = _batch_op_.b_dfdx_u(x, u).view(_batch_op_.params.n_batch, _batch_op_.params.n_state, _batch_op_.params.n_state)
+        dfdu = _batch_op_.b_dfdu(x, u).view(_batch_op_.params.n_batch, _batch_op_.params.n_state, _batch_op_.params.n_ctrl)
+        vtdx = torch.sum(dvdxx * dfdt) + torch.sum(dvdx * dfdx)
+        vtdu = torch.sum(dvdx * dfdu)
+        return grad_output * vtdx, grad_output, vtdu
 
 
 class value_dt_loss(Function):

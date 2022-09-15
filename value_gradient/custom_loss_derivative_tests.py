@@ -32,30 +32,39 @@ d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], batch_size)
 d = mujoco.MjData(m)
 batch_op = MjBatchOps(m, d_params)
 
-
 # Value network
 val_input, value_output = d_params.n_state + d_params.n_desc, d_params.n_ctrl
-v_layers = [[val_input, 16, value_output], [], 0]
+layer_dims = [val_input, 16, value_output]
+v_layers = [layer_dims, [], 0, [torch.nn.Sigmoid() for _ in range(len(layer_dims) - 1)]]
 value_net = ValueFunction(d_params, LayerInfo(*v_layers)).to(device)
 
 x_full = torch.randn(batch_size, d_params.n_full_state).requires_grad_() * 0.01
 x_full[0, :] = torch.tensor([0.5442, -1.03142738, -0.02782536])
+x = torch.tensor([0.5442, -1.03142738])
 x_full_np = tensor_to_np(x_full)
 x_desc = torch.randn(batch_size, d_params.n_state + d_params.n_desc).to(device).requires_grad_() * 0.01
+x = torch.Tensor(x_desc[:, :d_params.n_state])
 x_desc_curr = torch.randn(batch_size, d_params.n_state + d_params.n_desc).to(device) * 0.01
 x_desc_np = tensor_to_np(x_desc)
-u_star = torch.ones(batch_size, d_params.n_ctrl, dtype=torch.float)
+u_star = torch.ones(batch_size, d_params.n_ctrl, dtype=torch.float).requires_grad_()
+
+dvdxx = torch.Tensor(d_params.n_batch, d_params.n_state, d_params.n_state)
+for i in range(d_params.n_batch):
+    dvdxx[i] = torch.autograd.functional.hessian(value_net, x_desc[i])[:d_params.n_state, :d_params.n_state]
+
 
 if __name__ == "__main__":
     net_loss_functions.set_value_net__(value_net)
     net_loss_functions.set_batch_ops__(batch_op)
     net_loss_functions.set_dt_(0.01)
-    loss_func = value_dt_loss.apply
-    value_net.update_dvdx_desc(x_desc)
-    loss = torch.mean(loss_func(x_desc, x_desc_curr))
+    loss_func = value_descent_loss.apply
+    value_net.update_dvdx(x_desc)
+    value_net.update_dvdxx(x_desc)
+    loss = torch.mean(loss_func(x, u_star))
     loss.retain_grad()
     x_desc.retain_grad()
     loss.backward()
+
     print(f"Loss is {loss}, loss.grad {x_desc.grad}")
 
     torch.autograd.gradcheck(ctrl_effort_loss.apply, (x_full), rtol=1e-1, atol=1e-1)
