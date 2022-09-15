@@ -68,9 +68,9 @@ def b_full_loss(x_desc_next: torch.Tensor,
                 goal: torch.Tensor):
     clone = torch.mean(clone_loss(x_full_next, u_star))
     effort = torch.mean(effort_loss(x_full_next))
-    dvdfdu = torch.mean(value_lie_loss(x_desc_next, u_star)) * 1000
-    dvdt = torch.mean(value_dt_loss_auto(x_desc_next, x_desc_curr)) * 1000
-    goal = torch.mean(value_goal_loss(goal)) * 1000
+    dvdfdu = torch.mean(value_lie_loss(x_desc_next, u_star))
+    dvdt = torch.mean(value_dt_loss_auto(x_desc_next, x_desc_curr))
+    goal = torch.mean(value_goal_loss(goal))
 
     return torch.mean(clone + effort + dvdfdu + dvdt + goal), (clone, effort, dvdfdu, dvdt, goal)
 

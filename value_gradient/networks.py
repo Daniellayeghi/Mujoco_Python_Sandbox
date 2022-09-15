@@ -90,9 +90,8 @@ class OptimalPolicy(torch.nn.Module):
     # Projection onto value function computes new acceleration, then integrate to get state
     def forward(self, inputs):
         pos, vel = inputs[:, 0:self._params.n_pos], inputs[:, self._params.n_pos:self._params.n_vel + self._params.n_pos]
-        pos_next = self._policy_net(inputs)
-        vel_next = self._derivative(pos, pos_next)
-        acc_next = self._derivative(vel, vel_next)
+        acc_next = self._policy_net(inputs)
+        vel_next = self._integrate(vel, acc_next)
 
         dxdt = torch.column_stack((vel_next, acc_next))
 
