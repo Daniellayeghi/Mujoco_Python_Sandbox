@@ -1,7 +1,5 @@
-import random
-
 import mujoco
-from mujoco import derivative
+from mujoco.derivative import *
 import matplotlib.pyplot as plt
 import numpy as np
 import glfw
@@ -10,7 +8,7 @@ import math
 '''
 This file tests the derivative bindings.
 '''
-m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator_sparse.xml")
+m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 d = mujoco.MjData(m)
 d.qpos = np.random.random(m.nq) * 5
 print(m.nbody)
@@ -51,19 +49,19 @@ def step(m, d):
 glfw.set_scroll_callback(glfw.get_current_context(), scroll)
 
 if __name__ == "__main__":
-    d_vec = derivative.MjDataVecView(m, d)
-    params = derivative.MjDerivativeParams(1e-6, derivative.WRT.CTRL)
-    du = derivative.MjDerivative(m, params)
-    dx_du = list()
+    dfdu = MjDerivative(m, d, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
+    df_du = list()
 
     while not glfw.window_should_close(glfw.get_current_context()):
         sim_start = d.time
         while(d.time - sim_start) < 1.0/60.0:
             step(m, d)
-            d.xfrc_applied[2] = - np.random.random(1) * 5
-            dx_du.append(du.wrt_dynamics(d_vec)[0])
+            d.ctrl[0] = - np.random.random(1) * .5
+            res = dfdu.func()
+            print(res)
+            df_du.append(res.flatten())
 
-        time.sleep(0.001)
+        time.sleep(0.01)
         view = mujoco.MjrRect(0, 0, 0, 0)
         view.width, view.height = glfw.get_framebuffer_size(glfw.get_current_context())
         mujoco.mjv_updateScene(m, d, opt, pert, cam, 7, scn)
@@ -71,7 +69,7 @@ if __name__ == "__main__":
         glfw.swap_buffers(glfw.get_current_context())
         glfw.poll_events()
 
-    plt.plot(dx_du)
+    plt.plot(df_du)
     plt.title("dpos/du")
     plt.show()
     ctx.free()

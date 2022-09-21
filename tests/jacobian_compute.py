@@ -1,125 +1,58 @@
-from mujoco_py import load_model_from_path, MjSim, MjViewer
+import mujoco
 import numpy as np
-from collections import namedtuple
+import numdifftools as nd
 from scipy.optimize import approx_fprime
-
-State = namedtuple('State', 'time qpos qvel act udd_state')
-
-
-# This module calculates the derivatives of dynamics w.r.t states and controls fprime.
-# The main reason for this module is to be used in unit tests for C++ implementations
-
-def forward_sim_state(state_vector: np.array):
-    perturbed_state = sim.get_state()
-    row = state_vector.shape[0]
-    for joint in range(perturbed_state.qpos.shape[0]):
-        perturbed_state.qpos[joint] = state_vector[joint]
-
-    for joint in range(perturbed_state.qvel.shape[0]):
-        perturbed_state.qvel[joint] = state_vector[joint+int(row/2)]
-
-    sim.set_state(perturbed_state)
-    sim.step()
-
-    result_pos = np.array([sim.data.qpos[i] for i in range(sim.data.qpos.shape[0])]).reshape(sim.data.qpos.shape[0], 1)
-    result_vel = np.array([sim.data.qvel[i] for i in range(sim.data.qvel.shape[0])]).reshape(sim.data.qvel.shape[0], 1)
-
-    return np.vstack((result_pos, result_vel))
+from mujoco.derivative import *
 
 
-def forward_sim_acc_state(state_vector: np.array):
-    perturbed_state = sim.get_state()
-    row = state_vector.shape[0]
-    for joint in range(perturbed_state.qpos.shape[0]):
-        perturbed_state.qpos[joint] = state_vector[joint]
-
-    for joint in range(perturbed_state.qvel.shape[0]):
-        perturbed_state.qvel[joint] = state_vector[joint+int(row/2)]
-
-    sim.set_state(perturbed_state)
-    sim.step()
-
-    result = np.array([sim.data.qacc[i] for i in range(sim.data.qacc.shape[0])])
-
-    return result
+m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/2link.xml")
+d = mujoco.MjData(m)
+d_cp = mujoco.MjData(m)
+dfdu = MjDerivative(m, d, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
 
 
-def forward_sim_ctrl(ctrl_vector: np.array, state: State):
-    sim.set_state(state)
-    row = state.qpos.shape[0]
-    result = np.zeros(state.qpos.shape[0] + state.qvel.shape[0])
-    for joint in range(sim.data.ctrl.shape[0]):
-        sim.data.ctrl[joint] = ctrl_vector[joint]
-
-    sim.step()
-
-    for joint in range(state.qpos.shape[0]):
-        result[joint] = sim.data.qpos[joint]
-
-    for joint in range(state.qvel.shape[0]):
-        result[joint + row] = sim.data.qvel[joint]
-
-    return result
+def copy_data(d_src, d_target):
+    d_target.qpos = d_src.qpos
+    d_target.qvel = d_target.qvel
+    d_target.qacc = d_target.qacc
+    d_target.qfrc_applied = d_target.qfrc_applied
+    d_target.xfrc_applied = d_target.xfrc_applied
+    d_target.ctrl = d_target.ctrl
+    mujoco.mj_forward(m, d_target)
 
 
-def forward_sim_ctrl_acc(ctrl_vector: np.array, state: State):
-    sim.set_state(state)
-    for joint in range(sim.data.ctrl.shape[0]):
-        sim.data.ctrl[joint] = ctrl_vector[joint]
+def fwd_u(u):
+    d_cp.ctrl[1] = u
+    mujoco.mj_step(m, d_cp)
+    res = np.copy(d_cp.qpos)
+    copy_data(d, d_cp)
+    return res[0]
 
-    sim.step()
 
-    result = np.array([sim.data.qacc[i] for i in range(sim.data.qacc.shape[0])])
-
-    return result
+def fwd_x(x):
+    d.qpos = x[:m.nq]
+    d.qvel = x[m.nq:]
+    mujoco.mj_step(m, d)
+    return np.vstack((d.qpos, d.qvel, d.qacc)).flatten()
 
 
 if __name__ == "__main__":
-    model = load_model_from_path("/home/daniel/Repos/OptimisationBasedControl/models/cartpole.xml")
+    d.qpos, d.qvel, n_full, epsilon = 0, 0, m.nq * 3, 1e-6
+    d_cp.qpos, d_cp.qvel, = 0, 0
 
-    sim = MjSim(model)
-    viewer = MjViewer(sim)
+    u = np.zeros_like(d.ctrl)
+    dxdu_mine = dfdu.func()
 
-    new_state = State(time=0, qpos=np.array([0, 0]), qvel=np.array([0, 0]), act=0, udd_state={})
-    sim.set_state(new_state)
+    d = mujoco.MjData(m)
+    d.qpos, d.qvel, n_full, epsilon = 0, 0, m.nq * 3, 1e-6
+    d_cp.qpos, d_cp.qvel, = 0, 0
 
-    state_vec = np.array([new_state.qpos[0], new_state.qpos[1], new_state.qvel[0], new_state.qvel[1]])
+    jac_op = nd.Jacobian(lambda x: fwd_u(x), method='forward', step=epsilon, order=1, step_ratio=1)
+    dxdu_nd = jac_op(0)
 
-    epsilon = 1e-6
-    sim.set_state(new_state)
-    J_state = np.vstack(
-        [approx_fprime(state_vec, lambda x: forward_sim_state(x)[m], epsilon)
-         for m in range(state_vec.shape[0])]
-    )
+    print(f"[dxdu Error]: {np.square(np.sum(dxdu_nd[:-1] - dxdu_mine))}")
 
-    print(J_state)
+    hess_op = [nd.Hessian(lambda x: fwd_u(x)[m], method='forward') for m in range(n_full)]
+    dx2_d2u = np.vstack([hess_op[i](u) for i in range(len(hess_op))])
 
-    sim.set_state(new_state)
-    ctrl_vec = np.array([0, 0])
-    import time
-
-    start = time.time()
-    J_ctrl = np.vstack(
-        [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl(x, new_state)[m], epsilon)
-         for m in range(state_vec.shape[0])]
-    )
-    end = time.time()
-    print(end - start)
-    print(J_ctrl)
-
-
-    # sim.set_state(new_state)
-    # ctrl_vec = np.array([0.5, 0.3])
-    # J_ctrl_acc = np.vstack(
-    #     [approx_fprime(ctrl_vec, lambda x: forward_sim_ctrl_acc(x, new_state)[m], epsilon)
-    #      for m in range(sim.data.qacc.shape[0])]
-    # )
-
-    # print(J_ctrl_acc)
-    #
-    # sim.set_state(new_state)
-    # state_vec = np.array([new_state.qpos[0], new_state.qpos[1], new_state.qvel[0], new_state.qvel[1]])
-    # J_state_acc = np.vstack(
-    #     [approx_fprime(state_vec, lambda x: forward_sim_acc_state(x)[m], epsilon)
-    #      for m in range(sim.data.qacc.shape[0])]
-    # )
+    print(f"dx2_d2u: {dx2_d2u} and gauss dx2_d2u: {np.outer(2 * dxdu_mine.T, dxdu_mine)}")

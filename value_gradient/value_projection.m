@@ -65,8 +65,4 @@ plot(q_next, qd_next, '+');
 too_low  =  v_jac(q, qd)' * fnext <= -fcost(q, qd, 0);
 too_high =  v_jac(q, qd)' * fnext + alpha * v(q, qd) >= 0;
 
-shou
-if too_low
-    
-    
-end
+
