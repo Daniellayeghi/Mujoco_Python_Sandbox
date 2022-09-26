@@ -5,7 +5,7 @@ from scipy.optimize import approx_fprime
 from mujoco.derivative import *
 
 
-m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/2link.xml")
+m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 d = mujoco.MjData(m)
 d_cp = mujoco.MjData(m)
 dfdu = MjDerivative(m, d, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
@@ -37,8 +37,8 @@ def fwd_x(x):
 
 
 if __name__ == "__main__":
-    d.qpos, d.qvel, n_full, epsilon = [10, 10], [0, 0], m.nq * 2, 1e-6
-    d_cp.qpos, d_cp.qvel = [10, 10], [0, 0]
+    d.qpos, d.qvel, n_full, epsilon = np.random.rand(1), np.random.rand(1), m.nq * 2, 1e-6
+    d_cp.qpos, d_cp.qvel = d.qpos, d.qvel
 
     u = np.zeros_like(d.ctrl)
     dxdu_mine = dfdu.func()
@@ -48,9 +48,10 @@ if __name__ == "__main__":
     )
 
     dxdu_nd = jac_op(u.T)
-    print(f"[dxdu Error]: {np.square(np.sum(dxdu_nd - dxdu_mine))} \n")
+    print(f"jac_nd:\n{dxdu_nd}\njac_mine:\n{dxdu_mine}\n")
+    print(f"[dxdu Error]: {np.square(np.sum(dxdu_nd - dxdu_mine))}\n")
 
-    u_rand = np.array([0, 0])
+    u_rand = np.array([0])
 
     hess_ops = []
     for i in range(n_full):

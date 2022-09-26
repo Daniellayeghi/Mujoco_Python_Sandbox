@@ -7,7 +7,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 class MLP(nn.Module):
-    def __init__(self, layer_info: LayerInfo, apply_sigmoid=False):
+    def __init__(self, layer_info: LayerInfo, apply_sigmoid=False, scale=1):
         super(MLP, self).__init__()
         self.mlp = InitNetwork(layer_info).get_network()
 
@@ -17,13 +17,13 @@ class MLP(nn.Module):
 
         # Applying it to our net
         self.mlp.apply(init_weights)
-
         self.apply_sigmoid = apply_sigmoid
+        self.scale = scale
 
     def forward(self, input):
         output = self.mlp(input)
         if self.apply_sigmoid:
-            probs = torch.sigmoid(output)
+            probs = torch.sigmoid(output) * self.scale
             return probs
         return output
 

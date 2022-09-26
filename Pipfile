@@ -28,6 +28,7 @@ tensorflow-probability = "*"
 mujoco-py = "*"
 joblib = "*"
 numdifftools = "*"
+livelossplot = "*"
 
 [requires]
 python_version = "3.7"

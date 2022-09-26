@@ -8,13 +8,13 @@ from torch_device import device, is_cuda
 
 
 class ValueFunction(MLP):
-    def __init__(self, data_params: DataParams, layer_info: LayerInfo, apply_sigmoid=False):
-        super(ValueFunction, self).__init__(layer_info, apply_sigmoid)
+    def __init__(self, data_params: DataParams, layer_info: LayerInfo, apply_sigmoid=False, scale=1):
+        super(ValueFunction, self).__init__(layer_info, apply_sigmoid, scale)
         self.loss = list()
         self._params = data_params
         self._v = torch.Tensor((self._params.n_batch, 1))
-        self._dvdx = torch.Tensor(self._params.n_batch, self._params.n_state)
-        self._damping = torch.ones(self._params.n_batch, self._params.n_state).to(device) * 1e-6
+        self._dvdx = torch.Tensor(self._params.n_batch, 1, self._params.n_state)
+        self._damping = torch.ones(self._params.n_batch, 1, self._params.n_state).to(device) * 0
         self._dvdxx = torch.Tensor(self._params.n_batch, self._params.n_state, self._params.n_state)
         self._dvdx_desc = torch.Tensor(self._params.n_batch, self._params.n_state + self._params.n_desc)
 
@@ -23,7 +23,7 @@ class ValueFunction(MLP):
         v = self.forward(inputs).requires_grad_()
         dvdx = torch.autograd.grad(
             v, inputs, grad_outputs=torch.ones_like(v), create_graph=True
-        )[0][:, :self._params.n_state] + self._damping
+        )[0].view(self._params.n_batch, 1, self._params.n_state) + self._damping
         return dvdx
 
     def dvdxx(self, inputs):
@@ -31,7 +31,7 @@ class ValueFunction(MLP):
         for i in range(self._params.n_batch):
             dvdxx[i] = torch.autograd.functional.hessian(
                 self.forward, inputs[i]
-            )[:self._params.n_state, :self._params.n_state]
+            )
 
         return self._dvdxx
 
@@ -55,7 +55,7 @@ class ValueFunction(MLP):
     def update_grads(self, inputs):
         self.update_dvdx(inputs)
         self.update_dvdxx(inputs)
-        self.update_dvdx_desc(inputs)
+        # self.update_dvdx_desc(inputs)
 
     def update_dvdx(self, inputs):
         self._dvdx = self.dvdx(inputs).detach().clone()

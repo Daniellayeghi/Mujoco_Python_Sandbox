@@ -44,8 +44,7 @@ d_test = data[n_train:, :]
 
 # for value derivative
 d_train_d = TensorDataset(d_train)
-d_loader = DataLoader(d_train_d, batch_size=d_params.n_batch, shuffle=True, drop_last=True
-                      )
+d_loader = DataLoader(d_train_d, batch_size=d_params.n_batch, shuffle=True, drop_last=True)
 
 # Set up networks loss and params
 set_value_net__(value_net)
