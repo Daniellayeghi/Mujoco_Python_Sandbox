@@ -16,7 +16,7 @@ class MLP(nn.Module):
                 torch.nn.init.xavier_uniform(m.weight)
 
         # Applying it to our net
-        self.mlp.apply(init_weights)
+        # self.mlp.apply(init_weights)
         self.apply_sigmoid = apply_sigmoid
         self.scale = scale
 

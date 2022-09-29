@@ -17,12 +17,8 @@ class InitNetwork(nn.Module):
         modules = []
 
         for l_idx in range(len(layers)-1):
-            if l_idx == len(layers)-2:
-                if layer_info.act_funcs[l_idx] is None:
-                    args = [nn.Linear(layers[l_idx], layers[l_idx + 1])]
-                else:
-                    args = [nn.Linear(layers[l_idx], layers[l_idx + 1]), layer_info.act_funcs[l_idx]]
-
+            if layer_info.act_funcs[l_idx] is None:
+                args = [nn.Linear(layers[l_idx], layers[l_idx + 1])]
             else:
                 args = [nn.Linear(layers[l_idx], layers[l_idx + 1]), layer_info.act_funcs[l_idx]]
 

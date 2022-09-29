@@ -16,7 +16,6 @@ class ValueFunction(MLP):
         self._dvdx = torch.Tensor(self._params.n_batch, 1, self._params.n_state)
         self._damping = torch.ones(self._params.n_batch, 1, self._params.n_state).to(device) * 0
         self._dvdxx = torch.Tensor(self._params.n_batch, self._params.n_state, self._params.n_state)
-        self._dvdx_desc = torch.Tensor(self._params.n_batch, self._params.n_state + self._params.n_desc)
 
     def dvdx(self, inputs):
         # Compute network derivative w.r.t state
@@ -35,13 +34,6 @@ class ValueFunction(MLP):
 
         return self._dvdxx
 
-    def dvdx_desc(self, inputs):
-        v = self.forward(inputs).requires_grad_()
-        dvdx_desc = torch.autograd.grad(
-            v, inputs, grad_outputs=torch.ones_like(v), create_graph=True
-        )[0]
-        return dvdx_desc
-
     def get_dvdx(self, inputs):
         return self.dvdx(inputs).detach().clone()
 
@@ -55,16 +47,12 @@ class ValueFunction(MLP):
     def update_grads(self, inputs):
         self.update_dvdx(inputs)
         self.update_dvdxx(inputs)
-        # self.update_dvdx_desc(inputs)
 
     def update_dvdx(self, inputs):
         self._dvdx = self.dvdx(inputs).detach().clone()
 
     def update_dvdxx(self, inputs):
         self._dvdxx = self.dvdxx(inputs).detach().clone()
-
-    def update_dvdx_desc(self, inputs):
-        self._dvdx_desc = self.dvdx_desc(inputs).detach().clone()
 
 
 class OptimalPolicy(torch.nn.Module):
