@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # data = np.vstack(data)
 
     data = pd.read_csv(parent_path + "di_matlab_data.csv", sep=',', header=None).to_numpy()
-    data = shuffle(data)[0:int(data.shape[0] * .1), :]
+    data = shuffle(data)[0:int(data.shape[0] * .2), :]
     # ind = np.argsort(data[:, 2])
     # data = data[ind, :]
 
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     else:
         error = []
-        value_net.load_state_dict(torch.load("./op_value_relu5.pt"))
+        value_net.load_state_dict(torch.load("./op_value_relu6.pt"))
         value_net.eval()
         for d in d_loader:
             x = d[0][:, :-1].requires_grad_()
