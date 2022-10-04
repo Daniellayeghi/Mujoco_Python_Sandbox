@@ -25,7 +25,7 @@ if __name__ == "__main__":
     v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
     value_net = ValueFunction(d_params, LayerInfo(*v_layers), False, 1).to(device)
 
-    value_net.load_state_dict(torch.load("op_value_relu5.pt"))
+    value_net.load_state_dict(torch.load("op_value_relu6.pt"))
     value_net.eval()
 
     # State encoder network
@@ -50,13 +50,13 @@ if __name__ == "__main__":
 
     for pos in range(pos_arr.numpy().shape[0]):
         for vel in range(vel_arr.numpy().shape[0]):
-            # value_matrix[pos][vel] = value_net(x_encoder_net(
-            #         torch.tensor([pos_arr[pos], vel_arr[vel], goal[0], goal[1]]).float().to(device)
-            # )).detach().cpu().numpy()[0]
+            value_matrix[pos][vel] = value_net(x_encoder_net(
+                    torch.tensor([pos_arr[pos], vel_arr[vel], pos_arr[pos]-goal[0], vel_arr[vel]-goal[1]]).float().to(device)
+            )).detach().cpu().numpy()[0]
 
-            value_matrix[pos][vel] = value_net(
-                    torch.tensor([pos_arr[pos] - goal[0], vel_arr[vel] - goal[1]]).float().to(device)
-            ).detach().cpu().numpy()[0]
+            # value_matrix[pos][vel] = value_net(
+            #         torch.tensor([pos_arr[pos] - goal[0], vel_arr[vel] - goal[1]]).float().to(device)
+            # ).detach().cpu().numpy()[0]
 
     [P, V] = np.meshgrid(pos_arr.numpy(), vel_arr.numpy())
 

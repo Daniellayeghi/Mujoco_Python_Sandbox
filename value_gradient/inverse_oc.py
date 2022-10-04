@@ -18,19 +18,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Training')
     parser.add_argument('-t', '--train', help='Train NN?', required=True, type=str, default='n')
     parser.add_argument('-bs', '--batch_size', help="Batch size", required=True, type=int, default=16)
+    parser.add_argument('-p', '--path', help="Path to Data", required=True, type=str, default='\n')
     args = parser.parse_args()
     TRAIN = args.train == 'y'
     batch_size = args.batch_size
+    data_path = args.path
 
     # Mujoco models
     d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], batch_size)
-    parent_path = "/srv/data/daniel/ssd0/"
-    data = pd.read_csv(parent_path + "data_di.csv", sep=',', header=None).to_numpy()
-    data = shuffle(data)[0:int(data.shape[0] * .7), :]
+    data = pd.read_csv(data_path, sep=',', header=None).to_numpy()
+    data = shuffle(data)[0:int(data.shape[0] * .01), :]
     # ind = np.argsort(data[:, 2])
     # data = data[ind, :]
 
-    n_train = int(data.shape[0] * 0.7)
+    n_train = int(data.shape[0] * 0.05)
     d_train = torch.Tensor(data[0:n_train, :]).to(device)
     d_test = torch.Tensor(data[n_train:, :]).to(device)
 
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     val_input, value_output = d_params.n_state, 1
     layer_dims = [val_input, 64, 128, 64, value_output]
     v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
-    value_net = ValueFunction(d_params, LayerInfo(*v_layers), False, 1).to(device)
+    value_net = MLP(LayerInfo(*v_layers), False, 1).to(device)
 
     # State encoder network
     x_encoder_input, x_encoder_output = d_params.n_state + d_params.n_desc, d_params.n_state
@@ -57,40 +58,41 @@ if __name__ == "__main__":
     x_decoder_layers = [x_decoder_layer_dims, [], 0, [None, None]]
     x_decoder_net = MLP(LayerInfo(*x_decoder_layers), False, 1).to(device)
 
-    lr = 3e-4
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, value_net.parameters()), lr=lr)
+    class OptPolicy(torch.nn.Module):
+        def __init__(self, feature_net: MLP, value_net: MLP, RinvB: torch.Tensor, params: DataParams):
+            super(OptPolicy, self).__init__()
+            self.feature_net = feature_net
+            self.value_net = value_net
+            self.RinvB = RinvB
+            self.params = params
 
-    set_value_net__(value_net)
-    loss_v = loss_value_proj.apply
+        def forward(self, x_external):
+            features = self.feature_net(x_external).requires_grad_()
+            value = self.value_net(features).requires_grad_()
+
+            dvdx = torch.autograd.grad(
+                value, features, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
+            )[0].requires_grad_().view(self.params.n_batch, 1, self.params.n_state)
+
+            u = -torch.bmm(b_B_R, dvdx.mT)
+
+            return u
 
     b_Rinv = torch.ones((batch_size, 1, 1)) * 1/50
     b_Btran = torch.tensor([0.0005, 0.09999975]).repeat(d_params.n_batch, 1, 1)
     b_B_R = 0.5 * torch.bmm(b_Rinv, b_Btran).to(device)
     goal = torch.zeros((1, d_params.n_state)).to(device)
 
-    def ctrl(x, value):
-        v = value(x).requires_grad_()
-        dvdx = torch.autograd.grad(
-            v, x, grad_outputs=torch.ones_like(v), create_graph=True, only_inputs=True
-        )[0].requires_grad_().view(d_params.n_batch, 1, d_params.n_state)
+    pi = OptPolicy(x_encoder_net, value_net, b_B_R, d_params)
 
-        u = -torch.bmm(b_B_R, dvdx.mT)
-        return u
+    lr = 3e-4
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, pi.parameters()), lr=lr)
 
     mse_loss = torch.nn.MSELoss()
 
     def b_l2_loss(x_external, u_star):
-        # pos_error = x_external[:, 0] - x_external[:, 2]
-        # vel_error = x_external[:, 1] - x_external[:, 3]
-        # x_enc = torch.vstack((pos_error, vel_error)).T
-        x_enc = x_encoder_net(x_external).requires_grad_()
-        # x_dec = x_decoder_net(x_enc).requires_grad_()
-        # l_mse = mse_loss(x_external, x_dec) * 0
-        l1_lambda = 0.0005
-        l1_enc = sum(p.abs().sum() for p in x_encoder_net.parameters()) * l1_lambda * 1
-        # l1_dec = sum(p.abs().sum() for p in x_decoder_net.parameters()) * 0
-        l_ioc = u_star.view(d_params.n_batch, d_params.n_ctrl, 1) - ctrl(x_enc, value_net)
-        loss = torch.mean(l_ioc.square().sum(2)) + l1_enc
+        l_ioc = u_star.view(d_params.n_batch, d_params.n_ctrl, 1) - pi(x_external)
+        loss = torch.mean(l_ioc.square().sum(2))
         return loss
 
     def save_models(value_path: str, encoder_path: str):
@@ -98,6 +100,8 @@ if __name__ == "__main__":
         torch.save(value_net.state_dict(), value_path + ".pt")
         torch.save(x_encoder_net.state_dict(), encoder_path + ".pt")
 
+    value_net.train()
+    x_encoder_net.train()
 
     if TRAIN:
         try:
@@ -133,6 +137,10 @@ if __name__ == "__main__":
                 print('train loss: {} epoch: {} lr: {}'.format(epoch_loss_train.item(), epoch, optimizer.param_groups[0]['lr']))
                 print('valid loss: {} epoch: {} lr: {}'.format(epoch_loss_test.item(), epoch, optimizer.param_groups[0]['lr']))
                 print(f'bathc time: {end-now}')
+
+                for param in x_encoder_net.parameters():
+                    print(param)
+
             save_models("./op_value_relu6", "./op_enc_relu6")
 
         except KeyboardInterrupt:
