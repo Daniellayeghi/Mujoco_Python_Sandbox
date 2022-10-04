@@ -12,6 +12,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.utils import shuffle
 import argparse
+import time
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Training')
@@ -21,30 +22,11 @@ if __name__ == "__main__":
     TRAIN = args.train == 'y'
     batch_size = args.batch_size
 
-    # TRAIN = False
-    # # Data params
-    # batch_size = 128
-
     # Mujoco models
-    m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], batch_size)
-    d_t = mujoco.MjData(m)
-
-    parent_path = "~/Desktop/data/"
-    # data1 = np.load("di_data.npy")
-    # data = []
-    # for i in [3]:
-    #     name = f"di{i}"
-    #     data_q = pd.read_csv(parent_path + name + "_features_pos.csv", sep=',', header=None)
-    #     data_v = pd.read_csv(parent_path + name + "_features_pos.csv", sep=',', header=None)
-    #     data_g = pd.read_csv(parent_path + name + "_features_goal.csv", sep=',', header=None)
-    #     data_u = pd.read_csv(parent_path + name + "_features_ctrl.csv", sep=',', header=None)
-    #     data.append(np.hstack((data_q, data_v, data_g, data_u)))
-    #
-    # data = np.vstack(data)
-
-    data = pd.read_csv(parent_path + "di_matlab_data.csv", sep=',', header=None).to_numpy()
-    data = shuffle(data)[0:int(data.shape[0] * .2), :]
+    parent_path = "/srv/data/daniel/ssd0/"
+    data = pd.read_csv(parent_path + "data_di.csv", sep=',', header=None).to_numpy()
+    data = shuffle(data)[0:int(data.shape[0] * .7), :]
     # ind = np.argsort(data[:, 2])
     # data = data[ind, :]
 
@@ -75,9 +57,8 @@ if __name__ == "__main__":
     x_decoder_layers = [x_decoder_layer_dims, [], 0, [None, None]]
     x_decoder_net = MLP(LayerInfo(*x_decoder_layers), False, 1).to(device)
 
-    lr = 1e-4
+    lr = 3e-4
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, value_net.parameters()), lr=lr)
-    # lr_s = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.9, last_epoch=- 1)
 
     set_value_net__(value_net)
     loss_v = loss_value_proj.apply
@@ -90,7 +71,7 @@ if __name__ == "__main__":
     def ctrl(x, value):
         v = value(x).requires_grad_()
         dvdx = torch.autograd.grad(
-            v, x, grad_outputs=torch.ones_like(v), create_graph=True
+            v, x, grad_outputs=torch.ones_like(v), create_graph=True, only_inputs=True
         )[0].requires_grad_().view(d_params.n_batch, 1, d_params.n_state)
 
         u = -torch.bmm(b_B_R, dvdx.mT)
@@ -121,8 +102,9 @@ if __name__ == "__main__":
     if TRAIN:
         try:
             iter = 100
-            for epoch in range(300):
+            for epoch in range(500):
                 running_loss = 0
+                now = time.time()
                 for i, d_t in enumerate(d_loader):
                     # TODO: Maybe this copy is unnecessary
                     x_external = (d_t[0][:, :-d_params.n_ctrl]).requires_grad_()
@@ -134,6 +116,7 @@ if __name__ == "__main__":
                     running_loss += loss.detach() * len(d_t)
                     if not (i % iter):
                         print(f"Batch completion train: {int(i / len(d_loader) * 100)}%,", end="\r")
+                end = time.time()
 
                 valid_loss = 0.0
                 for i, d_v in enumerate(d_loader_test):
@@ -149,8 +132,7 @@ if __name__ == "__main__":
 
                 print('train loss: {} epoch: {} lr: {}'.format(epoch_loss_train.item(), epoch, optimizer.param_groups[0]['lr']))
                 print('valid loss: {} epoch: {} lr: {}'.format(epoch_loss_test.item(), epoch, optimizer.param_groups[0]['lr']))
-                # lr_s.step()
-
+                print(f'bathc time: {end-now}')
             save_models("./op_value_relu6", "./op_enc_relu6")
 
         except KeyboardInterrupt:
