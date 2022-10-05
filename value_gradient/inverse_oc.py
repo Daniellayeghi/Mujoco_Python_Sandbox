@@ -27,11 +27,11 @@ if __name__ == "__main__":
     # Mujoco models
     d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], batch_size)
     data = pd.read_csv(data_path, sep=',', header=None).to_numpy()
-    data = shuffle(data)[0:int(data.shape[0] * .01), :]
+    data = shuffle(data)[0:int(data.shape[0] * .7), :]
     # ind = np.argsort(data[:, 2])
     # data = data[ind, :]
 
-    n_train = int(data.shape[0] * 0.05)
+    n_train = int(data.shape[0] * 0.7)
     d_train = torch.Tensor(data[0:n_train, :]).to(device)
     d_test = torch.Tensor(data[n_train:, :]).to(device)
 
@@ -42,8 +42,8 @@ if __name__ == "__main__":
 
     # Networks and optimizers
     val_input, value_output = d_params.n_state, 1
-    layer_dims = [val_input, 64, 128, 64, value_output]
-    v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
+    layer_dims = [val_input, 16, 16, value_output]
+    v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), None]]
     value_net = MLP(LayerInfo(*v_layers), False, 1).to(device)
 
     # State encoder network
@@ -91,9 +91,10 @@ if __name__ == "__main__":
     mse_loss = torch.nn.MSELoss()
 
     def b_l2_loss(x_external, u_star):
+        l1_enc = sum(p.abs().sum() for p in pi.feature_net.parameters()) * 0.0001 * 1
         l_ioc = u_star.view(d_params.n_batch, d_params.n_ctrl, 1) - pi(x_external)
         loss = torch.mean(l_ioc.square().sum(2))
-        return loss
+        return loss + l1_enc
 
     def save_models(value_path: str, encoder_path: str):
         print("########## Saving Trace ##########")
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     if TRAIN:
         try:
             iter = 100
-            for epoch in range(500):
+            for epoch in range(300):
                 running_loss = 0
                 now = time.time()
                 for i, d_t in enumerate(d_loader):
