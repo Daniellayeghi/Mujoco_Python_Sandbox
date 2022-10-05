@@ -42,8 +42,8 @@ if __name__ == "__main__":
 
     # Networks and optimizers
     val_input, value_output = d_params.n_state, 1
-    layer_dims = [val_input, 16, 16, value_output]
-    v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), None]]
+    layer_dims = [val_input,32, 64, 32, value_output]
+    v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
     value_net = MLP(LayerInfo(*v_layers), False, 1).to(device)
 
     # State encoder network
