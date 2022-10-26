@@ -1,5 +1,6 @@
 import mujoco
 from mujoco.derivative import *
+from dm_control.mujoco import Physics
 import matplotlib.pyplot as plt
 import numpy as np
 import glfw
@@ -9,6 +10,7 @@ import math
 This file tests the derivative bindings.
 '''
 m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
+[dm, d2] = Physics.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 d = mujoco.MjData(m)
 d.qpos = np.random.random(m.nq) * 5
 print(m.nbody)
@@ -49,14 +51,14 @@ def step(m, d):
 glfw.set_scroll_callback(glfw.get_current_context(), scroll)
 
 if __name__ == "__main__":
-    dfdu = MjDerivative(m, d, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
+    dfdu = MjDerivative(m, d2, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
     df_du = list()
 
     while not glfw.window_should_close(glfw.get_current_context()):
         sim_start = d.time
         while(d.time - sim_start) < 1.0/60.0:
-            step(m, d)
-            d.ctrl[0] = - np.random.random(1) * .5
+            step(m, d2)
+            d2.ctrl[0] = - np.random.random(1) * .5
             res = dfdu.func()
             print(res)
             df_du.append(res.flatten())

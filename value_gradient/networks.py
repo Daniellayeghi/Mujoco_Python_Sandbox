@@ -4,7 +4,7 @@ from utilities.torch_utils import gradify
 from utilities.data_utils import *
 import torch
 import torch.nn.functional as F
-from torch_device import device, is_cuda
+from value_gradient.utilities.torch_device import device
 
 
 class ValueFunction(MLP):

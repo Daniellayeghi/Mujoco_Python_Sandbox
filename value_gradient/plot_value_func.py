@@ -5,7 +5,7 @@ from utilities.data_utils import *
 from mlp_torch import MLP
 from networks import ValueFunction
 from net_utils_torch import LayerInfo
-from torch_device import device
+from value_gradient.utilities.torch_device import device
 import argparse
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Networks and optimizers
     val_input, value_output = d_params.n_state, 1
-    layer_dims = [val_input, 64, 128, 64, value_output]
+    layer_dims = [val_input, 32, 64,32, value_output]
     v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
     value_net = ValueFunction(d_params, LayerInfo(*v_layers), False, 1).to(device)
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     for pos in range(pos_arr.numpy().shape[0]):
         for vel in range(vel_arr.numpy().shape[0]):
             value_matrix[pos][vel] = value_net(x_encoder_net(
-                    torch.tensor([pos_arr[pos], vel_arr[vel], pos_arr[pos]-goal[0], vel_arr[vel]-goal[1]]).float().to(device)
+                    torch.tensor([pos_arr[pos], vel_arr[vel], goal[0], goal[1]]).float().to(device)
             )).detach().cpu().numpy()[0]
 
             # value_matrix[pos][vel] = value_net(

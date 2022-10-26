@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import torch
-from torch_device import device, is_cuda
+from value_gradient.utilities.torch_device import device
 from mlp_torch import MLP
 from net_utils_torch import LayerInfo
 from utilities.data_utils import *

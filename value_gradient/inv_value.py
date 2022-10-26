@@ -5,7 +5,7 @@ from utilities.data_utils import *
 from net_loss_functions import *
 from task_loss_functions import *
 from networks import ValueFunction, OptimalPolicy
-from torch_device import device, is_cuda
+from value_gradient.utilities.torch_device import device
 import mujoco
 import pandas as pd
 import torch

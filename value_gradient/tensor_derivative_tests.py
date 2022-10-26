@@ -6,7 +6,7 @@ from utilities.torch_utils import *
 from mujoco import MjData
 import mujoco
 import torch
-import cProfile
+from utilities.mujoco_torch import torch_mj_inv, torch_mj_set_attributes
 
 m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 
@@ -20,6 +20,8 @@ x_full = torch.randn(batch_size, d_params.n_state + d_params.n_vel, dtype=torch.
 x_full[0, :] = torch.tensor([0.5442, -1.03142738, -0.02782536])
 u_star = torch.zeros(batch_size, d_params.n_state + d_params.n_vel, dtype=torch.double)
 u_star_loss = np.ones_like(d.qfrc_inverse)
+
+torch_mj_set_attributes(m, batch_size)
 
 
 def set_xfull(d: MjData, xf):
@@ -46,14 +48,27 @@ def clone_loss(xf):
     return np.sum(np.square(u_star_loss - d.qfrc_inverse))
 
 
+t_mj_inv = torch_mj_inv.apply
+
 if __name__ == "__main__":
     x_full_np = tensor_to_np(x_full.flatten())
-    J_ctrl = approx_fprime(x_full_np, f_inv, 1e-6)
+    J_inv = approx_fprime(x_full_np, f_inv, 1e-6)
     J_effort = approx_fprime(x_full_np, effort_loss, 1e-6)
     J_clone = approx_fprime(x_full_np, clone_loss, 1e-6)
 
-    print(f"Finv Scipy deriv:\n{J_ctrl}")
-    print(f"Finv FD deriv:\n{bo.b_dfinvdx_full(x_full)}")
+    set_xfull(d, x_full_np)
+    mujoco.mj_inverse(m, d)
+    print(f"Finv mujoco: \n{d.qfrc_inverse}")
+    qfrc_torch = t_mj_inv(x_full)
+    print(f"Finv torch: \n{qfrc_torch}")
+
+    x_full.retain_grad()
+    qfrc_torch.retain_grad()
+    qfrc_torch.backward()
+
+    print(f"dFinvdx torch deriv:\n{x_full.grad}")
+    print(f"dFinvdx Scipy deriv:\n{J_inv}")
+    print(f"dFinvdx FD deriv:\n{bo.b_dfinvdx_full(x_full)}")
 
     print(f"Effort Scipy deriv:\n{J_effort}")
     print(f"Effort FD deriv:\n{2 * bo.b_qfrcs(x_full) * bo.b_dfinvdx_full(x_full)}")

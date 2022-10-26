@@ -29,7 +29,7 @@ end
 %% Projection
 close all
 
-alpha = 0;
+alpha = 1;
 
 % Cost function and their derivatives
 f = @(q, qd, qdd)([qd; qdd]);
@@ -46,7 +46,7 @@ proj_lower = @(q, qd, dfdt)(dfd - v_jac(q, qd) * v_jac(q, qd)' * dfdt / ...
 
 integrator = @(q, qd, qdd)([q + qd * 0.01; qd + qdd * 0.01]);
 
-q = 1.2; qd = 1.2; qdd = 3;
+q = 1.2; qd = 1; qdd = 3;
 q_next_h = q + qd * 0.01; qd_next_h = qd + qdd * 0.01;
 
 hold on;
@@ -55,7 +55,7 @@ quiver(poses, vels, vq, vqd, 'b');
 plot(q, qd, '-o');
 plot(q_next_h, qd_next_h, '*');
 
-dfdt   = [qd; qdd];
+dfdt   = [qd_next_h; qdd];
 fnext  = proj_upper(q, qd, dfdt);
 state  = integrator(q, qd, fnext(2));
 q_next = state(1); qd_next = state(2);
