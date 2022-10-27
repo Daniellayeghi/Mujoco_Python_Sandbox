@@ -29,8 +29,7 @@ end
 %% Projection
 close all
 
-alpha = 1;
-
+alpha = .00000001;
 % Cost function and their derivatives
 f = @(q, qd, qdd)([qd; qdd]);
 v = @(q, qd)(sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2);
@@ -46,7 +45,7 @@ proj_lower = @(q, qd, dfdt)(dfd - v_jac(q, qd) * v_jac(q, qd)' * dfdt / ...
 
 integrator = @(q, qd, qdd)([q + qd * 0.01; qd + qdd * 0.01]);
 
-q = 1.2; qd = 1; qdd = 3;
+q = 1.2; qd = 1.2; qdd = 5;
 q_next_h = q + qd * 0.01; qd_next_h = qd + qdd * 0.01;
 
 hold on;
@@ -61,6 +60,9 @@ state  = integrator(q, qd, fnext(2));
 q_next = state(1); qd_next = state(2);
 
 plot(q_next, qd_next, '+');
+title("J level sets");
+xlabel("q");
+ylabel("v");
 
 too_low  =  v_jac(q, qd)' * fnext <= -fcost(q, qd, 0);
 too_high =  v_jac(q, qd)' * fnext + alpha * v(q, qd) >= 0;
