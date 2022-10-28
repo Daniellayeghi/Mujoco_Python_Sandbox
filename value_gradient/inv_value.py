@@ -33,7 +33,7 @@ policy_net = MLP(LayerInfo(*p_layers)).to(device)
 
 opt_policy = OptimalPolicy(policy_net, value_net, d_params).to(device)
 lr = 1e-4
-optimizer = torch.optim.LBFGS(filter(lambda p: p.requires_grad, policy_net.parameters()), lr=lr)
+optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, policy_net.parameters()), lr=lr)
 
 # Load Data
 parent_path = "../../OptimisationBasedControl/data/"
