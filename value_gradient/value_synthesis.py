@@ -24,8 +24,6 @@ class PointMassData:
         self.qvel = self.x_xd[:, 1]
         self.qacc = self.x_xd[:, 2]
 
-        self.x_xd
-
 
 def step_internal(data: PointMassData, dt):
     data.qpos = data.qpos + data.qvel * dt

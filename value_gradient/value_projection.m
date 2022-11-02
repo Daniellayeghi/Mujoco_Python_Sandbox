@@ -1,26 +1,26 @@
 %% Plot policy against projection
 clear all
 syms q qd qdd real;
-pi = -q + sqrt(3) * qd;
-v  = sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2;
+pi = -q_t + sqrt(3) * qd_t;
+v  = sqrt(3) * q_t^2 + 2 * q_t * qd_t + sqrt(3) * qd_t^2;
 vx = jacobian(v);
-l  = q^2 + qd^2 + qdd^2;
-f  = [qd; qdd];
+l  = q_t^2 + qd_t^2 + qdd_t^2;
+f  = [qd_t; qdd_t];
 dp = l + vx * f;
-pi_d = diff(dp, qdd);
+pi_d = diff(dp, qdd_t);
 poses = -2:0.1:2;
 vels = -2:0.1:2;
 [POS, VEL] = meshgrid(poses, vels);
-v = subs(v, q, poses);
+v = subs(v, q_t, poses);
 VALUES = ones(size(POS));
 CTRLS = ones(size(POS));
 
 for i = 1:length(poses)
-    expr1 =  subs(v(1, i), q, poses(1, i));
-    expr2 =  subs(pi, q, poses(1, i));
+    expr1 =  subs(v(1, i), q_t, poses(1, i));
+    expr2 =  subs(pi, q_t, poses(1, i));
     for j = 1:length(vels)
-        VALUES(i, j) = subs(expr1, qd, vels(1, j));
-        CTRLS(i, j) = subs(expr2, qd, vels(1, j));
+        VALUES(i, j) = subs(expr1, qd_t, vels(1, j));
+        CTRLS(i, j) = subs(expr2, qd_t, vels(1, j));
     end
 end
 
@@ -29,43 +29,50 @@ end
 %% Projection
 close all
 
-alpha = 1;
+alpha = 50;
 % Cost function and their derivatives
 f = @(q, qd, qdd)([qd; qdd]);
 v = @(q, qd)(sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2);
 fcost = @(q, qd, u)(q^2 + qd^2 + u^2);
 v_jac = @(q, qd)([2*qd + 2*3^(1/2)*q; 2*q + 2*3^(1/2)*qd]);
-v_jac_norm = @(q, qd)(sqrt(v_jac(q, qd)' * v_jac(q, qd)));
+v_jac_norm = @(q, qd)(sqrt(v_jac(q, qd)' * v_jac(q, qd) + 1e-6));
 
 % Projection operator
-proj_upper = @(q, qd, dfdt)(dfdt - v_jac(q, qd)/v_jac_norm(q, qd) * (v_jac(q, qd)' * dfdt + alpha * v(q, qd)));
+proj_upper = @(q, qd, dfdt)(dfdt - v_jac(q, qd)/v_jac_norm(q, qd) * (v_jac(q, qd)' * dfdt + alpha * (q^2 + qd^2)));
 proj_lower = @(q, qd, dfdt)(dfd - v_jac(q, qd) * v_jac(q, qd)' * dfdt / ...
     v_jac_norm(q, qd));
 
 integrator = @(q, qd, qdd)([q + qd * 0.01; qd + qdd * 0.01]);
 
-q = 1.2; qd = 1.2; qdd = 0;
-q_next_h = q + qd * 0.01; qd_next_h = qd + qdd * 0.01;
-
+q_t = rand* 2; qd_t = rand * 2; qdd_t = 0;
+figure;
+hax1 = axes;
 hold on;
 contourf(POS, VEL, VALUES);
 quiver(poses, vels, vq, vqd, 'b');
-plot(q, qd, '-o');
-plot(q_next_h, qd_next_h, '*');
-
-dfdt   = [qd_next_h; qdd];
-fnext  = proj_upper(q, qd, dfdt);
-q_hat_next = q + qd_next_h * 0.01;
-qd_hat_next = q + fnext(2) * 0.01;
-state  = integrator(q, fnext(1), fnext(2));
-q_next = state(1); qd_next = state(2);
-
-% plot(q_hat_next,  fnext(2), '+');
+plot(q_t, qd_t, '-o');
 title("J level sets");
 xlabel("q");
 ylabel("v");
 
-too_low  =  v_jac(q, qd)' * fnext <= -fcost(q, qd, 0);
-too_high =  v_jac(q, qd)' * fnext + alpha * v(q, qd) >= 0;
+for i = 1:50
+    % compute the next state
+    qh_t2 = q_t + qd_t * 0.01; qdh_t2 = qd_t + qdd_t * 0.01;
+    plot(hax1, qh_t2, qdh_t2, '*');
+    
+    % assemble dxdt and project
+    dfdt   = [qd_t; qdd_t];
+    fnext  = proj_upper(q_t, qd_t, dfdt);
+    
+    % integrate to find next state along V
+    q_hat_next = q_t + fnext(1) * 0.01;
+    qd_hat_next = qd_t + fnext(2) * 0.01;
+    
+    % update state
+    q_t = q_hat_next;
+    qd_t = qd_hat_next;
+    plot(hax1, q_hat_next, qd_hat_next, '+');
+    drawnow;
+end
 
 
