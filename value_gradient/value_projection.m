@@ -29,23 +29,22 @@ end
 %% Projection
 close all
 
-alpha = .00000001;
+alpha = 1;
 % Cost function and their derivatives
 f = @(q, qd, qdd)([qd; qdd]);
 v = @(q, qd)(sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2);
 fcost = @(q, qd, u)(q^2 + qd^2 + u^2);
 v_jac = @(q, qd)([2*qd + 2*3^(1/2)*q; 2*q + 2*3^(1/2)*qd]);
-v_jac_norm = @(q, qd)(sum(square(v_jac(q, qd))));
+v_jac_norm = @(q, qd)(sqrt(v_jac(q, qd)' * v_jac(q, qd)));
 
 % Projection operator
-proj_upper = @(q, qd, dfdt)(dfdt - v_jac(q, qd) * (v_jac(q, qd)' * dfdt + ...
-    alpha * v(q, qd)) /v_jac_norm(q, qd));
+proj_upper = @(q, qd, dfdt)(dfdt - v_jac(q, qd)/v_jac_norm(q, qd) * (v_jac(q, qd)' * dfdt + alpha * v(q, qd)));
 proj_lower = @(q, qd, dfdt)(dfd - v_jac(q, qd) * v_jac(q, qd)' * dfdt / ...
     v_jac_norm(q, qd));
 
 integrator = @(q, qd, qdd)([q + qd * 0.01; qd + qdd * 0.01]);
 
-q = 1.2; qd = 1.2; qdd = 5;
+q = 1.2; qd = 1.2; qdd = 0;
 q_next_h = q + qd * 0.01; qd_next_h = qd + qdd * 0.01;
 
 hold on;
@@ -56,10 +55,12 @@ plot(q_next_h, qd_next_h, '*');
 
 dfdt   = [qd_next_h; qdd];
 fnext  = proj_upper(q, qd, dfdt);
-state  = integrator(q, qd, fnext(2));
+q_hat_next = q + qd_next_h * 0.01;
+qd_hat_next = q + fnext(2) * 0.01;
+state  = integrator(q, fnext(1), fnext(2));
 q_next = state(1); qd_next = state(2);
 
-plot(q_next, qd_next, '+');
+% plot(q_hat_next,  fnext(2), '+');
 title("J level sets");
 xlabel("q");
 ylabel("v");

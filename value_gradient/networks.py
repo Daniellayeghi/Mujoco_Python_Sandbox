@@ -4,7 +4,7 @@ from utilities.torch_utils import gradify
 from utilities.data_utils import *
 import torch
 import torch.nn.functional as F
-from value_gradient.utilities.torch_device import device
+from utilities.torch_device import device
 
 
 class ValueFunction(MLP):
@@ -22,7 +22,7 @@ class ValueFunction(MLP):
         v = self.forward(inputs).requires_grad_()
         dvdx = torch.autograd.grad(
             v, inputs, grad_outputs=torch.ones_like(v), create_graph=True
-        )[0].view(self._params.n_batch, 1, self._params.n_state) + self._damping
+        )[0]
         return dvdx
 
     def dvdxx(self, inputs):
