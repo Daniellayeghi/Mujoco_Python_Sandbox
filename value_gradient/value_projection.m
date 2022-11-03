@@ -1,8 +1,9 @@
 %% Plot policy against projection
 clear all
 syms q qd qdd real;
-pi = -q_t + sqrt(3) * qd_t;
-v  = sqrt(3) * q_t^2 + 2 * q_t * qd_t + sqrt(3) * qd_t^2;
+filename = "~/Desktop/cached_value.mat";
+pi = -q + sqrt(3) * qd;
+v  = sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2;
 vx = jacobian(v);
 l  = q_t^2 + qd_t^2 + qdd_t^2;
 f  = [qd_t; qdd_t];
@@ -15,6 +16,7 @@ v = subs(v, q_t, poses);
 VALUES = ones(size(POS));
 CTRLS = ones(size(POS));
 
+%% Compute values
 for i = 1:length(poses)
     expr1 =  subs(v(1, i), q_t, poses(1, i));
     expr2 =  subs(pi, q_t, poses(1, i));
@@ -25,9 +27,11 @@ for i = 1:length(poses)
 end
 
 [vq, vqd] = gradient(VALUES);
+save(filename, 'VALUES');
 
 %% Projection
 close all
+VALUES = load(filename).VALUES;
 
 alpha = 50;
 % Cost function and their derivatives
