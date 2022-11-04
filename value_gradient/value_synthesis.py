@@ -59,12 +59,12 @@ def dvdx(x, value_net):
     return dvdx
 
 
-def project(pm_data, x_xd_next, dvdx, loss):
+def project(pm_data, dvdx, loss):
     dvdx_batch = dvdx.view(n_bodies, 1, 2)
     x_xd_batch = pm_data.x_xd.view(n_bodies, 3, 1)
-    xd_next = x_xd_next[:, 1:]
+    xd_batch = pm_data.xd.view(n_bodies, 2, 1)
     norm = (dvdx_batch**2).sum(dim=2).view(n_bodies, 1, 1)
-    unnorm_porj = Func.relu((dvdx_batch@xd_next) + loss(x_xd_batch))
+    unnorm_porj = Func.relu((dvdx_batch@xd_batch) + loss(x_xd_batch))
     delta_xd = - (dvdx_batch/norm) * unnorm_porj
     return delta_xd
 
@@ -99,9 +99,8 @@ if __name__ == "__main__":
         for t in range(time):
             x = d_pm.x.detach().requires_grad_()
             Vx = dvdx(x, value_net)
-            step_external(d_pm, x_xd_external, 0.01)
-            delta_xd = project(d_pm, x_xd_external, Vx, lambda x_xd: 1e-3 * loss(x_xd))[:, -1]
-            d_pm.qacc = d_pm.qacc + delta_xd[:, -1]
+            delta_xd = project(d_pm, Vx, lambda x_xd: 1 * loss(x_xd))
+            d_pm.xd = d_pm.xd - delta_xd
             step_internal(d_pm, 0.01)
             buffer[t * n_bodies:(t * n_bodies) + n_bodies, :] = d_pm.x_xd
 
@@ -109,6 +108,7 @@ if __name__ == "__main__":
         buffer_ds = TensorDataset(buffer_d)
         buffer_loader = DataLoader(buffer_ds, batch_size=d_params.n_batch, shuffle=True, drop_last=True)
         batch_loss = lambda x_xd: torch.mean(loss(x_xd))
+
         for i, d in enumerate(buffer_loader):
             d = d[0].detach().requires_grad_()
             optimizer.zero_grad()
