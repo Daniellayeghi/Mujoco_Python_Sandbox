@@ -32,6 +32,7 @@ save(filename, 'VALUES');
 %% Projection
 close all
 VALUES = load(filename).VALUES;
+[vq, vqd] = gradient(VALUES);
 
 alpha = 50;
 % Cost function and their derivatives
@@ -58,8 +59,9 @@ plot(q_t, qd_t, '-o');
 title("J level sets");
 xlabel("q");
 ylabel("v");
+pos_buff = []
 
-for i = 1:50
+for i = 1:100
     % compute the next state
     qh_t2 = q_t + qd_t * 0.01; qdh_t2 = qd_t + qdd_t * 0.01;
     plot(hax1, qh_t2, qdh_t2, '*');
@@ -77,6 +79,9 @@ for i = 1:50
     qd_t = qd_hat_next;
     plot(hax1, q_hat_next, qd_hat_next, '+');
     drawnow;
+    pos_buff = [pos_buff, q_hat_next];
 end
+figure()
+plot(pos_buff)
 
 
