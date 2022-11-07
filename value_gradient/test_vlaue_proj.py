@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
             # in the case of the point mass the step in the cartesian
             # step is 1 to 1 with the "external point" mass (NO IK)
-            d_cp.qpos, d_cp.qvel, d_cp.qacc = d.qpos + xd_next[0].detach().numpy() * 0.01, d.qvel + xd_next[1].detach().numpy() * 0.01, xd_next[1].detach().numpy()
+            d_cp.qpos, d_cp.qvel, d_cp.qacc = d.qpos + d_cp.qvel * 0.01, d.qvel + xd_next[1].detach().numpy() * 0.01, xd_next[1].detach().numpy()
 
             mujoco.mj_inverse(m, d_cp)
             d.ctrl = d_cp.qfrc_inverse

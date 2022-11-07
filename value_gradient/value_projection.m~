@@ -36,7 +36,7 @@ VALUES = load(filename).VALUES;
 
 alpha = 1;
 % Cost function and their derivatives
-relu = @(x)(if (x > 0) x = x; else x = 0; end)
+relu = @(x)(if x > 
 f = @(q, qd, qdd)([qd; qdd]);
 v = @(q, qd)(sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2);
 fcost = @(q, qd, u)(q^2 + qd^2 + u^2);

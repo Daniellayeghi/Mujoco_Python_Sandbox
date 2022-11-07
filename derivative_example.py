@@ -2,6 +2,7 @@ import mujoco
 from mujoco.derivative import *
 from dm_control.mujoco import Physics
 import matplotlib.pyplot as plt
+import torch
 import numpy as np
 import glfw
 import time
@@ -18,6 +19,7 @@ print(m.nbody)
 ctx = mujoco.GLContext(1200, 1200)
 ctx.make_current()
 glfw.swap_interval(1)
+glfw.show_window(ctx._context)
 cam = mujoco.MjvCamera()
 pert = mujoco.MjvPerturb()
 con = mujoco.MjrContext(m, 100)
@@ -49,6 +51,7 @@ def step(m, d):
 
 
 glfw.set_scroll_callback(glfw.get_current_context(), scroll)
+
 
 if __name__ == "__main__":
     dfdu = MjDerivative(m, d, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
