@@ -27,3 +27,12 @@ class MLP(nn.Module):
             return probs
         return output
 
+    # def forward(self, q, qd):
+    #     x = torch.cat((q, qd), 2)
+    #     output = self.mlp(x)
+    #     if self.apply_sigmoid:
+    #         probs = torch.sigmoid(output) * self.scale
+    #         return probs
+    #     return output
+
+

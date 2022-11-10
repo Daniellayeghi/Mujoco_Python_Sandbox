@@ -8,50 +8,61 @@ from networks import ValueFunction, MLP
 from net_utils_torch import LayerInfo
 import torch.nn.functional as Func
 from torch.utils.data import TensorDataset, DataLoader
-from utilities.mujoco_torch import torch_mj_inv, torch_mj_set_attributes
+from utilities.mujoco_torch import torch_mj_inv, torch_mj_set_attributes, torch_mj_detach, torch_mj_attach
 import mujoco
 
 
 class PointMassData:
-    def __init__(self, n_bodies, rand=True):
-        self.x = torch.zeros((n_bodies, 2)).to(device)
+    def __init__(self, d_info: DataParams):
+        self.q = torch.rand(d_info.n_batch, 1, n_ees).to(device)
+        self.qd = torch.zeros(d_info.n_batch, 1, n_ees).to(device)
+        self.qdd = torch.zeros(d_info.n_batch, 1, n_ees).to(device)
+        self.d_info = d_info
 
-        if rand:
-            self.x[:, 0] = torch.rand((n_bodies, 1))
+    def get_x(self):
+        return torch.cat((self.q, self.qd), 2).view(d_info.n_batch, 1, self.d_info.n_state).clone()
 
-        self.xd = torch.zeros((n_bodies, 2)).to(device)
-        self.pos = self.x[:, 0]
-        self.vel = self.x[:, 1]
-        self.acc = self.xd[:, 1]
+    def get_xd(self):
+        return torch.cat((self.qd, self.qdd), 2).view(d_info.n_batch, 1, self.d_info.n_state).clone()
 
-
-def step_internal(data: PointMassData, xd_hat, dt):
-    data.x += xd_hat * dt
-    data.xd[:, 1] = xd_hat[:, 1]
+    def get_xxd(self):
+        return torch.cat((self.q, self.qd, self.qdd), 2).view(d_info.n_batch, 1, self.d_info.n_full_state).clone()
 
 
-def step_external(data: PointMassData, x_xd, dt):
-    x_xd[:, 0, 0] = data.pos + data.vel * dt
-    x_xd[:, 1, 0] = data.vel + data.acc * dt
+def step_internal(data: PointMassData, dt):
+    q_next = data.q + data.qd * dt
+    qd_next = data.qd + data.qdd * dt
+    data.q = q_next
+    data.qd = qd_next
 
 
 # Data params
-n_bodies, n_batch = 1, 16
-inits = torch.rand(n_bodies) * 2
-d_params = DataParams(3, 2, 1, 1, 1, 2, [1, 2], n_batch)
+n_ees, n_sims = 1, 1
+inits = torch.rand(n_ees) * 2
+d_info = DataParams(
+    n_full_state=3 * n_ees,
+    n_state=2 * n_ees,
+    n_pos=1 * n_ees,
+    n_vel=1 * n_ees,
+    n_ctrl=1 * n_ees,
+    n_desc=2,
+    idx_g_act=[1, 2],
+    n_batch=n_sims
+)
 
 # Networks and optimizers
-val_input, value_output = d_params.n_state, 1
+val_input, value_output = d_info.n_state, 1
 layer_dims = [val_input, 32, 64, 32, value_output]
 v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
 value_net = MLP(LayerInfo(*v_layers), False).to(device)
 
 # Mujoco Data
 m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
-x_xd_external = torch.zeros((n_bodies, 3, 1)).to(device)
+x_xd_external = torch.zeros((n_sims, n_ees * d_info.n_full_state, 1)).to(device)
 
 
 def dvdx(x, value_net):
+    x = x.clone()
     value = value_net(x).requires_grad_()
     dvdx = torch.autograd.grad(
         value, x, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
@@ -59,68 +70,75 @@ def dvdx(x, value_net):
     return dvdx
 
 
-def project(pm_data, dvdx, loss):
-    dvdx_batch = dvdx.view(n_bodies, 1, 2)
-    x = pm_data.x .view(n_bodies, 3, 1)
-    xd = pm_data.xd.view(n_bodies, 1, 1)
-    norm = (dvdx_batch**2).sum(dim=2).view(n_bodies, 1, 1)
-    unnorm_porj = Func.relu((dvdx_batch@xd) + loss(x, xd))
-    delta_xd = - (dvdx_batch/norm) * unnorm_porj
-    return delta_xd
+def project(x, xd, x_xd, dvdx, loss):
+    norm = (dvdx**2).sum(dim=2).view(n_sims, 1, 1)
+    unnorm_porj = Func.relu((dvdx@xd.mT) + loss(x, x_xd))
+    xd_trans = - (dvdx/norm) * unnorm_porj
+    return xd_trans
 
 
-optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, value_net.parameters()), lr=3e-4)
-torch_mj_set_attributes(m, n_batch, n_bodies)
-torch_mj_inverse_func = torch_mj_inv.apply
-
-
-def loss(x, xd):
-    n_batch = len(x)
-    x = x.view(n_batch, 2, 1)
-    loss_task = torch.sum(torch.square(x), 1).view(n_batch, 1, 1)
-    loss_ctrl = torch.sum(torch.square(torch_mj_inverse_func(xd[:, 1])), 1).view(n_batch, 1, 1)
-    loss = loss_task + loss_ctrl
+def loss(x, x_xd):
+    n_sims = len(x)
+    loss_task = torch.sum(torch.square(x), 2).view(n_sims, 1, 1)
+    # loss_ctrl = torch.sum(torch.square(torch_mj_inverse_func(x_xd)), 1).view(n_sims, 1, 1)
+    loss = loss_task #+ loss_ctrl
     return loss
 
 
-time, epochs, running_loss = 100, 100, 0
-buffer = torch.zeros((time * n_bodies, 3)).to(device)
-buffer = [[None] * 3] * (time * n_bodies)
+def loss_concat(x_xd):
+    n_steps = len(x_xd)
+    x = x_xd[:, :, :d_info.n_state].clone()
+    x_xd = x_xd.view(n_steps, 1, d_info.n_full_state)
+    loss_task = torch.sum(torch.square(x), 2).view(n_steps, 1, 1)
+    # loss_ctrl = torch.sum(torch.square(torch_mj_inverse_func(x_xd)), 1).view(n_steps, 1, 1)
+    loss = loss_task #+ zloss_ctrl
+    return loss
 
+
+time, epochs, running_loss = 10, 100, 0
+buffer = torch.zeros((1, 1, 3)).to(device)
+optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, value_net.parameters()), lr=3e-4)
+torch_mj_set_attributes(m, time, n_sims)
+torch_mj_inverse_func = torch_mj_inv.apply
 
 if __name__ == "__main__":
+    with torch.autograd.set_detect_anomaly(True):
+        for epoch in range(epochs):
+            d_pm = PointMassData(d_info)
+            d = mujoco.MjData(m)
+            d.qpos = d_pm.q.cpu().detach().numpy().flatten()
+            mass = d.qM
+            d_pm.q.requires_grad_()
+            d_pm.qd.requires_grad_()
+            d_pm.qdd.requires_grad_()
+            torch_mj_attach()
+            for t in range(time):
+                Vx = dvdx(d_pm.get_x(), value_net)
+                xd_trans = project(
+                    d_pm.get_x(), d_pm.get_xd(), d_pm.get_xxd(), Vx, lambda x, x_xd: 0.001 * loss(x, x_xd)
+                )
+                qdd_clone = d_pm.qdd.clone()
+                # qdd_clone = xd_trans[:, :, 1].clone().view(n_sims, 1, d_info.n_ctrl)
+                d_pm.qdd = qdd_clone
+                step_internal(d_pm, 0.01)
+                buffer = torch.cat((buffer, d_pm.get_xxd()), 0)
 
-    for epoch in range(epochs):
-        d_pm = PointMassData(n_bodies)
-        d = mujoco.MjData(m)
-        mass = d.qM
-        d.qpos = d_pm.pos.cpu().detach().numpy()
-        d_pm.x = d_pm.x.cpu().detach().numpy()
-        d_pm.qdd = d_pm.qdd.cpu().detach().numpy()
-        x = d_pm.x.detach().requires_grad_()
-        qdd = d_pm.qdd.detach().requires_grad_()
-        for t in range(time):
-            Vx = dvdx(x, value_net)
-            delta_xd = project(d_pm, Vx, lambda x, qdd: 1 * loss(x, qdd))
-            d_pm.xd -= delta_xd.squeeze()
-            step_internal(d_pm, 0.01)
-            buffer[t] = [d_pm.x, d_pm.xd]
+            buffer_c = buffer.clone()
+            buffer_ds = TensorDataset(buffer_c)
+            buffer_loader = DataLoader(buffer_ds, batch_size=time, drop_last=True)
 
-        buffer_d = buffer
-        buffer_ds = TensorDataset(buffer_d)
-        buffer_loader = DataLoader(buffer_ds, batch_size=d_params.n_batch, shuffle=True, drop_last=True)
-        batch_loss = lambda x_xd: torch.mean(loss(x_xd))
-
-        for i, d in enumerate(buffer_loader):
-            d = d[0]
-            optimizer.zero_grad()
-            l = batch_loss(d)
-            l.backward()
-            optimizer.step()
-            running_loss += l.item()
-
-            if i % 5 == 0:
+            batch_loss = lambda x_xd: torch.mean(loss_concat(x_xd))
+            for i, d in enumerate(buffer_loader):
+                d = d[0]
+                optimizer.zero_grad()
+                l = batch_loss(d)
+                l.backward(retain_graph=True)
+                optimizer.step()
+                running_loss += l.item()
                 avg_loss = running_loss / 20
                 print(f"batch: {epoch}, loss: {avg_loss}")
 
-        # buffer.detach()
+            d_pm.q.detach()
+            d_pm.qd.detach()
+            d_pm.qdd.detach()
+            torch_mj_detach()
