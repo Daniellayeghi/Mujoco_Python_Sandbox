@@ -1,8 +1,6 @@
 
 import math
 import numpy as np
-from IPython.display import clear_output
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -15,7 +13,6 @@ from torch.nn  import functional as F
 from torch.autograd import Variable
 
 use_cuda = torch.cuda.is_available()
-
 
 
 def ode_solve(z0, t0, t1, f):
@@ -33,8 +30,6 @@ def ode_solve(z0, t0, t1, f):
         z = z + h * f(z, t)
         t = t + h
     return z
-
-
 
 
 class ODEF(nn.Module):

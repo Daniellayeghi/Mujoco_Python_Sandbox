@@ -28,6 +28,16 @@ class PointMassData:
     def get_xxd(self):
         return torch.cat((self.q, self.qd, self.qdd), 2).view(d_info.n_batch, 1, self.d_info.n_full_state).clone()
 
+    def detach(self):
+        self.q.detach()
+        self.qd.detach()
+        self.qdd.detach()
+
+    def attach(self):
+        self.q.requires_grad_()
+        self.qd.requires_grad_()
+        self.qdd.requires_grad_()
+
 
 def step_internal(data: PointMassData, dt):
     q_next = data.q + data.qd * dt
@@ -62,11 +72,10 @@ x_xd_external = torch.zeros((n_sims, n_ees * d_info.n_full_state, 1)).to(device)
 
 
 def dvdx(x, value_net):
-    x = x.clone()
-    value = value_net(x).requires_grad_()
+    value = value_net(x)
     dvdx = torch.autograd.grad(
         value, x, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
-    )[0].requires_grad_()
+    )[0]
     return dvdx
 
 
@@ -108,17 +117,14 @@ if __name__ == "__main__":
             d = mujoco.MjData(m)
             d.qpos = d_pm.q.cpu().detach().numpy().flatten()
             mass = d.qM
-            d_pm.q.requires_grad_()
-            d_pm.qd.requires_grad_()
-            d_pm.qdd.requires_grad_()
+            d_pm.attach()
             torch_mj_attach()
             for t in range(time):
                 Vx = dvdx(d_pm.get_x(), value_net)
                 xd_trans = project(
                     d_pm.get_x(), d_pm.get_xd(), d_pm.get_xxd(), Vx, lambda x, x_xd: 0.001 * loss(x, x_xd)
                 )
-                qdd_clone = d_pm.qdd.clone()
-                # qdd_clone = xd_trans[:, :, 1].clone().view(n_sims, 1, d_info.n_ctrl)
+                qdd_clone = xd_trans[:, :, 1].clone().view(n_sims, 1, d_info.n_ctrl)
                 d_pm.qdd = qdd_clone
                 step_internal(d_pm, 0.01)
                 buffer = torch.cat((buffer, d_pm.get_xxd()), 0)
@@ -130,7 +136,7 @@ if __name__ == "__main__":
             batch_loss = lambda x_xd: torch.mean(loss_concat(x_xd))
             for i, d in enumerate(buffer_loader):
                 d = d[0]
-                optimizer.zero_grad()
+                # optimizer.zero_grad()
                 l = batch_loss(d)
                 l.backward(retain_graph=True)
                 optimizer.step()
@@ -138,7 +144,5 @@ if __name__ == "__main__":
                 avg_loss = running_loss / 20
                 print(f"batch: {epoch}, loss: {avg_loss}")
 
-            d_pm.q.detach()
-            d_pm.qd.detach()
-            d_pm.qdd.detach()
+            d_pm.detach()
             torch_mj_detach()
