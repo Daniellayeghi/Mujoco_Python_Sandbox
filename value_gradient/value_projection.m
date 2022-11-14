@@ -82,7 +82,7 @@ while sqrt([q_t, qd_t] * [q_t; qd_t]) > 0.001
 
     pos_buff = [pos_buff; [q_hat_next, qd_hat_next, fnext(2)]];
     % integrate to find next state along V
-    q_hat_next = q_t + fnext(1)  * 0.01;
+    q_hat_next = q_t + qd_t  * 0.01;
     qd_hat_next = qd_t + fnext(2) * 0.01;
     
     % update state

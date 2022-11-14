@@ -3,6 +3,12 @@ from mujoco.derivative import *
 from .torch_utils import *
 from torch.autograd import Function
 from .torch_device import device
+from collections import namedtuple
+
+
+SimulationParams = namedtuple(
+    'SimulationParams', 'nqva, nqv, nq, nv, nu, nee, nsim'
+)
 
 
 _mj_attrs = None
