@@ -194,6 +194,7 @@ class SpiralFunctionExample(LinearODEF):
 class RandomLinearODEF(LinearODEF):
     def __init__(self):
         super(RandomLinearODEF, self).__init__(torch.randn(2, 2)/2.)
+        print("Done!!")
 
 
 class TestODEF(ODEF):

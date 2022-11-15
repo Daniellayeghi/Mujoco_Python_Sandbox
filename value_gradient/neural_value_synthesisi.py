@@ -25,6 +25,33 @@ import mujoco
 use_cuda = torch.cuda.is_available()
 
 
+# class PointMassData:
+#     def __init__(self, sim_params: SimulationParams, q_init: torch.Tensor, qd_init: torch.Tensor):
+#         self.q = q_init.clone().to(device)
+#         self.qd = qd_init.clone().to(device)
+#         self.qdd = torch.zeros(sim_params.nsim, 1, sim_params.nee).to(device)
+#         self.sim_params = sim_params
+#
+#     def get_x(self):
+#         return torch.cat((self.q, self.qd), 2).view(self.sim_params.nsim, 1, self.sim_params.nqv).clone()
+#
+#     def get_xd(self):
+#         return torch.cat((self.qd, self.qdd), 2).view(self.sim_params.nsim, 1, self.sim_params.nqv).clone()
+#
+#     def get_xxd(self):
+#         return torch.cat((self.q, self.qd, self.qdd), 2).view(self.sim_params.nsim, 1, self.sim_params.nqva).clone()
+#
+#     def detach(self):
+#         self.q.detach()
+#         self.qd.detach()
+#         self.qdd.detach()
+#
+#     def attach(self):
+#         self.q.requires_grad_()
+#         self.qd.requires_grad_()
+#         self.qdd.requires_grad_()
+
+
 def decomp_x(x, sim_params: SimulationParams):
     return x[:, :, 0:sim_params.nq].clone(), x[:, :, sim_params.nq:].clone()
 
@@ -33,48 +60,31 @@ def decomp_xd(xd, sim_params: SimulationParams):
     return xd[:, :, 0:sim_params.nv].clone(), xd[:, :, sim_params.nv:].clone()
 
 
-class PointMassData:
-    def __init__(self, sim_params: SimulationParams):
-        self.q = torch.rand(sim_params.nsim, 1, sim_params.nee).to(device)
-        self.qd = torch.zeros(sim_params.nsim, 1, sim_params.nee).to(device)
-        self.qdd = torch.zeros(sim_params.nsim, 1, sim_params.nee).to(device)
-        self.sim_params = sim_params
+def ode_solve(zi, ti, tf, dt, dfdt):
+    steps = math.ceil((abs(ti - tf)/dt).max().item())
+    z, t = zi, ti
+    for step in range(steps):
+        z = z + dfdt(z, t) * dt
+        t = t + dt
 
-    def get_x(self):
-        return torch.cat((self.q, self.qd), 2).view(self.sim_params.nsim, 1, self.sim_params.nqv).clone()
-
-    def get_xd(self):
-        return torch.cat((self.qd, self.qdd), 2).view(self.sim_params.nsim, 1, self.sim_params.nqv).clone()
-
-    def get_xxd(self):
-        return torch.cat((self.q, self.qd, self.qdd), 2).view(self.sim_params.nsim, 1, self.sim_params.nqva).clone()
-
-    def detach(self):
-        self.q.detach()
-        self.qd.detach()
-        self.qdd.detach()
-
-    def attach(self):
-        self.q.requires_grad_()
-        self.qd.requires_grad_()
-        self.qdd.requires_grad_()
-
-
-def ode_solve(z0, t0, t1, f):
-    """
-    Simplest Euler ODE initial value solver
-    """
-    h_max = 0.01
-    n_steps = math.ceil((abs(t1 - t0)/h_max).max().item())
-
-    h = (t1 - t0)/n_steps
-    t = t0
-    z = z0
-
-    for i_step in range(n_steps):
-        z = z + h * f(z, t)
-        t = t + h
     return z
+
+
+# def ode_solve(z0, t0, t1, f):
+#     """
+#     Simplest Euler ODE initial value solver
+#     """
+#     h_max = 0.01
+#     n_steps = math.ceil((abs(t1 - t0)/h_max).max().item())
+#
+#     h = (t1 - t0)/n_steps
+#     t = t0
+#     z = z0
+#
+#     for i_step in range(n_steps):
+#         z = z + h * f(z, t)
+#         t = t + h
+#     return z
 
 
 class ODEF(nn.Module):
@@ -116,7 +126,7 @@ class ODEAdjoint(torch.autograd.Function):
             z = torch.zeros(time_len, bs, *z_shape).to(z0)
             z[0] = z0
             for i_t in range(time_len - 1):
-                z0 = ode_solve(z0, t[i_t], t[i_t+1], func)
+                z0 = ode_solve(z0, t[i_t], t[i_t+1], 0.01, func)
                 z[i_t+1] = z0
 
         ctx.func = func
@@ -231,35 +241,36 @@ class ValueFunction(nn.Module):
 
 
 class DynamicalSystem(ODEF):
-    def __init__(self, value_function: ValueFunction, loss, model: mujoco.MjModel, sim_params: SimulationParams):
-        super(DynamicalSystem).__init__()
+    def __init__(self, value_function, loss, sim_params: SimulationParams):
+        super(DynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
-        self.point_mass = PointMassData(sim_params)
+        # self.point_mass = PointMassData(sim_params)
 
-    def project(self, x):
+    def project(self, x, t):
         q, v = decomp_x(x, self.sim_params)
-        x = torch.cat((q, v), 2)
         xd = torch.cat((v, torch.zeros_like(v)), 2)
         x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
 
-        def dvdx(x, value_net):
-            value = value_net(x)
-            dvdx = torch.autograd.grad(
-                value, x, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
-            )[0]
-            return dvdx
+        def dvdx(x, t, value_net):
+            with torch.set_grad_enabled(True):
+                x = x.detach().requires_grad_(True)
+                value = value_net(x, t).requires_grad_()
+                dvdx = torch.autograd.grad(
+                    value, x, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
+                )[0]
+                return dvdx
 
-        Vx = dvdx(x, self.value_func)
+        Vx = dvdx(x, t, self.value_func)
         norm = (Vx ** 2).sum(dim=2).view(self.nsim, 1, 1)
         unnorm_porj = Func.relu((Vx @ xd.mT) + self.loss_func(x, x_xd))
         xd_trans = - (Vx / norm) * unnorm_porj
         return xd_trans[:, -1]
 
     def dfdt(self, x, t):
-        xd = self.project(x)
+        xd = self.project(x, t)
         v = x[:, :, -1].clone()
         a = xd[:, :, -1].clone()
         return torch.cat((v, a), 2)
@@ -267,6 +278,28 @@ class DynamicalSystem(ODEF):
     def forward(self, x, t):
         xd = self.dfdt(x, t)
         return xd
+
+
+if __name__ == "__main__":
+    m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
+    d = mujoco.MjData(m)
+    Q = torch.diag(torch.Tensor([1, .001]))
+    Qf = torch.diag(torch.Tensor([1, .5]))
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 1)
+    q_init, qd_init = torch.randn((sim_params.nsim, 1, 1*sim_params.nee)), torch.zeros((sim_params.nsim, 1, 1*sim_params.nee))
+    x_init = torch.cat((q_init, qd_init), 2).to(device)
+    value_func = ValueFunction(torch.randn((2, 2))).to(device)
+    dyn_system = DynamicalSystem(value_func, lambda x: x @ Q @ x, sim_params).to(device)
+    neural_ode = NeuralODE(dyn_system).to(device)
+    time = torch.linspace(0, 2, 21).to(device)
+
+    epochs = range(100)
+    for e in epochs:
+        traj = neural_ode(x_init, time, return_whole_sequence=True)
+
+
+
+
 
 
 
