@@ -55,7 +55,7 @@ proj_lower = @(q, qd, dfdt)(dfd - v_jac(q, qd) * v_jac(q, qd)' * dfdt / ...
 integrator = @(q, qd, qdd)([q + qd * 0.01; qd + qdd * 0.01]);
 
 % init =[0.738493562240430, 0.222405510587575];
-q_t= rand * 2; qd_t= 0; qdd_t = 0;
+q_t= .22; qd_t= -.1; qdd_t = 0;
 q_hat_next = q_t; qd_hat_next = qd_t;
 figure();
 hax1 = axes;

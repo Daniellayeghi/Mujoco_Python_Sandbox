@@ -25,6 +25,14 @@ import mujoco
 use_cuda = torch.cuda.is_available()
 
 
+def decomp_x(x, sim_params: SimulationParams):
+    return x[:, :, 0:sim_params.nq].clone(), x[:, :, sim_params.nq:].clone()
+
+
+def decomp_xd(xd, sim_params: SimulationParams):
+    return xd[:, :, 0:sim_params.nv].clone(), xd[:, :, sim_params.nv:].clone()
+
+
 class PointMassData:
     def __init__(self, sim_params: SimulationParams):
         self.q = torch.rand(sim_params.nsim, 1, sim_params.nee).to(device)
@@ -227,10 +235,12 @@ class DynamicalSystem(ODEF):
         super(DynamicalSystem).__init__()
         self.value_func = value_function
         self.loss_func = loss
+        self.sim_params = sim_params
         self.nsim = sim_params.nsim
         self.point_mass = PointMassData(sim_params)
 
-    def project(self, q, v):
+    def project(self, x):
+        q, v = decomp_x(x, self.sim_params)
         x = torch.cat((q, v), 2)
         xd = torch.cat((v, torch.zeros_like(v)), 2)
         x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
@@ -248,11 +258,15 @@ class DynamicalSystem(ODEF):
         xd_trans = - (Vx / norm) * unnorm_porj
         return xd_trans[:, -1]
 
-    def dfdt(self, q, v, t):
-        x_xd = self.project(q, v)
+    def dfdt(self, x, t):
+        xd = self.project(x)
+        v = x[:, :, -1].clone()
+        a = xd[:, :, -1].clone()
+        return torch.cat((v, a), 2)
 
-    def forward(self, q, v, t):
-        self.project()
+    def forward(self, x, t):
+        xd = self.dfdt(x, t)
+        return xd
 
 
 
