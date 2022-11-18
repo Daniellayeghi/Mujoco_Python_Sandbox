@@ -281,6 +281,22 @@ class DynamicalSystem(ODEF):
         return xd
 
 
+class LinearODEF(ODEF):
+    def __init__(self, W):
+        super(LinearODEF, self).__init__()
+        self.lin = nn.Linear(2, 2, bias=False)
+        self.lin.weight = nn.Parameter(W)
+
+    def forward(self, x, t):
+        return self.lin(x)
+
+
+class RandomLinearODEF(LinearODEF):
+    def __init__(self):
+        super(RandomLinearODEF, self).__init__(torch.randn(2, 2)/2.)
+        print("Done!!")
+
+
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
@@ -305,8 +321,17 @@ if __name__ == "__main__":
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     value_func = ValueFunction(torch.randn((2, 2))).to(device)
     dyn_system = DynamicalSystem(value_func, loss_func, sim_params).to(device)
-    neural_ode = NeuralODE(dyn_system).to(device)
+    neural_ode = NeuralODE(RandomLinearODEF()).to(device)
     time = torch.linspace(0, 2, 21).to(device)
+
+    ode_trained = NeuralODE(RandomLinearODEF())
+
+    data_in = torch.Tensor([1, 0])
+    time = torch.linspace(0, 2, 21)
+
+    for i in range(100):
+        x_out = ode_trained(data_in, time, return_whole_sequence=True)
+        print(x_out)
 
     optimizer = torch.optim.Adam(neural_ode.parameters(), lr=0.01)
 

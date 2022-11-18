@@ -309,6 +309,14 @@ def conduct_experiment(ode_true, ode_trained, n_steps, name, plot_freq=10):
 ode_true = NeuralODE(SpiralFunctionExample())
 ode_trained = NeuralODE(RandomLinearODEF())
 
+data_in = torch.Tensor([1, 0])
+time = torch.linspace(0, 2, 21)
+
+for i in range(100):
+    x_out = ode_trained(data_in, time, return_whole_sequence=True)
+    print(x_out)
+
+
 conduct_experiment(ode_true, ode_trained, 500, "linear")
 
 
