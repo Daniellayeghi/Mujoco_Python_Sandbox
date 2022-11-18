@@ -3,7 +3,6 @@ import math
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import matplotlib.cm as cm
 
 import torch
@@ -117,7 +116,7 @@ class ODEAdjoint(torch.autograd.Function):
 
         dLdz = dLdz.view(time_len, bs, n_dim)  # flatten dLdz for convenience
         with torch.no_grad():
-            ## Create placeholders for output gradients
+            # Create placeholders for output gradients
             # Prev computed backwards adjoints to be adjusted by direct gradients
             adj_z = torch.zeros(bs, n_dim).to(dLdz)
             adj_p = torch.zeros(bs, n_params).to(dLdz)

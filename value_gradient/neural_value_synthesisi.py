@@ -252,7 +252,7 @@ class DynamicalSystem(ODEF):
     def project(self, x, t):
         q, v = decomp_x(x, self.sim_params)
         xd = torch.cat((v, torch.zeros_like(v)), 2)
-        x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
+        # x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
 
         def dvdx(x, t, value_net):
             with torch.set_grad_enabled(True):
@@ -263,16 +263,17 @@ class DynamicalSystem(ODEF):
                 )[0]
                 return dvdx
 
+        # Vx = torch.randn((1,1,2)).to(device)
         Vx = dvdx(x, t, self.value_func)
         norm = (Vx ** 2).sum(dim=2).view(self.nsim, 1, 1)
-        unnorm_porj = Func.relu((Vx @ xd.mT) + self.loss_func(x, x_xd))
+        unnorm_porj = Func.relu((Vx @ xd.mT) + self.loss_func(x))
         xd_trans = - (Vx / norm) * unnorm_porj
-        return xd_trans[:, -1]
+        return xd_trans[:, :, sim_params.nv:].view(1, 1, sim_params.nv)
 
     def dfdt(self, x, t):
         xd = self.project(x, t)
-        v = x[:, :, -1].clone()
-        a = xd[:, :, -1].clone()
+        v = x[:, :, -1].view(1, 1, sim_params.nv).clone()
+        a = xd[:, :, -1].view(1, 1, sim_params.nv).clone()
         return torch.cat((v, a), 2)
 
     def forward(self, x, t):
@@ -283,26 +284,36 @@ class DynamicalSystem(ODEF):
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    Q = torch.diag(torch.Tensor([1, .001]))
-    Qf = torch.diag(torch.Tensor([1, .5]))
     sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 1)
+    Q = torch.diag(torch.Tensor([1, .001])).view(sim_params.nsim, 2, 2).to(device)
+    Qf = torch.diag(torch.Tensor([1, .5])).view(sim_params.nsim, 2, 2).to(device)
+
+    def loss_func(x: torch.Tensor):
+        return x @ Q @ x.mT
+
+    def batch_loss(x: torch.Tensor):
+        t, nsim, r, c = x.shape
+        x_run = x[0:-1, :, :, :].view(t-1, r, c).clone()
+        x_final = x[-1, :, :, :].view(1, r, c).clone()
+        l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
+        l_terminal = (x_final @ Qf @ x_final.mT).squeeze()
+
+        return l_running + l_terminal
+
+
     q_init, qd_init = torch.randn((sim_params.nsim, 1, 1*sim_params.nee)), torch.zeros((sim_params.nsim, 1, 1*sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     value_func = ValueFunction(torch.randn((2, 2))).to(device)
-    dyn_system = DynamicalSystem(value_func, lambda x: x @ Q @ x, sim_params).to(device)
+    dyn_system = DynamicalSystem(value_func, loss_func, sim_params).to(device)
     neural_ode = NeuralODE(dyn_system).to(device)
     time = torch.linspace(0, 2, 21).to(device)
+
+    optimizer = torch.optim.Adam(neural_ode.parameters(), lr=0.01)
 
     epochs = range(100)
     for e in epochs:
         traj = neural_ode(x_init, time, return_whole_sequence=True)
-
-
-
-
-
-
-
-
-
-
+        loss = batch_loss(traj)
+        optimizer.zero_grad()
+        loss.backward(retain_graph=True)
+        optimizer.step()
