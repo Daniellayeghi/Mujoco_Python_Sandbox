@@ -113,6 +113,7 @@ class ODEF(nn.Module):
         for p in self.parameters():
             p_shapes.append(p.size())
             flat_parameters.append(p.flatten())
+        return torch.cat(flat_parameters)
 
 
 class ODEAdjoint(torch.autograd.Function):
