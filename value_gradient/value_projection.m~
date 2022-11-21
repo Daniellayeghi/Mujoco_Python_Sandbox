@@ -72,7 +72,7 @@ fnext = [q_hat_next; 0];
 while sqrt([q_t, qd_t] * [q_t; qd_t]) > 0.01
 
     % compute the next state
-%     qh_t2 = q_t + qd_t * 0.01; qdh_t2 = qd_t + qdd_t * 0.01;
+    qh_t2 = q_t + qd_t * 0.01; qdh_t2 = qd_t + qdd_t * 0.01;
 %     plot(hax1, qh_t2, qdh_t2, '*');
     
     % assemble dxdt and project

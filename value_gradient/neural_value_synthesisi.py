@@ -127,7 +127,7 @@ class ODEAdjoint(torch.autograd.Function):
             z = torch.zeros(time_len, bs, *z_shape).to(z0)
             z[0] = z0
             for i_t in range(time_len - 1):
-                z0 = ode_solve(z0, t[i_t], t[i_t+1], 0.01, func)
+                z0 = ode_solve(z0, t[i_t], t[i_t+1], 1, func)
                 z[i_t+1] = z0
 
         ctx.func = func
@@ -186,6 +186,8 @@ class ODEAdjoint(torch.autograd.Function):
 
                 # Compute direct gradients
                 dLdz_i = dLdz[i_t]
+
+                # dLdt = dLdz * dzdt == dLdz * z[i] (since dzdt is layered)
                 dLdt_i = torch.bmm(torch.transpose(dLdz_i.unsqueeze(-1), 1, 2), f_i.unsqueeze(-1))[:, 0]
 
                 # Adjusting adjoints with direct gradients
@@ -196,7 +198,7 @@ class ODEAdjoint(torch.autograd.Function):
                 aug_z = torch.cat((z_i.view(bs, n_dim), adj_z, torch.zeros(bs, n_params).to(z), adj_t[i_t]), dim=-1)
 
                 # Solve augmented system backwards
-                aug_ans = ode_solve(aug_z, t_i, t[i_t-1], augmented_dynamics)
+                aug_ans = ode_solve(aug_z, t_i, t[i_t-1], 1, augmented_dynamics)
 
                 # Unpack solved backwards augmented system
                 adj_z[:] = aug_ans[:, n_dim:2*n_dim]
@@ -266,12 +268,13 @@ class DynamicalSystem(ODEF):
 
         # Vx = torch.randn((1,1,2)).to(device)
         Vx = dvdx(x, t, self.value_func)
-        norm = (Vx ** 2).sum(dim=2).view(self.nsim, 1, 1)
-        unnorm_porj = Func.relu((Vx @ xd.mT) + self.loss_func(x))
+        norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
+        unnorm_porj = Func.relu((Vx @ xd.mT) + 1 * self.loss_func(x))
         xd_trans = - (Vx / norm) * unnorm_porj
         return xd_trans[:, :, sim_params.nv:].view(1, 1, sim_params.nv)
 
     def dfdt(self, x, t):
+        # Fix a =
         xd = self.project(x, t)
         v = x[:, :, -1].view(1, 1, sim_params.nv).clone()
         a = xd[:, :, -1].view(1, 1, sim_params.nv).clone()
@@ -282,27 +285,11 @@ class DynamicalSystem(ODEF):
         return xd
 
 
-class LinearODEF(ODEF):
-    def __init__(self, W):
-        super(LinearODEF, self).__init__()
-        self.lin = nn.Linear(2, 2, bias=False)
-        self.lin.weight = nn.Parameter(W)
-
-    def forward(self, x, t):
-        return self.lin(x)
-
-
-class RandomLinearODEF(LinearODEF):
-    def __init__(self):
-        super(RandomLinearODEF, self).__init__(torch.randn(2, 2)/2.)
-        print("Done!!")
-
-
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
     sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 1)
-    Q = torch.diag(torch.Tensor([1, .001])).view(sim_params.nsim, 2, 2).to(device)
+    Q = torch.diag(torch.Tensor([1, 1])).view(sim_params.nsim, 2, 2).to(device)
     Qf = torch.diag(torch.Tensor([1, .5])).view(sim_params.nsim, 2, 2).to(device)
 
     def loss_func(x: torch.Tensor):
@@ -318,28 +305,23 @@ if __name__ == "__main__":
         return l_running + l_terminal
 
 
-    q_init, qd_init = torch.randn((sim_params.nsim, 1, 1*sim_params.nee)), torch.zeros((sim_params.nsim, 1, 1*sim_params.nee))
-    x_init = torch.cat((q_init, qd_init), 2).to(device)
     value_func = ValueFunction(torch.randn((2, 2))).to(device)
     dyn_system = DynamicalSystem(value_func, loss_func, sim_params).to(device)
-    neural_ode = NeuralODE(RandomLinearODEF()).to(device)
-    time = torch.linspace(0, 2, 21).to(device)
-
-    ode_trained = NeuralODE(RandomLinearODEF())
-
-    data_in = torch.Tensor([1, 0])
-    time = torch.linspace(0, 2, 21)
-
-    for i in range(100):
-        x_out = ode_trained(data_in, time, return_whole_sequence=True)
-        print(x_out)
-
+    neural_ode = NeuralODE(dyn_system).to(device)
+    time = torch.linspace(0, 0.1, 11).to(device)
     optimizer = torch.optim.Adam(neural_ode.parameters(), lr=0.01)
 
-    epochs = range(100)
+    epochs = range(500)
+    attempts = range(10)
+
+    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1)
+    qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
+    x_init = torch.cat((q_init, qd_init), 2).to(device)
+
     for e in epochs:
         traj = neural_ode(x_init, time, return_whole_sequence=True)
         loss = batch_loss(traj)
         optimizer.zero_grad()
         loss.backward(retain_graph=True)
         optimizer.step()
+        print(f"Epochs: {e}, Loss: {loss.item()}, Init State: {x_init}, Final State: {traj[-1]}")
