@@ -29,6 +29,7 @@ mujoco-py = "*"
 joblib = "*"
 numdifftools = "*"
 dm-control = "==1.0.5"
+torchdiffeq = "*"
 
 [requires]
 python_version = "3.7"

@@ -1,26 +1,13 @@
 import math
 import numpy as np
-from utilities.mujoco_torch import mujoco, torch_mj_set_attributes, SimulationParams
-
 import torch
 import torch.nn.functional as Func
-from torch.utils.data import TensorDataset, DataLoader
 from torch import Tensor
 from torch import nn
-from torch.nn import functional as F
-from torch.autograd import Variable
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-
-from utilities import mujoco_torch
-from utilities.torch_utils import tensor_to_np
-from utilities.torch_device import device
-from utilities.data_utils import DataParams
-from net_utils_torch import LayerInfo
-from utilities.mujoco_torch import torch_mj_inv, torch_mj_set_attributes, torch_mj_detach, torch_mj_attach
 import mujoco
+import matplotlib.pyplot as plt
+from utilities.torch_device import device
+from utilities.mujoco_torch import mujoco, torch_mj_set_attributes, SimulationParams
 
 use_cuda = torch.cuda.is_available()
 
@@ -330,7 +317,7 @@ if __name__ == "__main__":
 
         return l_running + l_terminal
 
-    S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 1)
+    S_init = torch.Tensor([[1, 1], [1, 1]]).to(device)
     lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
     dyn_system = DynamicalSystem(lin_value_func, loss_func, sim_params).to(device)
@@ -338,10 +325,10 @@ if __name__ == "__main__":
     time = torch.linspace(0, 2, 201).to(device)
     optimizer = torch.optim.Adam(neural_ode.parameters(), lr=1e-3)
 
-    epochs = range(5000)
-    attempts = range(10)
+    epochs, attempts = range(5000), range(10)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 3
+    # q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 3
+    q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     pos_arr = torch.linspace(-2, 2, 100)
