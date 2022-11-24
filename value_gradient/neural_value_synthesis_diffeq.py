@@ -96,7 +96,7 @@ class DynamicalSystem(nn.Module):
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
-        self.step = 5
+        self.step = 0.07
         # self.point_mass = PointMassData(sim_params)
 
     def project(self, t, x):
@@ -164,8 +164,8 @@ if __name__ == "__main__":
     time = torch.linspace(0, 5, 501).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
+    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 2
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 2
     # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         optimizer.zero_grad()
         traj = odeint(dyn_system, x_init, time)
         loss = batch_loss(traj)
-        # dyn_system.step /= (0.1 * loss.item())
+        # dyn_system.step /= (100 * loss.item())
         loss.backward()
         optimizer.step()
 
