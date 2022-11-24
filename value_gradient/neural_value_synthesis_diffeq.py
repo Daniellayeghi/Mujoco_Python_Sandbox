@@ -22,26 +22,29 @@ else:
     from torchdiffeq import odeint
 
 
-def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, f_mat, func, trace=None, contour=True):
+def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
     assert len(xs) == len(ys)
-    trace = trace.detach().cpu().squeeze()
+    trace = trace.detach().clone().cpu().squeeze()
     for i, x in enumerate(xs):
         for j, y in enumerate(ys):
-            in_tensor = torch.tensor((x, y)).view(1, 1, 2).float()
-            f_mat[i, j] = func(0, in_tensor).detach().cpu().squeeze()
+            in_tensor = torch.tensor((x, y)).view(1, 1, 2).float().to(device)
+            f_mat[i, j] = func(0, in_tensor).detach().squeeze()
 
-    [X, Y] = torch.meshgrid(xs.squeeze(), ys.squeeze())
+    [X, Y] = xy_grid
+    f_mat = f_mat.cpu()
     plt.clf()
     ax = plt.axes()
-    # if contour:
-    #     ax.contourf(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-    # else:
-    #     ax = plt.axes(projection='3d')
-    #     ax.plot_surface(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    if contour:
+        ax.contourf(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    else:
+        ax = plt.axes(projection='3d')
+        ax.plot_surface(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
     ax.set_title('surface')
     ax.set_xlabel('Pos')
     ax.set_ylabel('Vel')
-    ax.plot(trace[:, 0], trace[:, 1], "k")
+    n_plots = trace.shape[1]
+    for i in range(n_plots):
+        ax.plot(trace[:, i, 0], trace[:, i, 1])
     plt.pause(0.001)
 
 
@@ -71,13 +74,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 32, bias=False),
+            nn.Linear(n_in, 4, bias=False),
             nn.Softplus(),
-            nn.Linear(32, 64, bias=False),
-            nn.Softplus(),
-            nn.Linear(64, 32, bias=False),
-            nn.Softplus(),
-            nn.Linear(32, 1, bias=False),
+            nn.Linear(4, 1, bias=False)
         )
 
         def init_weights(net):
@@ -97,7 +96,7 @@ class DynamicalSystem(nn.Module):
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
-        self.step = 0.001
+        self.step = 5
         # self.point_mass = PointMassData(sim_params)
 
     def project(self, t, x):
@@ -118,13 +117,13 @@ class DynamicalSystem(nn.Module):
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
         unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
         xd_trans = - (Vx / norm) * unnorm_porj
-        return xd_trans[:, :, self.sim_params.nv:].view(1, 1, self.sim_params.nv)
+        return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
 
     def dfdt(self, t, x):
         # Fix a =
         xd = self.project(t, x)
-        v = x[:, :, -1].view(1, 1, self.sim_params.nv).clone()
-        a = xd[:, :, -1].view(1, 1, self.sim_params.nv).clone()
+        v = x[:, :, -1].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
+        a = xd[:, :, -1].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
         return torch.cat((v, a), 2)
 
     def forward(self, t, x):
@@ -132,57 +131,66 @@ class DynamicalSystem(nn.Module):
         return xd
 
 
+def save_models(value_path: str, net: nn.Module):
+    print("########## Saving Trace ##########")
+    torch.save(net.state_dict(), value_path + ".pt")
+
+
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 1)
-    Q = torch.diag(torch.Tensor([1, .01])).view(sim_params.nsim, 2, 2).to(device)
-    Qf = torch.diag(torch.Tensor([100, 1])).view(sim_params.nsim, 2, 2).to(device)
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 40)
+    Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
+    R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
+    Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
 
     def loss_func(x: torch.Tensor):
         return x @ Q @ x.mT
 
     def batch_loss(x: torch.Tensor):
         t, nsim, r, c = x.shape
-        x_run = x[0:-1, :, :, :].view(t-1, r, c).clone()
-        x_final = x[-1, :, :, :].view(1, r, c).clone()
+        x_run = x[0:-1, :, :, :].view(t-1, nsim, r, c).clone()
+        x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
         l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
         l_terminal = (x_final @ Qf @ x_final.mT).squeeze()
 
-        return l_running + l_terminal
+        return torch.mean(l_running + l_terminal)
 
-    # S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 1)
-    S_init = torch.Tensor([[1, 1], [1, 1]]).to(device)
+    S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 5).to(device)
+    # S_init = torch.Tensor([[1.7, 1], [1, 1.7]]).to(device)
     lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-    dyn_system = DynamicalSystem(lin_value_func, loss_func, sim_params).to(device)
-    time = torch.linspace(0, 2, 201).to(device)
-    optimizer = torch.optim.Adam(dyn_system.parameters(), lr=1e-3)
+    dyn_system = DynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
+    time = torch.linspace(0, 5, 501).to(device)
+    optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 3
-    q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
-    qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
+    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
+    # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
+    # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
-    pos_arr = torch.linspace(-10, 10, 100)
-    vel_arr = torch.linspace(-10, 10, 100)
-    f_mat = torch.zeros((100, 100))
+    pos_arr = torch.linspace(-10, 10, 100).to(device)
+    vel_arr = torch.linspace(-10, 10, 100).to(device)
+    f_mat = torch.zeros((100, 100)).to(device)
+    [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
 
     epochs, attempts = range(100), range(10)
 
     for e in epochs:
         optimizer.zero_grad()
-        traj = odeint(dyn_system, x_init, time, method='euler')
+        traj = odeint(dyn_system, x_init, time)
         loss = batch_loss(traj)
-        dyn_system.step *= 1/loss.item()
+        # dyn_system.step /= (0.1 * loss.item())
         loss.backward()
         optimizer.step()
 
         for param in dyn_system.parameters():
             print(f"\n{param}\n")
 
-        print(f"Epochs: {e}, Loss: {loss.item()}, Init State: {x_init}, Final State: {traj[-1]}")
+        print(f"Epochs: {e}, Loss: {loss.item()}")
         # if e % 0 == 0:
         with torch.no_grad():
-            plot_2d_funcition(pos_arr, vel_arr, f_mat, lin_value_func, trace=traj, contour=True)
+            plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, lin_value_func, trace=traj, contour=True)
 
+    save_models("./neural_value", lin_value_func)
     plt.show()

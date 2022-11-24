@@ -11,7 +11,7 @@ from utilities.mujoco_torch import mujoco, torch_mj_set_attributes, SimulationPa
 
 use_cuda = torch.cuda.is_available()
 
-dt =1
+dt = 0.01
 
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, f_mat, func, trace=None, contour=True):
@@ -46,15 +46,19 @@ def decomp_xd(xd, sim_params: SimulationParams):
     return xd[:, :, 0:sim_params.nv].clone(), xd[:, :, sim_params.nv:].clone()
 
 
-def ode_solve(zi, ti, tf, dt, dfdt):
-    steps = math.ceil((abs(ti - tf)/dt).max().item())
-    z, t = zi, ti
-    for step in range(steps):
-        z = z + dfdt(z, t) * dt
-        t = t + dt
-
+def ode_solve(zi, t, dt, dfdt):
+    z = zi
+    z = z + dfdt(z, t) * dt
     return z
 
+# def ode_solve(zi, ti, tf, dt, dfdt):
+#     steps = math.ceil((abs(ti - tf)/dt).max().item())
+#     z, t = zi, ti
+#     for step in range(steps):
+#         z = z + dfdt(z, t) * dt
+#         t = t + dt
+#
+#     return z
 
 # def ode_solve(z0, t0, t1, f):
 #     """
@@ -112,8 +116,12 @@ class ODEAdjoint(torch.autograd.Function):
         with torch.no_grad():
             z = torch.zeros(time_len, bs, *z_shape).to(z0)
             z[0] = z0
-            for i_t in range(time_len - 1):
-                z0 = ode_solve(z0, t[i_t], t[i_t+1], dt, func)
+            # for i_t in range(time_len - 1):
+            #     z0 = ode_solve(z0, t[i_t], t[i_t+1], dt, func)
+            #     z[i_t+1] = z0
+
+            for i_t, time in enumerate(t[:-1]):
+                z0 = ode_solve(z0, time, dt, func)
                 z[i_t+1] = z0
 
         ctx.func = func
@@ -184,7 +192,8 @@ class ODEAdjoint(torch.autograd.Function):
                 aug_z = torch.cat((z_i.view(bs, n_dim), adj_z, torch.zeros(bs, n_params).to(z), adj_t[i_t]), dim=-1)
 
                 # Solve augmented system backwards
-                aug_ans = ode_solve(aug_z, t_i, t[i_t-1], dt, augmented_dynamics)
+                # aug_ans = ode_solve(aug_z, t_i, t[i_t-1], dt, augmented_dynamics)
+                aug_ans = ode_solve(aug_z, t_i, -dt, augmented_dynamics)
 
                 # Unpack solved backwards augmented system
                 adj_z[:] = aug_ans[:, n_dim:2*n_dim]
@@ -322,7 +331,7 @@ if __name__ == "__main__":
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
     dyn_system = DynamicalSystem(lin_value_func, loss_func, sim_params).to(device)
     neural_ode = NeuralODE(dyn_system).to(device)
-    time = torch.linspace(0, 2, 201).to(device)
+    time = torch.linspace(0, 2, int(2/dt + 1)).to(device)
     optimizer = torch.optim.Adam(neural_ode.parameters(), lr=1e-3)
 
     epochs, attempts = range(5000), range(10)

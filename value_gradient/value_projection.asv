@@ -4,6 +4,8 @@ syms q qd qdd real;
 filename = "~/Desktop/cached_value.mat";
 pi = -q + sqrt(3) * qd;
 v  = sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2;
+v = 10*q^2 + 10*qd^2;
+
 vx = jacobian(v);
 vqd = diff(v, qd);
 l  = q^2 + qd^2 + qdd^2;
@@ -42,6 +44,7 @@ f = @(q, qd, qdd)([qd; qdd]);
 v = @(q, qd)(sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2);
 fcost = @(q, qd, u)(q^2 + qd^2 + u^2);
 v_jac = @(q, qd)([2*qd + 2*3^(1/2)*q; 2*q + 2*3^(1/2)*qd]);
+v_jac = @(q, qd)([20*q; 2*qd]);
 v_qd = @(q, qd)(2*q - 2*3^(1/2)*(qd));
 gauss_hessian = @(q, qd)(2 * (v_jac(q, qd)' * v_jac(q, qd) + 1e-6));
 real_hessian  = [2*3^(1/2), 2; 2, 2*3^(1/2)];
@@ -60,7 +63,6 @@ q_hat_next = q_t; qd_hat_next = qd_t;
 figure();
 hax1 = axes;
 hold on;
-surf(POS, VEL, VALUES, 'FaceAlpha',0.25)
 contourf(POS, VEL, VALUES);
 quiver(poses, vels, vq, vqd, 'b');
 plot(q_hat_next, qd_hat_next, '-o');
