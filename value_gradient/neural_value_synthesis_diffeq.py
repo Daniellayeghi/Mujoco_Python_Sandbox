@@ -96,7 +96,7 @@ class DynamicalSystem(nn.Module):
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
-        self.step = 0.07
+        self.step = 0.005
         # self.point_mass = PointMassData(sim_params)
 
     def project(self, t, x):
@@ -139,7 +139,7 @@ def save_models(value_path: str, net: nn.Module):
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 40)
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80)
     Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
     Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -164,8 +164,8 @@ if __name__ == "__main__":
     time = torch.linspace(0, 5, 501).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 2
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 2
+    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 7
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 7
     # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
@@ -180,6 +180,7 @@ if __name__ == "__main__":
         optimizer.zero_grad()
         traj = odeint(dyn_system, x_init, time)
         loss = batch_loss(traj)
+        dyn_system.step *= 1.08
         # dyn_system.step /= (100 * loss.item())
         loss.backward()
         optimizer.step()
@@ -188,9 +189,9 @@ if __name__ == "__main__":
             print(f"\n{param}\n")
 
         print(f"Epochs: {e}, Loss: {loss.item()}")
-        # if e % 0 == 0:
-        with torch.no_grad():
-            plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, lin_value_func, trace=traj, contour=True)
+        if e % 5 == 0:
+            with torch.no_grad():
+                plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, lin_value_func, trace=traj, contour=True)
 
     save_models("./neural_value", lin_value_func)
     plt.show()
