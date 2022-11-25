@@ -180,7 +180,7 @@ if __name__ == "__main__":
         optimizer.zero_grad()
         traj = odeint(dyn_system, x_init, time)
         loss = batch_loss(traj)
-        dyn_system.step *= 1.08
+        dyn_system.step *= 1.07
         # dyn_system.step /= (100 * loss.item())
         loss.backward()
         optimizer.step()
@@ -189,7 +189,7 @@ if __name__ == "__main__":
             print(f"\n{param}\n")
 
         print(f"Epochs: {e}, Loss: {loss.item()}")
-        if e % 5 == 0:
+        if True:
             with torch.no_grad():
                 plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, lin_value_func, trace=traj, contour=True)
 
