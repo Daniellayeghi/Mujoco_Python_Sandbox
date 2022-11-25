@@ -1,7 +1,7 @@
 import math
 import argparse
 import numpy as np
-from utilities.mujoco_torch import mujoco, torch_mj_set_attributes, SimulationParams
+from utilities.mujoco_torch import mujoco, torch_mj_set_attributes, SimulationParams, torch_mj_inv
 import torch
 import torch.nn.functional as Func
 from torch import Tensor
@@ -54,6 +54,18 @@ def decomp_x(x, sim_params: SimulationParams):
 
 def decomp_xd(xd, sim_params: SimulationParams):
     return xd[:, :, 0:sim_params.nv].clone(), xd[:, :, sim_params.nv:].clone()
+
+
+def compose_xxd(x, acc):
+    return torch.cat((x, acc), dim=3)
+
+
+def compose_acc(x, dt):
+    ntime, nsim, r, c = x.shape
+    v = x[:, :, :, -1].view(ntime, nsim, r, int(c/2)).clone()
+    acc = torch.diff(v, dim=0) / dt
+    acc_null = torch.zeros_like((acc[0, :, :, :])).view(1, nsim, r, int(c/2))
+    return torch.cat((acc, acc_null), dim=0)
 
 
 class LinValueFunction(nn.Module):
@@ -139,15 +151,16 @@ def save_models(value_path: str, net: nn.Module):
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80)
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 501)
     Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
     Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
+    torch_mj_set_attributes(m, sim_params)
 
     def loss_func(x: torch.Tensor):
         return x @ Q @ x.mT
 
-    def batch_loss(x: torch.Tensor):
+    def batch_state_loss(x: torch.Tensor):
         t, nsim, r, c = x.shape
         x_run = x[0:-1, :, :, :].view(t-1, nsim, r, c).clone()
         x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
@@ -156,12 +169,18 @@ if __name__ == "__main__":
 
         return torch.mean(l_running + l_terminal)
 
+    def batch_ctrl_loss(xxd: torch.Tensor):
+        return torch.mean(torch_mj_inv.apply(xxd))
+
+    def batch_state_ctrl_loss(x, xxd):
+        return batch_state_loss(x) + batch_ctrl_loss(xxd)
+
     S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 5).to(device)
     # S_init = torch.Tensor([[1.7, 1], [1, 1.7]]).to(device)
     lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
     dyn_system = DynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
-    time = torch.linspace(0, 5, 501).to(device)
+    time = torch.linspace(0, 5, sim_params.ntime).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
     q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 7
@@ -179,7 +198,9 @@ if __name__ == "__main__":
     for e in epochs:
         optimizer.zero_grad()
         traj = odeint(dyn_system, x_init, time)
-        loss = batch_loss(traj)
+        acc = compose_acc(traj, 0.01)
+        xxd = compose_xxd(traj, acc)
+        loss = batch_state_ctrl_loss(traj, xxd)
         dyn_system.step *= 1.07
         # dyn_system.step /= (100 * loss.item())
         loss.backward()

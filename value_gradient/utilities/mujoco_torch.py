@@ -7,7 +7,7 @@ from collections import namedtuple
 
 
 SimulationParams = namedtuple(
-    'SimulationParams', 'nqva, nqv, nq, nv, nu, nee, nsim'
+    'SimulationParams', 'nqva, nqv, nq, nv, nu, nee, nsim, ntime'
 )
 
 
@@ -15,60 +15,61 @@ _mj_attrs = None
 
 
 class __MJAtrributes():
-    def __init__(self, m: mujoco.MjModel, n_batch, n_sim):
-        self.m = m
-        self.d = mujoco.MjData(m)
-        self._dfdx = MjDerivative(m, self.d, MjDerivativeParams(1e-6, Wrt.State, Mode.Fwd))
-        self._dfdu = MjDerivative(m, self.d, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
-        self._dfinvdx_xd = MjDerivative(m, self.d, MjDerivativeParams(1e-6, Wrt.State, Mode.Inv))
-        self._n_state = self.m.nq + self.m.nv
+    def __init__(self, m: mujoco.MjModel, sim_params: SimulationParams):
+        self._m = m
+        self._d = mujoco.MjData(m)
+        self._dfdx = MjDerivative(m, self._d, MjDerivativeParams(1e-6, Wrt.State, Mode.Fwd))
+        self._dfdu = MjDerivative(m, self._d, MjDerivativeParams(1e-6, Wrt.Ctrl, Mode.Fwd))
+        self._dfinvdx_xd = MjDerivative(m, self._d, MjDerivativeParams(1e-6, Wrt.State, Mode.Inv))
+        self._nstate = self._m.nv + self._m.nq
+        self._nfull_state = self._nstate + self._m.nq
+
+        self._sim_params = sim_params
+        self.n_sim = sim_params.nsim
+        self.n_time = sim_params.ntime
+        self.n_ee = sim_params.nee
+        self.nqv = sim_params.nqv
 
         # Buffers
-        self._qfrc_t_batch = torch.zeros(
-            (n_batch, 1, self.m.nv), dtype=torch.float
+        self._qfrc_t = torch.zeros(
+            (self.n_time, self.n_sim, 1, self._m.nv), dtype=torch.float
         ).requires_grad_().to(device)
 
-        self._dfinvdx_xd_t_batch = torch.zeros(
-            (n_batch, self.m.nv, self._n_state + self.m.nv), dtype=torch.float
-        ).requires_grad_().to(device)
-
-        self._qfrc_t_bodies = torch.zeros(
-            (n_sim, 1, self.m.nv), dtype=torch.float
+        self._dfinvdx_xd_t = torch.zeros(
+            (self.n_time, self.n_sim, self._m.nv, self._nfull_state), dtype=torch.float
         ).requires_grad_().to(device)
 
     # Setters
     def _set_q_qd_qdd(self, pos, vel, acc):
-        self.d.qpos, self.d.qvel, self.d.qacc = pos, vel, acc
+        self._d.qpos, self._d.qvel, self._d.qacc = pos, vel, acc
 
     def _set_q_qd(self, pos, vel):
-        self.d.qpos, self.d.qvel = pos, vel
+        self._d.qpos, self._d.qvel = pos, vel
 
     def set_q_qd_qdd_array(self, x_xd_tensor):
         tensor = x_xd_tensor.flatten()
         self._set_q_qd_qdd(
-            tensor[:self.m.nq], tensor[self.m.nq:self._n_state], tensor[self._n_state:]
+            tensor[:self._m.nq], tensor[self._m.nq:self._nstate], tensor[self._nstate:]
         )
 
     def set_q_qd_array(self, x_tensor):
         tensor = x_tensor.flatten()
         self._set_q_qd(
-            tensor[:self.m.nq], tensor[self.m.nq:self._n_state]
+            tensor[:self._m.nq], tensor[self._m.nq:self._nstate]
         )
 
     def detach(self):
-        self._qfrc_t_batch.detach()
-        self._qfrc_t_bodies.detach()
-        self._dfinvdx_xd_t_batch.detach()
+        self._qfrc_t.detach()
+        self._dfinvdx_xd_t.detach()
 
     def attach(self):
-        self._qfrc_t_batch.requires_grad_()
-        self._qfrc_t_bodies.requires_grad_()
-        self._dfinvdx_xd_t_batch.requires_grad_()
+        self._qfrc_t.requires_grad_()
+        self._dfinvdx_xd_t.requires_grad_()
 
 
-def torch_mj_set_attributes(m: mujoco.MjModel, n_time, n_sims):
+def torch_mj_set_attributes(m: mujoco.MjModel, sim_params: SimulationParams):
     global _mj_attrs
-    _mj_attrs = __MJAtrributes(m, n_time, n_sims)
+    _mj_attrs = __MJAtrributes(m, sim_params)
 
 
 def torch_mj_detach():
@@ -86,16 +87,14 @@ class torch_mj_inv(Function):
     def forward(ctx, x_xd):
         x_xd_np = tensor_to_np(x_xd)
         ctx.save_for_backward(x_xd)
-        if len(x_xd) == len(_mj_attrs._qfrc_t_batch):
-            res = _mj_attrs._qfrc_t_batch
-        else:
-            res = _mj_attrs._qfrc_t_bodies
+        res = _mj_attrs._qfrc_t
 
-        # Rollout batch
-        for i in range(len(x_xd_np)):
-            _mj_attrs.set_q_qd_qdd_array(x_xd_np[i, :, :])
-            mujoco.mj_inverse(_mj_attrs.m, _mj_attrs.d)
-            res[i, :, :] = np_to_tensor(_mj_attrs.d.qfrc_inverse, x_xd.device).view(res[i, :, :].shape)
+        time, nsim, r, c = x_xd.shape
+        for t in range(time):
+            for s in range(nsim):
+                _mj_attrs.set_q_qd_qdd_array(x_xd_np[t, s, :, :])
+                mujoco.mj_inverse(_mj_attrs._m, _mj_attrs._d)
+                res[t, s, :, :] = np_to_tensor(_mj_attrs._d.qfrc_inverse, x_xd.device).view(res[t, s, :, :].shape)
 
         return res
 
@@ -103,11 +102,12 @@ class torch_mj_inv(Function):
     def backward(ctx, grad_output):
         x_xd, = ctx.saved_tensors
         x_xd_np = tensor_to_np(x_xd)
-        for i in range(len(x_xd)):
-            _mj_attrs.set_q_qd_qdd_array(x_xd_np[i, :])
-            _mj_attrs._dfinvdx_xd_t_batch[i, :] = np_to_tensor(
-                _mj_attrs._dfinvdx_xd.func(), _mj_attrs._dfinvdx_xd_t_batch.device
+        time, nsim, r, c = x_xd.shape
+        for t in range(time):
+            for s in range(nsim):
+                _mj_attrs.set_q_qd_qdd_array(x_xd_np[t, s, :, :])
+                _mj_attrs._dfinvdx_xd_t[t, s, :, :] = np_to_tensor(
+                _mj_attrs._dfinvdx_xd.func(), _mj_attrs._dfinvdx_xd_t.device
             )
-        return grad_output * _mj_attrs._dfinvdx_xd_t_batch
 
-
+        return grad_output * _mj_attrs._dfinvdx_xd_t
