@@ -151,7 +151,7 @@ def save_models(value_path: str, net: nn.Module):
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 501)
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 5, 501)
     Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
     Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         return torch.mean(torch_mj_inv.apply(xxd))
 
     def batch_state_ctrl_loss(x, xxd):
-        return batch_state_loss(x) + batch_ctrl_loss(xxd)
+        return batch_state_loss(x) + 1 * batch_ctrl_loss(xxd)
 
     S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 5).to(device)
     # S_init = torch.Tensor([[1.7, 1], [1, 1.7]]).to(device)
@@ -183,8 +183,8 @@ if __name__ == "__main__":
     time = torch.linspace(0, 5, sim_params.ntime).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 7
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 7
+    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
     # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
@@ -201,7 +201,7 @@ if __name__ == "__main__":
         acc = compose_acc(traj, 0.01)
         xxd = compose_xxd(traj, acc)
         loss = batch_state_ctrl_loss(traj, xxd)
-        dyn_system.step *= 1.07
+        dyn_system.step *= 1.08
         # dyn_system.step /= (100 * loss.item())
         loss.backward()
         optimizer.step()
