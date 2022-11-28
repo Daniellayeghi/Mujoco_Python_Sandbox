@@ -101,6 +101,17 @@ class NNValueFunction(nn.Module):
         return self.nn(x)
 
 
+class Encoder(nn.Module):
+    def __init__(self, weight, sim_params: SimulationParams):
+        super(Encoder, self).__init__()
+        self.nin = sim_params.nqv * sim_params.nee
+        self.E = nn.Linear(self.nin, 1).requires_grad_(False)
+        self.E.weight = nn.Parameter(weight)
+
+    def forward(self, x):
+        return self.E(x)
+
+
 class DynamicalSystem(nn.Module):
     def __init__(self, value_function, loss, sim_params: SimulationParams):
         super(DynamicalSystem, self).__init__()
@@ -151,7 +162,8 @@ def save_models(value_path: str, net: nn.Module):
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 5, 501)
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 30, 201)
+    prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 5, 100, 1.07
     Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
     Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -180,7 +192,7 @@ if __name__ == "__main__":
     lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
     dyn_system = DynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
-    time = torch.linspace(0, 5, sim_params.ntime).to(device)
+    time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
     q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
@@ -193,23 +205,27 @@ if __name__ == "__main__":
     f_mat = torch.zeros((100, 100)).to(device)
     [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
 
-    epochs, attempts = range(100), range(10)
-
-    for e in epochs:
+    while diff > tol or iteration > max_iter:
         optimizer.zero_grad()
         traj = odeint(dyn_system, x_init, time)
         acc = compose_acc(traj, 0.01)
         xxd = compose_xxd(traj, acc)
         loss = batch_state_ctrl_loss(traj, xxd)
-        dyn_system.step *= 1.08
-        # dyn_system.step /= (100 * loss.item())
+
+        dyn_system.step *= step_size
+        print(f"Stepping with {dyn_system.step}")
+
+        diff = math.fabs(prev_cost - loss.item())
+        prev_cost = loss.item()
         loss.backward()
         optimizer.step()
 
         for param in dyn_system.parameters():
             print(f"\n{param}\n")
 
-        print(f"Epochs: {e}, Loss: {loss.item()}")
+        print(f"Epochs: {iteration}, Loss: {loss.item()}")
+        iteration += 1
+
         if True:
             with torch.no_grad():
                 plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, lin_value_func, trace=traj, contour=True)
