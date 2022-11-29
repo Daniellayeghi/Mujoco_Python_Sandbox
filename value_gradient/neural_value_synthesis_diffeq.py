@@ -57,7 +57,7 @@ def compose_xxd(x, acc):
 
 def compose_acc(x, dt):
     ntime, nsim, r, c = x.shape
-    v = x[:, :, :, -1].view(ntime, nsim, r, int(c/2)).clone()
+    v = x[:, :, :, int(c/2):].clone()
     acc = torch.diff(v, dim=0) / dt
     acc_null = torch.zeros_like((acc[0, :, :, :])).view(1, nsim, r, int(c/2))
     return torch.cat((acc, acc_null), dim=0)
@@ -81,7 +81,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 4, bias=False),
+            nn.Linear(n_in, 8, bias=False),
+            nn.Softplus(),
+            nn.Linear(8, 4, bias=False),
             nn.Softplus(),
             nn.Linear(4, 1, bias=False)
         )
@@ -99,7 +101,7 @@ class NNValueFunction(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, weight, sim_params: SimulationParams):
         super(Encoder, self).__init__()
-        self.nin = sim_params.nqv * sim_params.nee
+        self.nin = sim_params.nqv
         self.E = nn.Linear(self.nin, 1).requires_grad_(False)
         self.E.weight = nn.Parameter(weight)
 
@@ -140,14 +142,10 @@ class DynamicalSystem(nn.Module):
     def dfdt(self, t, x):
         # Fix a =
         xd = self.project(t, x)
-        v = x[:, :, -1].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
-        a = xd[:, :, -1].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
+        v = x[:, :, :self.sim_params.nv].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
+        a = xd.clone()
         return torch.cat((v, a), 2)
 
     def forward(self, t, x):
         xd = self.dfdt(t, x)
         return xd
-
-
-
-

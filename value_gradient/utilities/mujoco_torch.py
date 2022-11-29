@@ -110,4 +110,4 @@ class torch_mj_inv(Function):
                 _mj_attrs._dfinvdx_xd.func(), _mj_attrs._dfinvdx_xd_t.device
             )
 
-        return grad_output * _mj_attrs._dfinvdx_xd_t
+        return grad_output.mT * _mj_attrs._dfinvdx_xd_t

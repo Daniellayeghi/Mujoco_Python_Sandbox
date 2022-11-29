@@ -9,7 +9,7 @@ if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
     sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 30, 201)
-    prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 5, 100, 1.07
+    prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 2, 100, 1.07
     Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
     Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -41,8 +41,8 @@ if __name__ == "__main__":
     time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, 1 * sim_params.nee).uniform_(-1, 1) * 5
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 5
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 5
     # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
