@@ -63,52 +63,6 @@ def compose_acc(x, dt):
     return torch.cat((acc, acc_null), dim=0)
 
 
-class LinValueFunction(nn.Module):
-    """
-    Value function is J = xSx
-    """
-    def __init__(self, n_in, Sinit):
-        super(LinValueFunction, self).__init__()
-        self.S = nn.Linear(2, 2, bias=-False)
-        self.S.weight = nn.Parameter(Sinit)
-
-    def forward(self, t: float, x: torch.Tensor):
-        return self.S(x) @ x.mT
-
-
-class NNValueFunction(nn.Module):
-    def __init__(self, n_in):
-        super(NNValueFunction, self).__init__()
-
-        self.nn = nn.Sequential(
-            nn.Linear(n_in, 8, bias=False),
-            nn.Softplus(),
-            nn.Linear(8, 4, bias=False),
-            nn.Softplus(),
-            nn.Linear(4, 1, bias=False)
-        )
-
-        def init_weights(net):
-            if type(net) == nn.Linear:
-                torch.nn.init.xavier_uniform(net.weight)
-
-        self.nn.apply(init_weights)
-
-    def forward(self, t, x):
-        return self.nn(x)
-
-
-class Encoder(nn.Module):
-    def __init__(self, weight, sim_params: SimulationParams):
-        super(Encoder, self).__init__()
-        self.nin = sim_params.nqv
-        self.E = nn.Linear(self.nin, 1).requires_grad_(False)
-        self.E.weight = nn.Parameter(weight)
-
-    def forward(self, x):
-        return self.E(x)
-
-
 class DynamicalSystem(nn.Module):
     def __init__(self, value_function, loss, sim_params: SimulationParams):
         super(DynamicalSystem, self).__init__()
@@ -142,7 +96,7 @@ class DynamicalSystem(nn.Module):
     def dfdt(self, t, x):
         # Fix a =
         xd = self.project(t, x)
-        v = x[:, :, :self.sim_params.nv].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
+        v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
         a = xd.clone()
         return torch.cat((v, a), 2)
 
