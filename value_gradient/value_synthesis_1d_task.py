@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
         if True:
             with torch.no_grad():
-                plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=traj, contour=False)
+                plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=traj, contour=True)
 
     save_models("./neural_value", lin_value_func)
     plt.show()
