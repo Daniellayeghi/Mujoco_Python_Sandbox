@@ -48,11 +48,11 @@ if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator_sparse.xml")
     d = mujoco.MjData(m)
     sim_params = SimulationParams(3 * 2, 2 * 2, 1 * 2, 1 * 2, 1 * 2, 2, 50, 101)
-    prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, -1, 10000, 1.02
+    prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, -1, 10000, 1.05
     Q = torch.diag(torch.Tensor([0, 1, 0, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     Q_stop = torch.diag(torch.Tensor([0, 0, 1, 0])).repeat(sim_params.nsim, 1, 1).to(device)
     Qb = torch.diag(torch.Tensor([0, 1, 0, 1])).repeat(sim_params.nsim, 1, 1).to(device)
-    R = torch.diag(torch.Tensor([0, 10000])).repeat(sim_params.nsim, 1, 1).to(device)
+    R = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     Qf = torch.diag(torch.Tensor([0, 1, 0, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     torch_mj_set_attributes(m, sim_params)
 
@@ -60,11 +60,11 @@ if __name__ == "__main__":
         x_a = x[:, :, :sim_params.nq-1].clone()
         x_u = x[:, :, sim_params.nq-1:sim_params.nq].clone()
         l_dist = torch.cdist(x_a, x_u)
-        l_dist_norm = l_dist / torch.max(l_dist)
+        l_dist_norm = (l_dist / torch.max(l_dist)) * 0
         x_task = x.view(x.shape).clone()
         l_task = (x_task @ Q @ x_task.mT) * 1
-        l_stop = (x_task @ Q_stop @ x_task.mT) * 1
-        return ((l_stop + l_task) * torch.exp(l_dist_norm) + l_dist)
+        l_stop = (x_task @ Q_stop @ x_task.mT) * 0
+        return ((l_stop + l_task) * torch.exp(l_dist_norm) + l_dist * 0)
 
     def batch_distance_loss(x: torch.Tensor):
         t, nsim, r, c = x.shape
@@ -99,16 +99,21 @@ if __name__ == "__main__":
         t, nsim, r, c = xxd.shape
         qfrcs = torch_mj_inv.apply(xxd)
         # loss = torch.sum(qfrcs @ R @ qfrcs.mT, dim=0).view(1, nsim, r, 1)
-        loss_act = (qfrcs[:, :, :, :sim_params.nv-1] * 0).square_().clone()
-        loss_uact = (qfrcs[:, :, :, sim_params.nv-1:] * cio).square_().clone()
-        loss = torch.sum(loss_uact + loss_act, dim=0).view(1, nsim, r, 1)
-        return torch.mean(loss, 1).squeeze()
+        l_act = (qfrcs[:t-1, :, :, :sim_params.nv-1] * 0).square_().clone()
+        l_uact = (qfrcs[:t-1, :, :, sim_params.nv-1:] * cio).square_().clone()
+        l_ctrl = l_uact + l_act
+        return l_ctrl
 
     def batch_state_ctrl_loss(x, xxd, cio):
         l_dist = batch_distance_loss(x)
-        l_run = torch.sum(batch_state_running_cst(x), 0)
+        l_dist_norm = l_dist / torch.max(l_dist) * 0
+        l_run = batch_state_running_cst(x)
         l_term = batch_state_terminal_cst(x)
-        l_ctrl = torch.sum(batch_ctrl_cst(xxd, cio * l_dist), 0)
+        l_ctrl = batch_ctrl_cst(xxd, cio * l_dist_norm)
+        l_task = l_run * torch.exp(l_dist_norm) + l_dist + l_ctrl
+        l_task = (torch.sum(l_task, dim=0) + l_term).squeeze()
+        l_task = torch.mean(l_task)
+        return l_task
 
 
     class NNValueFunction(nn.Module):
@@ -131,14 +136,14 @@ if __name__ == "__main__":
             return self.nn(x)
 
     # Initialise the network
-    S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 5).to(device)
+    S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(-5, 5).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
     dyn_system = DynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
-    optimizer = torch.optim.Adam(dyn_system.parameters(), lr=3e-2)
+    optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
     # Assemble initial conditions
-    q_init_act = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-7.5, 7.5)
-    q_init_uact = torch.zeros(sim_params.nsim, 1, 1)
+    q_init_act = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-2, -1)
+    q_init_uact = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-7.5, 7.5)
     q_init = torch.cat((q_init_act, q_init_uact), 2)
     qd_init_act = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-5, 5)
     qd_init_uact = torch.zeros((sim_params.nsim, 1, 1))
@@ -158,7 +163,7 @@ if __name__ == "__main__":
         traj = odeint(dyn_system, x_init, time)
         acc = compose_acc(traj, 0.01)
         xxd = compose_xxd(traj, acc)
-        loss = batch_state_ctrl_loss(traj, xxd, min(cios[iteration].item(), 1))
+        loss = batch_state_ctrl_loss(traj, xxd, 1)
         dyn_system.step *= step_size
         diff = math.fabs(prev_cost - loss.item())
         prev_cost = loss.item()
