@@ -56,3 +56,19 @@ class ParallelRollouts:
                 future.result()
 
         return state
+
+
+if __name__ == "__main__":
+    model_path = "../../../OptimisationBasedControl/models/finger.xml"
+    model = mujoco.MjModel.from_xml_path(model_path)
+    num_workers, nstate, nstep = 10, 100, 200
+    initial_state = np.random.randn(nstate, model.nq + model.nv + model.na)
+    state = np.zeros((nstate, nstep, model.nq + model.nv + model.na))
+    sensordata = np.zeros((nstate, nstep, model.nsensordata))
+    ctrl = np.random.randn(nstate, nstep, model.nu)
+
+    data = mujoco.MjData(model)
+    par_roll = ParallelRollouts(model_path, num_workers)
+    res = par_roll(initial_state, state, ctrl, sensordata, use_cache=False)
+    res_cached = par_roll(initial_state, state, ctrl, sensordata, use_cache=True)
+    print(res_cached)
