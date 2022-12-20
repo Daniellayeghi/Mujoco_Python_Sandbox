@@ -64,12 +64,13 @@ def compose_acc(x, dt):
 
 
 class DynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=lambda: None):
         super(DynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
+        self._dynamics = dynamics
         self.step = 0.005
         # self.point_mass = PointMassData(sim_params)
 
@@ -94,8 +95,13 @@ class DynamicalSystem(nn.Module):
         return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
 
     def dfdt(self, t, x):
-        # Fix a =
+        # TODO: Either the value function is a function of just the actuation space e.g. the cart or it takes into
+        # TODO: the main difference is that the normalised projection is changed depending on what is used
         xd = self.project(t, x)
+        if self._dynamics is not None:
+            xxd = self._dynamics(x, xd)
+            return xxd
+
         v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
         a = xd.clone()
         return torch.cat((v, a), 2)
