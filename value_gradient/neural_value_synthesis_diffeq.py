@@ -63,16 +63,22 @@ def compose_acc(x, dt):
     return torch.cat((acc, acc_null), dim=0)
 
 
-class DynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=lambda: None):
-        super(DynamicalSystem, self).__init__()
+class ProjectedDynamicalSystem(nn.Module):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None):
+        super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
         self._dynamics = dynamics
         self.step = 0.005
-        # self.point_mass = PointMassData(sim_params)
+
+        if dynamics is None:
+            def dynamics(x, xd):
+                v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
+                a = xd.clone()
+                return torch.cat((v, a), 2)
+            self._dynamics = dynamics
 
     def project(self, t, x):
         q, v = decomp_x(x, self.sim_params)
@@ -98,13 +104,11 @@ class DynamicalSystem(nn.Module):
         # TODO: Either the value function is a function of just the actuation space e.g. the cart or it takes into
         # TODO: the main difference is that the normalised projection is changed depending on what is used
         xd = self.project(t, x)
-        if self._dynamics is not None:
-            xxd = self._dynamics(x, xd)
-            return xxd
+        return self._dynamics(x, xd)
 
-        v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
-        a = xd.clone()
-        return torch.cat((v, a), 2)
+        # v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
+        # a = xd.clone()
+        # return torch.cat((v, a), 2)
 
     def forward(self, t, x):
         xd = self.dfdt(t, x)

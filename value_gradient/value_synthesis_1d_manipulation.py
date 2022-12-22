@@ -138,7 +138,7 @@ if __name__ == "__main__":
     # Initialise the network
     S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(-5, 5).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-    dyn_system = DynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
+    dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 
     # Assemble initial conditions
