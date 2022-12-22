@@ -18,6 +18,9 @@ class ParallelRollouts:
             nstep=nstep, initial_state=init_states, ctrl=ctrl, state=state
         )
 
+    def init_memory(self, init_states, state, ctrl):
+        self._build_containers(init_states, state, ctrl)
+
     def _build_containers(self, init_states, state, ctrl):
         n = init_states.shape[0] // self._nworkers  # integer division
         self._chunks = [] # a list of tuples, one per worker
@@ -42,9 +45,7 @@ class ParallelRollouts:
         self._chunks[-1][0], self._chunks[-1][1], self._chunks[-1][2] =\
             init_states[(self._nworkers - 1) * n:], ctrl[(self._nworkers - 1) * n:], state[(self._nworkers - 1) * n:]
 
-    def __call__(self, init_states, state, ctrl, sensor_data, use_cache=False):
-        prepare_containers = self._fill_containers if use_cache else self._build_containers
-        prepare_containers(init_states, state, ctrl)
+    def __call__(self, init_states, state, ctrl, sensor_data):
         assert(self._chunks is not None)
 
         with concurrent.futures.ThreadPoolExecutor(
@@ -66,9 +67,7 @@ if __name__ == "__main__":
     state = np.zeros((nstate, nstep, model.nq + model.nv + model.na))
     sensordata = np.zeros((nstate, nstep, model.nsensordata))
     ctrl = np.random.randn(nstate, nstep, model.nu)
-
     data = mujoco.MjData(model)
     par_roll = ParallelRollouts(model_path, num_workers)
-    res = par_roll(initial_state, state, ctrl, sensordata, use_cache=False)
-    res_cached = par_roll(initial_state, state, ctrl, sensordata, use_cache=True)
-    print(res_cached)
+    par_roll.init_memory(initial_state, state, ctrl)
+    res_cached = par_roll(initial_state, state, ctrl, sensordata)
