@@ -29,7 +29,7 @@ numdifftools = "*"
 dm-control = "==1.0.5"
 torchdiffeq = "*"
 absl-py = "*"
-torch = "==1.10.1+cu102"
+torch = "==1.13.0+cu117"
 
 [requires]
 python_version = "3.7"
