@@ -71,7 +71,7 @@ class ProjectedDynamicalSystem(nn.Module):
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
         self._dynamics = dynamics
-        self.step = 0.005
+        self.step =  0.015#nn.Parameter(torch.tensor(0.015))
 
         if dynamics is None:
             def dynamics(x, xd):
@@ -97,7 +97,7 @@ class ProjectedDynamicalSystem(nn.Module):
         Vx = dvdx(t, x, self.value_func)
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
         unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
-        xd_trans = - (Vx / norm) * unnorm_porj
+        xd_trans = - (Vx / norm) * unnorm_porj * 5
         return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
 
     def dfdt(self, t, x):

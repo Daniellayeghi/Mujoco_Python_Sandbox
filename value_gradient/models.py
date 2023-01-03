@@ -1,24 +1,67 @@
 import torch
 import matplotlib.pyplot as plt
+from animations.cartpole import animate_cartpole
+import numpy as np
+from dataclasses import  dataclass
+
+@dataclass
+class ModelParams:
+    nq: int = 0
+    nv: int = 0
+    nu: int = 0
+    nx: int = 0
+    nxd: int = 0
 
 
-class Cartpole:
+class BaseRBD(object):
+    def __init__(self, nsims, params: ModelParams):
+        self._params = params
+        self._gear = 1
+        self._b = torch.diag(torch.ones(params.nv)).repeat(nsims, 1, 1)
+
+    def _Muact(self, q):
+        pass
+
+    def _Mact(self, q):
+        pass
+
+    def _Mfull(self, q):
+        pass
+
+    def _Cfull(self, x):
+        pass
+
+    def _Tgrav(self, q):
+        pass
+
+    def simulate(self, x, acc):
+        q, qd = x[:, :, :self._params.nq].clone(), x[:, :, self._params.nq:].clone()
+        M = self._Mfull(q)
+        M_21, M_22 = M[:, 1, 0].unsqueeze(1).clone(), M[:, 1, 1].unsqueeze(1).clone()
+        Tp = (self._Tgrav(q) - (self._Cfull(x) @ qd.mT).mT)[:, :, 1].clone()
+        Tfric = (self._b @ qd.mT).mT[:, :, 1].clone()
+        qddc = acc[:, :, 0].clone() * self._gear
+        qddp = 1/M_22 * (Tp - Tfric - M_21 * qddc)
+        xd = torch.cat((qd[:, :, 0], qd[:, :, 1], qddc, qddp), 1).unsqueeze(1).clone()
+        return xd.clone()
+
+
+
+class Cartpole(BaseRBD):
     LENGTH = 1
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = .8
+    FRICTION = .13
+    GEAR = 1.5
 
-    def __init__(self, nsims, augmented_state=False):
+    def __init__(self, nsims, params: ModelParams, augmented_state=False):
+        super(Cartpole, self).__init__(nsims, params)
         self._L = torch.ones((nsims, 1, 1)) * self.LENGTH
         self._Mp = torch.ones((nsims, 1, 1)) * self.MASS_P
         self._Mc = torch.ones((nsims, 1, 1)) * self.MASS_C
-        self._Ma = torch.zeros((nsims, 1, 2))
-        self._Mu = torch.zeros((nsims, 1, 2))
-        self._M = torch.zeros((nsims, 2, 2))
-        self._C = torch.zeros((nsims, 2, 2))
-        self._Tbias = torch.zeros((nsims, 1, 2))
-        self._b = torch.diag(torch.Tensor([1, 1])).repeat(nsims, 1, 1) * self.FRICTION
+        self._b *= self.FRICTION
+        self._gear *= self.GEAR
 
     def _Muact(self, q):
         qc, qp = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
@@ -56,19 +99,12 @@ class Cartpole:
         return torch.cat((torch.zeros_like(grav), grav), 2)
 
     def __call__(self, x, acc):
-        q, qd = x[:, :, :2].clone(), x[:, :, 2:].clone()
-        M = self._Mfull(q)
-        M_21, M_22 = M[:, 1, 0].unsqueeze(1).clone(), M[:, 1, 1].unsqueeze(1).clone()
-        Tp = (self._Tgrav(q) - (self._Cfull(x) @ qd.mT).mT)[:, :, 1].clone()
-        Tfric = (self._b @ qd.mT).mT[:, :, 1].clone()
-        qddc = acc[:, :, 0].clone()
-        qddp = 1/M_22 * (Tp - Tfric - M_21 * qddc)
-        xd = torch.cat((qd[:, :, 0], qd[:, :, 1], qddc, qddp), 1).unsqueeze(1).clone()
-        return xd.clone()
+        return self.simulate(x, acc)
 
 
 if __name__ == "__main__":
-    cp = Cartpole(1)
+    cp_params = ModelParams(2, 2, 1, 4, 4)
+    cp = Cartpole(1, cp_params)
     x_init = torch.randn((1, 1, 4))
     xd_init = torch.randn((1, 1, 4))
 
@@ -80,24 +116,25 @@ if __name__ == "__main__":
     res = cp(x_init, xd_init)
     print(torch.square(ref - res))
 
-    x_init = torch.Tensor([0, 0.2, 0, 0]).view(1, 1, 4)
-    xd_init = torch.Tensor([0, 0, 0, 0]).view(1, 1, 4)
+    x_init = torch.Tensor([0, .1, 0, 0]).view(1, 1, 4)
+    xd_init = torch.Tensor([0, 0]).view(1, 1, 2)
 
     def integrate(func, x, xd, time, dt):
         xs = []
 
         for t in range(time):
+            xd[:, :, 0] = torch.randn((1)) * 10
             xd_new = func(x, xd)
-            xd[:, :, :2] = xd_new[:, :, :2]
             x = x + xd_new * dt
             xs.append(x)
 
         return xs
 
 
-    xs = integrate(cp, x_init, xd_init, 5000, 0.01)
+    xs = integrate(cp, x_init, xd_init, 500, 0.01)
 
-    pos = [x[:, :, 1].item() for x in xs]
-    print(pos)
-    plt.plot(pos)
-    plt.show()
+    theta = [x[:, :, 1].item() for x in xs]
+    cart = [x[:, :, 0].item() for x in xs]
+    # plt.plot(theta)
+    # plt.show()
+    animate_cartpole(np.array(cart), np.array(theta))
