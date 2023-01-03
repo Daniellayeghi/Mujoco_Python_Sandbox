@@ -66,3 +66,5 @@ def animate_cartpole(x_vec, theta_vec, dt=0.01, skip = 2):
         time.sleep(.001)
             # Save Frame:
             # writerObj.grab_frame()
+
+    plt.close(fig)
