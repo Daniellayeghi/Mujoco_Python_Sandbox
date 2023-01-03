@@ -71,7 +71,7 @@ class ProjectedDynamicalSystem(nn.Module):
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
         self._dynamics = dynamics
-        self.step =  0.015#nn.Parameter(torch.tensor(0.015))
+        self.step = .5#nn.Parameter(torch.tensor(0.015))
 
         if dynamics is None:
             def dynamics(x, xd):
