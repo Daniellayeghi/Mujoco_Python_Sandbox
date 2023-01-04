@@ -52,13 +52,17 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 64, bias=False),
+            nn.Linear(n_in, 32, bias=False),
+            nn.Softplus(),
+            nn.Linear(32, 64, bias=False),
             nn.Softplus(),
             nn.Linear(64, 256, bias=False),
             nn.Softplus(),
             nn.Linear(256, 64, bias=False),
             nn.Softplus(),
-            nn.Linear(64, 1, bias=False),
+            nn.Linear(64, 32, bias=False),
+            nn.Softplus(),
+            nn.Linear(32, 1, bias=False)
         )
 
         def init_weights(net):
