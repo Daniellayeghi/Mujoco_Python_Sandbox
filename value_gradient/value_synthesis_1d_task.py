@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # S_init = torch.Tensor([[1.7, 1], [1, 1.7]]).to(device)
     lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-    dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
+    dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params, mode='hjb').to(device)
     time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
     optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 

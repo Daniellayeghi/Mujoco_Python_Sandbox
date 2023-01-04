@@ -64,14 +64,19 @@ def compose_acc(x, dt):
 
 
 class ProjectedDynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, mode='proj'):
         super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
         self._dynamics = dynamics
-        self.step = .5#nn.Parameter(torch.tensor(0.015))
+        self.step = .015
+        self._h = torch.ones((1, 1, sim_params.nv)) * 0.01
+        if mode == 'proj':
+            self._ctrl = self.project
+        else:
+            self._ctrl = self.hjb
 
         if dynamics is None:
             def dynamics(x, xd):
@@ -79,6 +84,25 @@ class ProjectedDynamicalSystem(nn.Module):
                 a = xd.clone()
                 return torch.cat((v, a), 2)
             self._dynamics = dynamics
+
+    def hjb(self, t, x):
+        q, v = decomp_x(x, self.sim_params)
+        xd = torch.cat((v, torch.zeros_like(v)), 2)
+
+        def dvdx(t, x, value_net):
+            with torch.set_grad_enabled(True):
+                x = x.detach().requires_grad_(True)
+                value = value_net(t, x).requires_grad_()
+                dvdx = torch.autograd.grad(
+                    value, x, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
+                )[0]
+                return dvdx
+
+        # M = self._dynamics._Mfull(q)
+        # C = self._dynamics._Cfull(x)
+        Vqd = dvdx(t, x, self.value_func)[:, :, self.sim_params.nq:].clone()
+        xd_trans = 0.5 * -Vqd * 0.01 * 10#@ torch.linalg.inv(M) - (C@v.mT).mT
+        return xd_trans
 
     def project(self, t, x):
         q, v = decomp_x(x, self.sim_params)
@@ -103,7 +127,7 @@ class ProjectedDynamicalSystem(nn.Module):
     def dfdt(self, t, x):
         # TODO: Either the value function is a function of just the actuation space e.g. the cart or it takes into
         # TODO: the main difference is that the normalised projection is changed depending on what is used
-        xd = self.project(t, x)
+        xd = self._ctrl(t, x)
         return self._dynamics(x, xd)
 
         # v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
