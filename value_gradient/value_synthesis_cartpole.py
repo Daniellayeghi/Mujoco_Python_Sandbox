@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 from utilities.adahessian import AdaHessian
 from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 20, 300)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 1, 300)
 cp_params = ModelParams(2, 2, 1, 4, 4)
 
 prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 0, 3000, 1.0
-Q = torch.diag(torch.Tensor([1, 10, 10, 0.01, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
+Q = torch.diag(torch.Tensor([1, 2, 2, 0.01, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.1])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([50000, 600000, 600000, 500, 6000])).repeat(sim_params.nsim, 1, 1).to(device)
 cartpole = Cartpole(sim_params.nsim, cp_params)
@@ -115,21 +115,23 @@ def loss_function(x, acc):
 nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params, cartpole, mode='proj').to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
-optimizer = AdaHessian(dyn_system.parameters(), lr=6e-3)
+optimizer = torch.optim.Adam(dyn_system.parameters(), lr=1e-3)
 # q_init = torch.Tensor([0, torch.pi]).repeat(sim_params.nsim, 1, 1).to(device)
-q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(0.2, 1.9 * torch.pi) * 1
+qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(3.14, 3.14) * 1
+qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(0, 0) * 1
 qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(0, 0) * 1
-x_init = torch.cat((q_init, qd_init), 2).to(device)
+x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
+bad_init = False
 
 if __name__ == "__main__":
     while iteration < max_iter:
-        # if bad_init:
-        #     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-        #     dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params, cartpole).to(device)
+        if bad_init:
+            nn_value_func = NNValueFunction(sim_params.nqv).to(device)
+            dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params, cartpole).to(device)
 
         optimizer.zero_grad()
-        traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=0.01))
-        acc = compose_acc(traj, 0.01)
+        traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=0.02))
+        acc = compose_acc(traj, 0.02)
         xxd = compose_xxd(traj, acc)
         loss = loss_function(traj, acc)
         bad_init = loss.isnan()

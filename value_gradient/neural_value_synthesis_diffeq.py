@@ -71,7 +71,7 @@ class ProjectedDynamicalSystem(nn.Module):
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
         self._dynamics = dynamics
-        self.step = .015
+        self.step = .15
         self._h = torch.ones((1, 1, sim_params.nv)) * 0.01
         if mode == 'proj':
             self._ctrl = self.project

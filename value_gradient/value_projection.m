@@ -35,7 +35,7 @@ close all
 VALUES = load(filename).VALUES;
 [vq, vqd] = gradient(VALUES);
 
-alpha = 175;
+alpha = 30;
 
 % Cost function and their derivatives
 f = @(q, qd, qdd)([qd; qdd]);
