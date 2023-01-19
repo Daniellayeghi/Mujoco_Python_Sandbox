@@ -7,7 +7,7 @@ from collections import namedtuple
 
 
 SimulationParams = namedtuple(
-    'SimulationParams', 'nqva, nqv, nq, nv, nu, nee, nsim, ntime'
+    'SimulationParams', 'nqva, nqv, nq, nv, nu, nee, nsim, ntime, dt'
 )
 
 

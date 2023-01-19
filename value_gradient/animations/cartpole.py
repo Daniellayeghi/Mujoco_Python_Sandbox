@@ -63,7 +63,7 @@ def animate_cartpole(x_vec, theta_vec, dt=0.01, skip = 2):
         # Update Drawing:
         fig.canvas.draw()
         fig.canvas.flush_events()
-        time.sleep(.001)
+        time.sleep(.0001)
             # Save Frame:
             # writerObj.grab_frame()
 

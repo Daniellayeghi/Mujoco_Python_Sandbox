@@ -3,13 +3,12 @@ import mujoco
 from neural_value_synthesis_diffeq import *
 from utilities.torch_utils import save_models
 from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
-from snopt.snopt import S
 
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 201)
-    prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 0.5, 100, 1.03
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501)
+    prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 0.5, 100, 1.07
     Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
     Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -57,6 +56,8 @@ if __name__ == "__main__":
 
         def forward(self, x):
             return self.E(x)
+
+
     class NNValueFunction(nn.Module):
         def __init__(self, n_in):
             super(NNValueFunction, self).__init__()
@@ -64,7 +65,8 @@ if __name__ == "__main__":
             self.nn = nn.Sequential(
                 nn.Linear(n_in, 4, bias=False),
                 nn.Softplus(),
-                nn.Linear(4, 1, bias=False)
+                nn.Linear(4, 1, bias=False),
+                nn.Sigmoid()
             )
 
             def init_weights(net):
@@ -80,12 +82,12 @@ if __name__ == "__main__":
     # S_init = torch.Tensor([[1.7, 1], [1, 1.7]]).to(device)
     lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-    dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params, mode='proj').to(device)
+    dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
     time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
-    optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
+    optimizer = torch.optim.Adam(dyn_system.parameters(), lr=1e-2)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 5
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 5
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
     # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
@@ -97,15 +99,14 @@ if __name__ == "__main__":
     while diff > tol or iteration > max_iter:
         optimizer.zero_grad()
         traj = odeint(dyn_system, x_init, time)
-        acc = compose_acc(traj, 0.01)
-        xxd = compose_xxd(traj, acc)
-        loss = batch_state_ctrl_loss(traj, xxd)
+        loss = batch_state_loss(traj)
+        # acc = compose_acc(traj, 0.01)
+        # xxd = compose_xxd(traj, acc)
+        # loss = batch_state_ctrl_loss(traj, xxd)
 
         dyn_system.step *= step_size
         print(f"Stepping with {dyn_system.step}")
 
-        diff = math.fabs(prev_cost - loss.item())
-        prev_cost = loss.item()
         loss.backward()
         optimizer.step()
 

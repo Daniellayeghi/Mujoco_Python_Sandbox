@@ -14,10 +14,10 @@ class ModelParams:
 
 
 class BaseRBD(object):
-    def __init__(self, nsims, params: ModelParams):
+    def __init__(self, nsims, params: ModelParams, device):
         self._params = params
         self._gear = 1
-        self._b = torch.diag(torch.ones(params.nv)).repeat(nsims, 1, 1)
+        self._b = torch.diag(torch.ones(params.nv)).repeat(nsims, 1, 1).to(device)
 
     def _Muact(self, q):
         pass
@@ -39,11 +39,11 @@ class BaseRBD(object):
         M = self._Mfull(q)
         M_21, M_22 = M[:, 1, 0].unsqueeze(1).clone(), M[:, 1, 1].unsqueeze(1).clone()
         Tp = (self._Tgrav(q) - (self._Cfull(x) @ qd.mT).mT)[:, :, 1].clone()
-        Tfric = (self._b @ qd.mT).mT[:, :, 1].clone()
-        qddc = acc[:, :, 0].clone() * self._gear
+        Tfric = (qd).mT[:, 1, :].clone() * self.FRICTION
+        qddc = acc[:, :, 0].clone()
         qddp = 1/M_22 * (Tp - Tfric - M_21 * qddc)
         xd = torch.cat((qd[:, :, 0], qd[:, :, 1], qddc, qddp), 1).unsqueeze(1).clone()
-        return xd.clone()
+        return xd
 
 
 
@@ -52,21 +52,21 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = .13
-    GEAR = 1.5
+    FRICTION = .1
+    GEAR = 2
 
-    def __init__(self, nsims, params: ModelParams, augmented_state=False):
-        super(Cartpole, self).__init__(nsims, params)
-        self._L = torch.ones((nsims, 1, 1)) * self.LENGTH
-        self._Mp = torch.ones((nsims, 1, 1)) * self.MASS_P
-        self._Mc = torch.ones((nsims, 1, 1)) * self.MASS_C
+    def __init__(self, nsims, params: ModelParams, device, augmented_state=False):
+        super(Cartpole, self).__init__(nsims, params, device)
+        self._L = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
+        self._Mp = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
+        self._Mc = torch.ones((nsims, 1, 1)).to(device) * self.MASS_C
         self._b *= self.FRICTION
         self._gear *= self.GEAR
 
     def _Muact(self, q):
         qc, qp = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
-        M21 = (self._Mp * self._L * torch.cos(qp))
-        M22 = (self._Mp * self._L ** 2)
+        M21 = (self.MASS_P * self.LENGTH * torch.cos(qp))
+        M22 = (self.MASS_P * self.LENGTH ** 2) * torch.ones_like(qp)
         # self._M[:, 1, 0] = (self._Mp * self._L * torch.cos(qp)).squeeze()
         # self._M[:, 1, 1] = (self._Mp * self._L ** 2).squeeze()
         return torch.cat((M21, M22), 2)
@@ -74,8 +74,8 @@ class Cartpole(BaseRBD):
 
     def _Mact(self, q):
         qc, qp = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
-        M00 = (self._Mp + self._Mc)
-        M01 = (self._Mp * self._L * torch.cos(qp))
+        M00 = (self.MASS_P + self.MASS_C) * torch.ones_like(qp)
+        M01 = (self.MASS_P * self.LENGTH * torch.cos(qp))
         # self._M[:, 0, 0] = (self._Mp + self._Mc).squeeze()
         # self._M[:, 0, 1] = (self._Mp * self._L * torch.cos(qp)).squeeze()
         # return self._M[:, 0, :].clone()
@@ -89,13 +89,13 @@ class Cartpole(BaseRBD):
 
     def _Cfull(self, x):
         qp, qdp = x[:, :, 1].unsqueeze(1).clone(), x[:, :, 3].unsqueeze(1).clone()
-        C12 = (-self._Mp * self._L * qdp * torch.sin(qp))
+        C12 = (-self.MASS_P * self.LENGTH * qdp * torch.sin(qp))
         Ctop = torch.cat((torch.zeros_like(C12), C12), 2)
         return torch.cat((Ctop, torch.zeros_like(Ctop)), 1)
 
     def _Tgrav(self, q):
         qc, qp = q[:, :, 0].unsqueeze(1), q[:, :, 1].unsqueeze(1)
-        grav = (-self._Mp * self.GRAVITY * self._L * torch.sin(qp))
+        grav = (-self.MASS_P * self.GRAVITY * self.LENGTH * torch.sin(qp))
         return torch.cat((torch.zeros_like(grav), grav), 2)
 
     def __call__(self, x, acc):
@@ -104,7 +104,7 @@ class Cartpole(BaseRBD):
 
 if __name__ == "__main__":
     cp_params = ModelParams(2, 2, 1, 4, 4)
-    cp = Cartpole(1, cp_params)
+    cp = Cartpole(1, cp_params, 'cpu')
     x_init = torch.randn((1, 1, 4))
     xd_init = torch.randn((1, 1, 4))
 
@@ -123,7 +123,6 @@ if __name__ == "__main__":
         xs = []
 
         for t in range(time):
-            xd[:, :, 0] = torch.randn((1)) * 10
             xd_new = func(x, xd)
             x = x + xd_new * dt
             xs.append(x)

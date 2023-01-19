@@ -64,28 +64,48 @@ def compose_acc(x, dt):
 
 
 class ProjectedDynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, mode='proj'):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=2):
         super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
         self.sim_params = sim_params
         self.nsim = sim_params.nsim
         self._dynamics = dynamics
-        self.step = .15
-        self._h = torch.ones((1, 1, sim_params.nv)) * 0.01
+        self._encoder = encoder
+        self._acc_buffer = torch.zeros((sim_params.ntime, sim_params.nsim, 1, sim_params.nv)).to(device).requires_grad_(False)
+        self._scale = scale
+        self.step = 2
+        self._policy = None
+
         if mode == 'proj':
             self._ctrl = self.project
         else:
             self._ctrl = self.hjb
 
+        def policy(q, v, x, Vqd):
+            M = self._dynamics._Mfull(q)
+            C = self._dynamics._Cfull(x)
+            G = self._dynamics._Tgrav(q)
+
+            return -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
+
+        self._policy = policy
+
         if dynamics is None:
-            def dynamics(x, xd):
+            def dynamics(x, acc):
                 v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
-                a = xd.clone()
-                return torch.cat((v, a), 2)
+                return torch.cat((v, acc), 2)
             self._dynamics = dynamics
 
+            def policy(q, v, x, Vqd):
+                return -0.5 * (1 * (Vqd))
+
+            self._policy = policy
+
+
+
     def hjb(self, t, x):
+        x_enc = self._encoder(x)
         q, v = decomp_x(x, self.sim_params)
         xd = torch.cat((v, torch.zeros_like(v)), 2)
 
@@ -98,13 +118,12 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        # M = self._dynamics._Mfull(q)
-        # C = self._dynamics._Cfull(x)
-        Vqd = dvdx(t, x, self.value_func)[:, :, self.sim_params.nq:].clone()
-        xd_trans = 0.5 * -Vqd * 0.01 * 10#@ torch.linalg.inv(M) - (C@v.mT).mT
-        return xd_trans
+
+        Vqd = dvdx(t, x_enc, self.value_func)[:, :, self.sim_params.nq:].clone()
+        return self._policy(q, v, x, Vqd)
 
     def project(self, t, x):
+        x_enc = self._encoder(x)
         q, v = decomp_x(x, self.sim_params)
         xd = torch.cat((v, torch.zeros_like(v)), 2)
         # x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
@@ -118,17 +137,17 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        Vx = dvdx(t, x, self.value_func)
+        Vx = dvdx(t, x_enc, self.value_func)
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
         unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
-        xd_trans = - (Vx / norm) * unnorm_porj * 5
+        xd_trans = - (Vx / norm) * unnorm_porj
         return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
 
     def dfdt(self, t, x):
         # TODO: Either the value function is a function of just the actuation space e.g. the cart or it takes into
         # TODO: the main difference is that the normalised projection is changed depending on what is used
-        xd = self._ctrl(t, x)
-        return self._dynamics(x, xd)
+        acc = self._ctrl(t, x)
+        return self._dynamics(x, acc)
 
         # v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
         # a = xd.clone()
@@ -136,4 +155,5 @@ class ProjectedDynamicalSystem(nn.Module):
 
     def forward(self, t, x):
         xd = self.dfdt(t, x)
+        # self._acc_buffer[int(t/self.sim_params.dt), :, :, :] = xd[:, :, self.sim_params.nv:].clone()
         return xd
