@@ -11,7 +11,7 @@ from utilities.mujoco_torch import torch_mj_inv, torch_mj_set_attributes, Simula
 
 m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator_sparse.xml")
 
-d_params = SimulationParams(6, 4, 2, 2, 1, 2, 1, 1)
+d_params = SimulationParams(6, 4, 2, 2, 1, 2, 1, 1, 0.1)
 d = mujoco.MjData(m)
 
 u_star = torch.zeros(1, d_params.nqva, dtype=torch.double)
@@ -47,6 +47,7 @@ def clone_loss(xf):
 t_mj_inv = torch_mj_inv.apply
 
 if __name__ == "__main__":
+    M =np.zeros((m.nv, m.nv))
     x_full = torch.randn(1, 1, 1, d_params.nqva, dtype=torch.double).requires_grad_() * 0.6
     x_full[0, 0, 0, :] = torch.tensor([-.6, 0, 0, 0, 0, 0])
     x_full_np = tensor_to_np(x_full.flatten())
@@ -57,5 +58,7 @@ if __name__ == "__main__":
     mujoco.mj_inverse(m, d)
     dfinv_dx = jacobian(t_mj_inv, x_full)
     qfrc_torch = t_mj_inv(x_full)
+    mujoco.mj_fullM(m, M, d.qM)
+    print(f"Mass mat {M}")
     print(f"Finv torch:\n{qfrc_torch}, Finv:\n{d.qfrc_inverse}")
     print(f"Finv derivative scipy:\n{J_inv}, Finv derivative torch:\n{dfinv_dx}")

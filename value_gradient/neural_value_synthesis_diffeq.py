@@ -10,11 +10,9 @@ parser = argparse.ArgumentParser('Neural Value Synthesis demo')
 parser.add_argument('--adjoint', action='store_true')
 args = parser.parse_args()
 
-if args.adjoint:
-    from torchdiffeq import odeint_adjoint as odeint
-    print(f"Using the Adjoint method")
-else:
-    from torchdiffeq import odeint
+from torchdiffeq import odeint_adjoint as odeint
+print(f"Using the Adjoint method")
+
 
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
@@ -64,7 +62,7 @@ def compose_acc(x, dt):
 
 
 class ProjectedDynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=2):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1):
         super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
@@ -117,7 +115,6 @@ class ProjectedDynamicalSystem(nn.Module):
                     value, x, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
                 )[0]
                 return dvdx
-
 
         Vqd = dvdx(t, x_enc, self.value_func)[:, :, self.sim_params.nq:].clone()
         return self._policy(q, v, x, Vqd)

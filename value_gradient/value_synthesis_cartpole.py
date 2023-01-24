@@ -1,13 +1,10 @@
 import math
 import random
-
 import mujoco
 import torch
-
-from models import Cartpole, ModelParams
+from models import Cartpole, ModelParams, init_fig, animate_cartpole
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
-from utilities.adahessian import AdaHessian
 from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
@@ -16,7 +13,15 @@ prev_cost, diff, tol, max_iter, alpha, dt, n_bins = 0, 100.0, 0, 2000, .5, 0.008
 Q = torch.diag(torch.Tensor([.05, 5, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
+lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
+
+
+def build_discounts(lambdas: torch.Tensor, discount: float):
+    for i in range(lambdas.shape[0]):
+        lambdas[i, :, :, :] *= (discount)**i
+
+    return lambdas.clone()
 
 
 def state_encoder(x: torch.Tensor):
@@ -66,9 +71,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 64),
-            nn.Softplus(),
-            nn.Linear(64, 1),
+            nn.Linear(n_in, 32),
+            nn.Softplus(beta=5),
+            nn.Linear(32, 1),
         )
 
         def init_weights(net):
@@ -148,9 +153,18 @@ dyn_system = ProjectedDynamicalSystem(
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True, weight_decay=0.03)
 sc = torch.optim.lr_scheduler.ExponentialLR(optimizer, 1)
+lambdas = build_discounts(lambdas, 1.01)
 full_iteraiton = 0
 
+fig_3, p, r, width, height = init_fig(0)
+
+
 if __name__ == "__main__":
+
+    loaded = torch.jit.load("/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/model_scripted.pt")
+    a = torch.Tensor([0,  0, 0, 0])
+    t = torch.Tensor([0])
+
     def get_lr(optimizer):
         for param_group in optimizer.param_groups:
             return param_group['lr']
@@ -164,7 +178,7 @@ if __name__ == "__main__":
         qd_init = torch.FloatTensor(nsim, 1, sim_params.nv).uniform_(0, 0) * 1
         x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
         iteration = 0
-        alpha = 0.0
+        alpha = 1.0
 
         print(f"Theta range {thetas[0]} to {thetas[i]} and {thetas[-1-i]} to {thetas[-1]}")
         while iteration < max_iter:
@@ -201,13 +215,18 @@ if __name__ == "__main__":
                 plt.pause(0.001)
                 ax_2.set_title(loss.item())
 
-                from animations.cartpole import animate_cartpole
                 for i in range(0, sim_params.nsim, 10):
                     selection = random.randint(0, sim_params.nsim - 1)
                     cart = traj[:, selection, 0, 0].cpu().detach().numpy()
                     pole = traj[:, selection, 0, 1].cpu().detach().numpy()
-                    animate_cartpole(cart, pole, dt=0.01, skip=4)
+                    animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=4)
                 fig_1.clf()
                 fig_2.clf()
+
+            if full_iteraiton == 360:
+                model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+                model_scripted.save('model_scripted.pt')  # Save
+                input()
+
             iteration += 1
             full_iteraiton += 1

@@ -47,7 +47,7 @@ def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, 
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator_sparse.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3 * 2, 2 * 2, 1 * 2, 1 * 2, 1 * 2, 2, 50, 101)
+    sim_params = SimulationParams(3 * 2, 2 * 2, 1 * 2, 1 * 2, 1 * 2, 2, 50, 101, 0.01)
     prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, -1, 10000, 1.05
     Q = torch.diag(torch.Tensor([0, 1, 0, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     Q_stop = torch.diag(torch.Tensor([0, 0, 1, 0])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -121,9 +121,9 @@ if __name__ == "__main__":
             super(NNValueFunction, self).__init__()
 
             self.nn = nn.Sequential(
-                nn.Linear(n_in, 4, bias=False),
+                nn.Linear(n_in, 256, bias=False),
                 nn.Softplus(),
-                nn.Linear(4, 1, bias=False)
+                nn.Linear(256, 1, bias=False)
             )
 
             def init_weights(net):

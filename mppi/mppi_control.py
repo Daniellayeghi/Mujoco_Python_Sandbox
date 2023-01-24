@@ -39,7 +39,7 @@ class MPPI(object):
         self._cost_func  = cost_function
         self._num_actions = self._sim.data.ctrl.shape[0]
         self._delta_ctrl = [np.full((horizon, samples), 0.0) for _ in range(self._num_actions)]
-        self._ctrl       = [np.full((horizon, 1), 0.0) for _ in range(self._num_actions)]
+        self._ctrl = [np.full((horizon, 1), 0.0) for _ in range(self._num_actions)]
         self._cost       = np.full((horizon, 1), 0.0)
         self._cost_avg   = np.full((time_horizon, 1), 0.0)
         self._sample_cost = np.full((samples, 1), 0.0)

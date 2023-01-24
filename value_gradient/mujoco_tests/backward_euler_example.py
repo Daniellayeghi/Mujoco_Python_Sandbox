@@ -13,8 +13,7 @@ This file tests the derivative bindings.
 m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator_sparse.xml")
 # [dm, d2] = Physics.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
 d = mujoco.MjData(m)
-d.qpos = np.random.random(m.nq) * 5
-print(m.nbody)
+d.qpos = np.ones(m.nq) * 0.2
 
 ctx = mujoco.GLContext(1200, 1200)
 ctx.make_current()

@@ -39,6 +39,14 @@ class __MJAtrributes():
             (self.n_time, self.n_sim, self._m.nv, self._nfull_state), dtype=torch.float
         ).requires_grad_().to(device)
 
+        self._qfrc_t = torch.zeros(
+            (self.n_time, self.n_sim, 1, self._m.nv), dtype=torch.float
+        ).requires_grad_().to(device)
+
+        self._dfinvdx_xd_t = torch.zeros(
+            (self.n_time, self.n_sim, self._m.nv, self._nfull_state), dtype=torch.float
+        ).requires_grad_().to(device)
+
     # Setters
     def _set_q_qd_qdd(self, pos, vel, acc):
         self._d.qpos, self._d.qvel, self._d.qacc = pos, vel, acc

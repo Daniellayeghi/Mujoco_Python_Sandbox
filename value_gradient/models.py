@@ -1,6 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
-from animations.cartpole import animate_cartpole
+from animations.cartpole import animate_cartpole, init_fig
 import numpy as np
 from dataclasses import  dataclass
 
@@ -14,10 +14,11 @@ class ModelParams:
 
 
 class BaseRBD(object):
-    def __init__(self, nsims, params: ModelParams, device):
+    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         self._params = params
-        self._gear = 1
-        self._b = torch.diag(torch.ones(params.nv)).repeat(nsims, 1, 1).to(device)
+        self.simulator = self.simulate_REG
+        if mode == 'pfl':
+            self.simulator = self.simulate_PFL
 
     def _Muact(self, q):
         pass
@@ -34,17 +35,33 @@ class BaseRBD(object):
     def _Tgrav(self, q):
         pass
 
-    def simulate(self, x, acc):
+    def _Bvec(self):
+        pass
+
+    def _Tfric(self, qd):
+        pass
+
+    def simulate_PFL(self, x, acc):
         q, qd = x[:, :, :self._params.nq].clone(), x[:, :, self._params.nq:].clone()
         M = self._Mfull(q)
         M_21, M_22 = M[:, 1, 0].unsqueeze(1).clone(), M[:, 1, 1].unsqueeze(1).clone()
         Tp = (self._Tgrav(q) - (self._Cfull(x) @ qd.mT).mT)[:, :, 1].clone()
-        Tfric = (qd).mT[:, 1, :].clone() * self.FRICTION
+        Tfric = self._Tfric(qd)[:, :, 1].clone()
         qddc = acc[:, :, 0].clone()
         qddp = 1/M_22 * (Tp - Tfric - M_21 * qddc)
         xd = torch.cat((qd[:, :, 0], qd[:, :, 1], qddc, qddp), 1).unsqueeze(1).clone()
         return xd
 
+    def simulate_REG(self, x, tau):
+        tau = tau.clamp(-1, 1)
+        q, qd = x[:, :, :self._params.nq].clone(), x[:, :, self._params.nq:].clone()
+        Minv = torch.linalg.inv(self._Mfull(q))
+        Tp = (self._Tgrav(q) - (self._Cfull(x) @ qd.mT).mT)
+        Tfric = self._Tfric(qd)
+        B = self._Bvec()
+        qdd = (Minv @ (Tp - Tfric + B * tau).mT).mT
+        xd = torch.cat((qd[:, :, 0:2], qdd), 2).clone()
+        return xd
 
 
 class Cartpole(BaseRBD):
@@ -52,16 +69,15 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = .1
-    GEAR = 2
+    FRICTION = .05
+    GEAR = 30
 
-    def __init__(self, nsims, params: ModelParams, device, augmented_state=False):
-        super(Cartpole, self).__init__(nsims, params, device)
+    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
+        super(Cartpole, self).__init__(nsims, params, device, mode)
         self._L = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
         self._Mp = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
         self._Mc = torch.ones((nsims, 1, 1)).to(device) * self.MASS_C
-        self._b *= self.FRICTION
-        self._gear *= self.GEAR
+        self._b = torch.Tensor([1, 0]).repeat(nsims, 1, 1).to(device)
 
     def _Muact(self, q):
         qc, qp = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
@@ -98,42 +114,50 @@ class Cartpole(BaseRBD):
         grav = (-self.MASS_P * self.GRAVITY * self.LENGTH * torch.sin(qp))
         return torch.cat((torch.zeros_like(grav), grav), 2)
 
-    def __call__(self, x, acc):
-        return self.simulate(x, acc)
+    def _Bvec(self):
+        return self._b * self.GEAR
+
+    def _Tfric(self, qd):
+        return qd * self.FRICTION
+
+    def __call__(self, x, inputs):
+        return self.simulator(x, inputs)
 
 
 if __name__ == "__main__":
     cp_params = ModelParams(2, 2, 1, 4, 4)
-    cp = Cartpole(1, cp_params, 'cpu')
-    x_init = torch.randn((1, 1, 4))
-    xd_init = torch.randn((1, 1, 4))
+    cp = Cartpole(1, cp_params, 'cpu', mode='norm')
 
-    def test_func(x, xd):
-        qc, qp, qd, qddc = x[:, :, 0], x[:, :, 1],  x[:, :, 2:], xd[:, :, 2]
-        return torch.cat((qd[:, :, 0], qd[:, :, 1], qddc, -qddc * torch.cos(qp) - torch.sin(qp)), 1)
+    # x_init = torch.randn((1, 1, 4))
+    # qdd_init = torch.randn((1, 1, 4))
+    # def test_func(x, xd):
+    #     qc, qp, qd, qddc = x[:, :, 0], x[:, :, 1],  x[:, :, 2:], xd[:, :, 2]
+    #     return torch.cat((qd[:, :, 0], qd[:, :, 1], qddc, -qddc * torch.cos(qp) - torch.sin(qp)), 1)
+    #
+    # ref = test_func(x_init, qdd_init)1,
+    # res = cp(x_init, qdd_init)
+    # print(torch.square(ref - res))
 
-    ref = test_func(x_init, xd_init)
-    res = cp(x_init, xd_init)
-    print(torch.square(ref - res))
+    x_init = torch.Tensor([0, 3.14, 0, 0]).view(1, 1, 4)
+    qdd_init = torch.Tensor([0, 0]).view(1, 1, 2)
 
-    x_init = torch.Tensor([0, .1, 0, 0]).view(1, 1, 4)
-    xd_init = torch.Tensor([0, 0]).view(1, 1, 2)
 
     def integrate(func, x, xd, time, dt):
         xs = []
-
+        xs.append(x)
         for t in range(time):
-            xd_new = func(x, xd)
+            xd_new = func(x, torch.randn((1,1)) * 10)
             x = x + xd_new * dt
             xs.append(x)
 
         return xs
 
 
-    xs = integrate(cp, x_init, xd_init, 500, 0.01)
+    xs = integrate(cp, x_init, qdd_init, 5000, 0.01)
 
     theta = [x[:, :, 1].item() for x in xs]
     cart = [x[:, :, 0].item() for x in xs]
-    # plt.plot(theta)
-    # plt.show()
-    animate_cartpole(np.array(cart), np.array(theta))
+    plt.plot(cart)
+    plt.show()
+    fig, p, r, width, height = init_fig(cart[0])
+    animate_cartpole(np.array(cart), np.array(theta), fig, p, r, width, height)
