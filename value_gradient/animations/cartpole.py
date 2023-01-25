@@ -68,16 +68,16 @@ def animate_cartpole(x_vec, theta_vec, fig, p, r, width, height, dt=0.01, skip =
 
 
 def init_fig(x_init):
-    fig, ax = plt.subplots()
-    p, = ax.plot([], [], color='royalblue')
+    fig_anim, ax_anim = plt.subplots(num=4)
+    p, = ax_anim.plot([], [], color='royalblue')
     min_lim = -5
     max_lim = 5
-    ax.axis('equal')
-    ax.set_xlim([min_lim, max_lim])
-    ax.set_ylim([min_lim, max_lim])
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_title('Cartpole Simulation:')
+    ax_anim.axis('equal')
+    ax_anim.set_xlim([min_lim, max_lim])
+    ax_anim.set_ylim([min_lim, max_lim])
+    ax_anim.set_xlabel('X')
+    ax_anim.set_ylabel('Y')
+    ax_anim.set_title('Cartpole Simulation:')
     title = "simulation"
 
     # Setup Animation Writer:
@@ -91,13 +91,13 @@ def init_fig(x_init):
     height = width / 2  # Height of Cart
     xy_cart = (x_init - width / 2, - height / 2)  # Bottom Left Corner of Cart
     r = Rectangle(xy_cart, width, height, color='cornflowerblue')  # Rectangle Patch
-    ax.add_patch(r)  # Add Patch to Plot
+    ax_anim.add_patch(r)  # Add Patch to Plot
 
     # Draw the Ground:
-    ground = ax.hlines(-height / 2, min_lim, max_lim, colors='black')
+    ground = ax_anim.hlines(-height / 2, min_lim, max_lim, colors='black')
     height_hatch = 0.25
     width_hatch = max_lim - min_lim
     xy_hatch = (min_lim, - height / 2 - height_hatch)
     ground_hatch = Rectangle(xy_hatch, width_hatch, height_hatch, facecolor='None', linestyle='None', hatch='/')
-    ax.add_patch(ground_hatch)
-    return fig, p, r, width, height
+    ax_anim.add_patch(ground_hatch)
+    return fig_anim, p, r, width, height

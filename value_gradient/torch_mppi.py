@@ -76,11 +76,11 @@ class MPPIController:
 
 if __name__ == "__main__":
     cp_params = ModelParams(2, 2, 1, 4, 4)
-    pi_params = MPPIParams(75, 200, .5, 0.16, 0.01, 1.1)
+    pi_params = MPPIParams(75, 200, .5, 0.16, 0.01, 1.075)
     cp_mppi = Cartpole(pi_params.K, cp_params, 'cpu', mode='norm')
     cp_anim = Cartpole(1, cp_params, 'cpu', mode='norm')
 
-    Q = torch.diag(torch.Tensor([2, 2, 0.01, 0.01])).repeat(pi_params.K, 1, 1).to('cpu')
+    Q = torch.diag(torch.Tensor([5, 2, 0.01, 0.01])).repeat(pi_params.K, 1, 1).to('cpu')
     Qf = torch.diag(torch.Tensor([2, 2, 0.01, 0.01])).repeat(pi_params.K, 1, 1).to('cpu')
     R = torch.diag(torch.Tensor([1/pi_params.sigma])).repeat(pi_params.K, 1, 1)
 

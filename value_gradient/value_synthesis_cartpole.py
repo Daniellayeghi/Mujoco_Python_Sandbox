@@ -9,8 +9,8 @@ from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, to
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins = 0, 100.0, 0, 2000, .5, 0.008, 3
-Q = torch.diag(torch.Tensor([.05, 5, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount = 0, 100.0, 0, 2000, .5, 0.008, 3, 1.1
+Q = torch.diag(torch.Tensor([5, 2, 0.01, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -22,7 +22,6 @@ def build_discounts(lambdas: torch.Tensor, discount: float):
         lambdas[i, :, :, :] *= (discount)**i
 
     return lambdas.clone()
-
 
 def state_encoder(x: torch.Tensor):
     b, r, c = x.shape
@@ -97,8 +96,10 @@ nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 def backup_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    factor  = lambdas[-1, :, :, :].view(1, nsim, 1, 1).clone()
     x_final_w = batch_state_encoder(x_final)
-    l_running = torch.sum(x_final_w @ Q @ x_final_w.mT, 0).squeeze()
+    l_running = (x_final_w @ Q @ x_final_w.mT) * factor
+    l_running = torch.sum(l_running, 0).squeeze()
     value = nn_value_func(0, x_final_w).squeeze()
     return torch.mean(torch.square(value - l_running))
 
@@ -114,13 +115,14 @@ def batch_dynamics_loss(x, acc, alpha=1):
 
 def batch_state_loss(x: torch.Tensor):
     x = batch_state_encoder(x)
-    t, nsim, r, c = x.shape
-    x_run = x[:-1, :, :, :].view(t-1, nsim, r, c).clone()
-    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
-    l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
+    # t, nsim, r, c = x.shape
+    # x_run = x[, :, :, :].view(t-1, nsim, r, c).clone()
+    # x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    l_running = (x @ Q @ x.mT) * lambdas
+    l_running = torch.sum(l_running, 0).squeeze()
+    # l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
 
-    return torch.mean(l_running + l_terminal)
+    return torch.mean(l_running)
 
 def batch_ctrl_loss(acc: torch.Tensor):
     qddc = acc[:, :, :, 0].unsqueeze(2).clone()
@@ -153,17 +155,13 @@ dyn_system = ProjectedDynamicalSystem(
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True, weight_decay=0.03)
 sc = torch.optim.lr_scheduler.ExponentialLR(optimizer, 1)
-lambdas = build_discounts(lambdas, 1.01)
+lambdas = build_discounts(lambdas, 1.01).to(device)
 full_iteraiton = 0
 
 fig_3, p, r, width, height = init_fig(0)
 
 
 if __name__ == "__main__":
-
-    loaded = torch.jit.load("/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/model_scripted.pt")
-    a = torch.Tensor([0,  0, 0, 0])
-    t = torch.Tensor([0])
 
     def get_lr(optimizer):
         for param_group in optimizer.param_groups:
@@ -178,7 +176,7 @@ if __name__ == "__main__":
         qd_init = torch.FloatTensor(nsim, 1, sim_params.nv).uniform_(0, 0) * 1
         x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
         iteration = 0
-        alpha = 1.0
+        alpha = 0
 
         print(f"Theta range {thetas[0]} to {thetas[i]} and {thetas[-1-i]} to {thetas[-1]}")
         while iteration < max_iter:
@@ -219,7 +217,8 @@ if __name__ == "__main__":
                     selection = random.randint(0, sim_params.nsim - 1)
                     cart = traj[:, selection, 0, 0].cpu().detach().numpy()
                     pole = traj[:, selection, 0, 1].cpu().detach().numpy()
-                    animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=4)
+                    animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=2)
+
                 fig_1.clf()
                 fig_2.clf()
 
