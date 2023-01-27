@@ -1,13 +1,15 @@
-import math
+import argparse
 import mujoco
 from neural_value_synthesis_diffeq import *
 from utilities.torch_utils import save_models
 from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
+from torchdiffeq import odeint_adjoint as odeint
+
 
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
-    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501)
+    sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
     prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 0.5, 100, 1.07
     Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -78,11 +80,13 @@ if __name__ == "__main__":
         def forward(self, t, x):
             return self.nn(x)
 
+    x_encoder = lambda x: x
+
     S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 5).to(device)
     # S_init = torch.Tensor([[1.7, 1], [1, 1.7]]).to(device)
     lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-    dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params).to(device)
+    dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params, encoder=x_encoder).to(device)
     time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
     optimizer = torch.optim.Adam(dyn_system.parameters(), lr=1e-2)
 
@@ -98,7 +102,7 @@ if __name__ == "__main__":
 
     while diff > tol or iteration > max_iter:
         optimizer.zero_grad()
-        traj = odeint(dyn_system, x_init, time)
+        traj = odeint(dyn_system, x_init, time, method='euler')
         loss = batch_state_loss(traj)
         # acc = compose_acc(traj, 0.01)
         # xxd = compose_xxd(traj, acc)

@@ -1,16 +1,17 @@
-import math
 import random
-import mujoco
+
 import torch
+
 from models import Cartpole, ModelParams, init_fig, animate_cartpole
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
-from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
+from torchdiffeq import odeint_adjoint as odeint
+from utilities.mujoco_torch import SimulationParams
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount = 0, 100.0, 0, 2000, .5, 0.008, 3, 1.1
-Q = torch.diag(torch.Tensor([5, 2, 0.01, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 2000, .5, 0.008, 3, 1.05, 15, 'proj'
+Q = torch.diag(torch.Tensor([.5, .2, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -22,6 +23,7 @@ def build_discounts(lambdas: torch.Tensor, discount: float):
         lambdas[i, :, :, :] *= (discount)**i
 
     return lambdas.clone()
+
 
 def state_encoder(x: torch.Tensor):
     b, r, c = x.shape
@@ -37,6 +39,7 @@ def batch_state_encoder(x: torch.Tensor):
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
     qp = torch.cos(qp) - 1
     return torch.cat((qc, qp, v), 1).reshape((t, b, r, c))
+
 
 def wrap_free_state(x: torch.Tensor):
     q, v = x[:, :, :sim_params.nq], x[:, :, sim_params.nq:]
@@ -75,9 +78,10 @@ class NNValueFunction(nn.Module):
             nn.Linear(32, 1),
         )
 
-        def init_weights(net):
-            if type(net) == nn.Linear:
-                torch.nn.init.xavier_uniform(net.weight)
+        def init_weights(m):
+            if isinstance(m, nn.Linear):
+                torch.nn.init.xavier_normal_(m.weight)
+                torch.nn.init.zeros_(m.bias)
 
         self.nn.apply(init_weights)
 
@@ -85,12 +89,12 @@ class NNValueFunction(nn.Module):
         return self.nn(x)
 
 
-def loss_func(x: torch.Tensor):
-    x = state_encoder(x)
-    return x @ Q @ x.mT
-
-
 nn_value_func = NNValueFunction(sim_params.nqv).to(device)
+
+
+def loss_func(x: torch.Tensor, t):
+    x = state_encoder(x)
+    return x @ Q @ x.mT * (discount ** (t*sim_params.dt))
 
 
 def backup_loss(x: torch.Tensor):
@@ -102,6 +106,14 @@ def backup_loss(x: torch.Tensor):
     l_running = torch.sum(l_running, 0).squeeze()
     value = nn_value_func(0, x_final_w).squeeze()
     return torch.mean(torch.square(value - l_running))
+
+
+def lyapounov_goal_loss(x: torch.Tensor):
+    t, nsim, r, c = x.shape
+    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    x_final_w = batch_state_encoder(x_final)
+    value = nn_value_func(0, x_final_w).squeeze()
+    return torch.mean(value)
 
 
 def batch_dynamics_loss(x, acc, alpha=1):
@@ -124,6 +136,7 @@ def batch_state_loss(x: torch.Tensor):
 
     return torch.mean(l_running)
 
+
 def batch_ctrl_loss(acc: torch.Tensor):
     qddc = acc[:, :, :, 0].unsqueeze(2).clone()
     l_ctrl = torch.sum(qddc @ R @ qddc.mT, 0).squeeze()
@@ -141,24 +154,37 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     return torch.mean(torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze()) * 0.00001
 
 
-def loss_function(x, acc, alpha=1):
+def loss_function_bellman(x, acc, alpha=1):
     l_ctrl, l_state, l_bellman, l_dyn = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x), batch_dynamics_loss(x, acc, alpha)
     print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, loss dynamics {l_dyn}, alpha {alpha}")
     return l_ctrl + l_state + l_bellman + l_dyn
 
 
+def loss_function_lyapounov(x, acc, alpha=1):
+    l_ctrl, l_state, l_lyap = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), lyapounov_goal_loss(x)
+    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_lyap}, alpha {alpha}")
+    return l_ctrl + l_state + l_lyap
+
+
 thetas = torch.linspace(torch.pi - 0.6, torch.pi + 0.6, n_bins)
 mid_point = int(len(thetas)/2) + len(thetas) % 2
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode='hjb'
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True, weight_decay=0.03)
-sc = torch.optim.lr_scheduler.ExponentialLR(optimizer, 1)
-lambdas = build_discounts(lambdas, 1.01).to(device)
-full_iteraiton = 0
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1.5e-2, amsgrad=True)
+lambdas = build_discounts(lambdas, discount).to(device)
+full_iteraiton = 1
 
 fig_3, p, r, width, height = init_fig(0)
+
+log = f"m:{mode}_d:{discount}_s:{step}"
+
+
+def schedule_lr(optimizer, epoch, rate):
+    if epoch % rate == 0:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] *= (0.75 * (0.95 ** (epoch/rate)))
 
 
 if __name__ == "__main__":
@@ -181,17 +207,18 @@ if __name__ == "__main__":
         print(f"Theta range {thetas[0]} to {thetas[i]} and {thetas[-1-i]} to {thetas[-1]}")
         while iteration < max_iter:
             optimizer.zero_grad()
-            traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+
+            traj = odeint(
+                dyn_system, x_init, time, method='euler',
+                options=dict(step_size=dt), adjoint_atol=1e-9, adjoint_rtol=1e-9
+            )
+
             acc = compose_acc(traj, dt)
             xxd = compose_xxd(traj, acc)
-            loss = loss_function(traj, acc, alpha)
+            loss = loss_function_lyapounov(traj, acc, alpha)
             loss.backward()
             optimizer.step()
-            sc.step()
-            alpha *= 1.03
-
-            if alpha > 4:
-                alpha = 4
+            schedule_lr(optimizer, full_iteraiton, 60)
 
             print(f"Epochs: {full_iteraiton}, Loss: {loss.item()}, iteration: {iteration % 10}, lr: {get_lr(optimizer)}")
 
@@ -224,8 +251,9 @@ if __name__ == "__main__":
 
             if full_iteraiton == 360:
                 model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
-                model_scripted.save('model_scripted.pt')  # Save
+                model_scripted.save(f'{log}.pt')  # Save
                 input()
+                break
 
             iteration += 1
             full_iteraiton += 1

@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 from animations.cartpole import animate_cartpole, init_fig
 import numpy as np
-from dataclasses import  dataclass
+from dataclasses import dataclass
 
 @dataclass
 class ModelParams:
@@ -69,7 +69,7 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = .05
+    FRICTION = .1
     GEAR = 30
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):

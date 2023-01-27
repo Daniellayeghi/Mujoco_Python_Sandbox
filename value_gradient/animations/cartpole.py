@@ -7,6 +7,7 @@ import time
 # Create Animation:
 # Setup Figure:
 
+
 def animate_cartpole(x_vec, theta_vec, fig, p, r, width, height, dt=0.01, skip = 1):
     x_pole = x_vec + 1 * np.sin(theta_vec)
     y_pole = np.cos(theta_vec)
@@ -70,11 +71,11 @@ def animate_cartpole(x_vec, theta_vec, fig, p, r, width, height, dt=0.01, skip =
 def init_fig(x_init):
     fig_anim, ax_anim = plt.subplots(num=4)
     p, = ax_anim.plot([], [], color='royalblue')
-    min_lim = -5
-    max_lim = 5
+    min_lim = -10
+    max_lim = 10
     ax_anim.axis('equal')
     ax_anim.set_xlim([min_lim, max_lim])
-    ax_anim.set_ylim([min_lim, max_lim])
+    ax_anim.set_ylim([-4, 4])
     ax_anim.set_xlabel('X')
     ax_anim.set_ylabel('Y')
     ax_anim.set_title('Cartpole Simulation:')
