@@ -73,10 +73,9 @@ class ProjectedDynamicalSystem(nn.Module):
 
         def policy(q, v, x, Vqd):
             M = self._dynamics._Mfull(q)
-            C = self._dynamics._Cfull(x)
-            G = self._dynamics._Tgrav(q)
-
-            return -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
+            Minv = torch.linalg.inv(M)
+            C = -self._dynamics._Tbias(x)
+            return (-0.5 * ((Minv @ C.mT).mT @ Minv + Vqd).mT * self._scale).mT
 
         self._policy = policy
 

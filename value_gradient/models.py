@@ -167,12 +167,12 @@ class DoubleCartpole(BaseRBD):
 
     def _Ms(self, q):
         qc, qp1, qp2 = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone(), q[:, :, 2].unsqueeze(1).clone()
-        M11 = self._Mp1 + self._Mp2 + self._Mc
-        M12 = -0.5 * (self._Mp1 + self._Mp2) * self.LENGTH * torch.cos(qp1)
-        M13 = -0.5 * self._Mp2 * self.LENGTH * torch.cos(qp2)
-        M22 = self._Mp2 * self.LENGTH ** 2 + self._I1 + 0.25 * self._Mp1 * self.LENGTH ** 2
-        M23 = 0.5 * self._Mp2 * self.LENGTH ** 2 * torch.cos((qp1 - qp2))
-        M33 = 0.25 * self._Mp1 * self.LENGTH ** 2 + self._I2
+        M11 = (self.MASS_P + self.MASS_P + self.MASS_C) * torch.ones_like(qc)
+        M12 = -0.5 * (self.MASS_P + self.MASS_P) * self.LENGTH * torch.cos(qp1)
+        M13 = -0.5 * self.MASS_P * self.LENGTH * torch.cos(qp2)
+        M22 = (self.MASS_P * self.LENGTH ** 2 + (1/12 * self.LENGTH * self.MASS_P) + 0.25 * self.MASS_P * self.LENGTH ** 2) * torch.ones_like(qc)
+        M23 = 0.5 * self.MASS_P * self.LENGTH ** 2 * torch.cos((qp1 - qp2))
+        M33 = (0.25 * self.MASS_P * self.LENGTH ** 2 + (1/12 * self.LENGTH * self.MASS_P) ) * torch.ones_like(qc)
 
         M1s = torch.cat((M11, M12, M13), dim=2)
         M2s = torch.cat((M13, M22, M23), dim=2)
@@ -204,9 +204,9 @@ class DoubleCartpole(BaseRBD):
 
         L, fric, G = self.LENGTH, self.FRICTION, self.GRAVITY
 
-        Tact = - 0.5 * (self._Mp1 + 2*self._Mp2) * L * qdp1**2 *torch.sin(qp1) - 0.5 * self._Mp2 * L * qdp2**2 * torch.sin(qp2)
-        T2 = (0.5 * self._Mp2 + self._Mp1) * L * G * torch.sin(qp1) - 0.5 * self._Mp2 * L**2 * qdp2**2 * torch.sin((qp1 - qp2))
-        T3 = (0.5 * self._Mp2) * L * G * torch.sin(qp2) + L**2 * qdp1**2 * torch.sin((qp1 - qp2))
+        Tact = - 0.5 * (self.MASS_P + 2*self.MASS_P) * L * qdp1**2 *torch.sin(qp1) - 0.5 * self.MASS_P * L * qdp2**2 * torch.sin(qp2)
+        T2 = (0.5 * self.MASS_P + self.MASS_P) * L * G * torch.sin(qp1) - 0.5 * self.MASS_P * L**2 * qdp2**2 * torch.sin((qp1 - qp2))
+        T3 = (0.5 * self.MASS_P) * L * G * torch.sin(qp2) + L**2 * qdp1**2 * torch.sin((qp1 - qp2))
 
         return torch.cat((Tact, T2, T3), dim=2)
 
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     dcp = DoubleCartpole(1, dcp_params, 'cpu', mode='pfl')
     x_init_cp = torch.Tensor([0, .1, 0, 0]).view(1, 1, 4)
     qdd_init_cp = torch.Tensor([0, 0]).view(1, 1, 2)
-    x_init_dcp = torch.Tensor([0, 0, .1, 0, 0, 0]).view(1, 1, 6)
+    x_init_dcp = torch.Tensor([0, 2, 2, 0, 0, 0]).view(1, 1, 6)
     qdd_init_dcp = torch.Tensor([0, 0, 0]).view(1, 1, 3)
 
 
