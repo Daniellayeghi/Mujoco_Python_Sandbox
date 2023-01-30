@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(9,6,3,3,1,1,80,240,0.08)
+sim_params = SimulationParams(9,6,3,3,1,1,80,400,0.08)
 dcp_params = ModelParams(3, 3, 1, 6, 6)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 360, .5, 0.008, 3, 1.05, 15, 'hjb'
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 500, .5, 0.008, 3, 1.025, 15, 'hjb'
 Q = torch.diag(torch.Tensor([.5, .2, .2, 0.0001, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 300, 10, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -53,9 +53,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 32),
+            nn.Linear(n_in, 64),
             nn.Softplus(beta=5),
-            nn.Linear(32, 1),
+            nn.Linear(64, 1),
         )
 
         def init_weights(m):
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
             selection = random.randint(0, sim_params.nsim - 1)
 
-            if iteration % 10 == 0 and iteration != 0:
+            if iteration % 60 == 0 and iteration != 0:
                 fig_1 = plt.figure(1)
                 for i in range(sim_params.nsim):
                     qpole = traj[:, i, 0, 1].cpu().detach()
@@ -233,7 +233,6 @@ if __name__ == "__main__":
             iteration += 1
             full_iteraiton += 1
 
-        model_scripted = torch.jit.script(dyn_system.value_func.clone().to('cpu'))  # Export to TorchScript
-        model_scripted.save(f'{log}.pt')  # Save
+        model_scripted = torch.save(dyn_system.value_func.to('cpu'), f'{log}.pt')  # Export to TorchScript
         input()
         break
