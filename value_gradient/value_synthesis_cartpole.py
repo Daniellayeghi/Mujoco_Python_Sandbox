@@ -2,7 +2,8 @@ import random
 
 import torch
 
-from models import Cartpole, ModelParams, init_fig, animate_cartpole
+from models import Cartpole, ModelParams
+from animations.cartpole import init_fig_cp, animate_cartpole
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
@@ -10,7 +11,7 @@ from utilities.mujoco_torch import SimulationParams
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 360, .5, 0.008, 3, 1.05, 15, 'hjb'
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 360, .5, 0.008, 3, 1.06, 15, 'hjb'
 Q = torch.diag(torch.Tensor([.5, .2, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -176,7 +177,7 @@ optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1.5e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 full_iteraiton = 1
 
-fig_3, p, r, width, height = init_fig(0)
+fig_3, p, r, width, height = init_fig_cp(0)
 
 log = f"m-{mode}_d-{discount}_s-{step}"
 
@@ -215,7 +216,7 @@ if __name__ == "__main__":
 
             acc = compose_acc(traj, dt)
             xxd = compose_xxd(traj, acc)
-            loss = loss_function_lyapounov(traj, acc, alpha)
+            loss = loss_function_bellman(traj, acc, alpha)
             loss.backward()
             optimizer.step()
             schedule_lr(optimizer, full_iteraiton, 60)
