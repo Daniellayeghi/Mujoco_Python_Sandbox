@@ -10,7 +10,7 @@ from utilities.mujoco_torch import SimulationParams
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 2000, .5, 0.008, 3, 1.05, 15, 'proj'
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 360, .5, 0.008, 3, 1.05, 15, 'hjb'
 Q = torch.diag(torch.Tensor([.5, .2, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -178,7 +178,7 @@ full_iteraiton = 1
 
 fig_3, p, r, width, height = init_fig(0)
 
-log = f"m:{mode}_d:{discount}_s:{step}"
+log = f"m-{mode}_d-{discount}_s-{step}"
 
 
 def schedule_lr(optimizer, epoch, rate):
@@ -249,11 +249,10 @@ if __name__ == "__main__":
                 fig_1.clf()
                 fig_2.clf()
 
-            if full_iteraiton == 360:
-                model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
-                model_scripted.save(f'{log}.pt')  # Save
-                input()
-                break
-
             iteration += 1
             full_iteraiton += 1
+
+        model_scripted = torch.jit.script(dyn_system.value_func.clone().to('cpu'))  # Export to TorchScript
+        model_scripted.save(f'{log}.pt')  # Save
+        input()
+        break

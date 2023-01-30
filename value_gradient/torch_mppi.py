@@ -99,7 +99,6 @@ if __name__ == "__main__":
     r_cost = lambda x: state_encoder(x) @ Q @ state_encoder(x).mT
     t_cost = lambda x: value.forward(torch.zeros((1)), (state_encoder(x))) * 1 # 0.4
     t_reg_cost = lambda x: state_encoder(x) @ Qf @ state_encoder(x).mT
-    t_reg_cost_check = lambda x: state_encoder(x) @ Qf_single @ state_encoder(x).mT
 
     pi = MPPIController(cp_mppi, r_cost, t_cost, u_cost, pi_params)
     x = torch.Tensor([0, 3.14, 0, 0]).view(1, 1, 4)
