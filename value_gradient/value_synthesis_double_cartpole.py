@@ -176,6 +176,7 @@ if __name__ == "__main__":
         nsim = sim_params.nsim
         qp_init = torch.FloatTensor(int(nsim/2), 1, 1).uniform_(thetas[0], thetas[i]) * 1
         qp_init = torch.FloatTensor(int(nsim/2), 1, 1).uniform_(thetas[-1-i], thetas[-1]) * 1
+        qp_init = torch.cat((qp_init, qp_init), 0)
         qc_init = torch.FloatTensor(nsim, 1, 1).uniform_(0, 0) * 1
         qd_init = torch.FloatTensor(nsim, 1, sim_params.nv).uniform_(0, 0) * 1
         x_init = torch.cat((qc_init, qp_init, qp_init, qd_init), 2).to(device)
