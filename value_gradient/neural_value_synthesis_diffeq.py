@@ -74,8 +74,8 @@ class ProjectedDynamicalSystem(nn.Module):
         def policy(q, v, x, Vqd):
             M = self._dynamics._Mfull(q)
             Minv = torch.linalg.inv(M)
-            C = -self._dynamics._Tbias(x)
-            return (-0.5 * ((Minv @ C.mT).mT @ Minv + Vqd).mT * self._scale).mT
+            Tbias = self._dynamics._Tbias(x)
+            return (Minv @ (Tbias - 0.5 * Vqd).mT).mT
 
         self._policy = policy
 
@@ -98,6 +98,7 @@ class ProjectedDynamicalSystem(nn.Module):
         xd = torch.cat((v, torch.zeros_like(v)), 2)
 
         def dvdx(t, x, value_net):
+            x = x.squeeze()
             with torch.set_grad_enabled(True):
                 x = x.detach().requires_grad_(True)
                 value = value_net(t, x).requires_grad_()
@@ -106,7 +107,7 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        Vqd = dvdx(t, x_enc, self.value_func)[:, :, self.sim_params.nq:].clone()
+        Vqd = dvdx(t, x_enc, self.value_func).unsqueeze(1)[:, :, self.sim_params.nq:].clone()
         return self._policy(q, v, x, Vqd)
 
     def project(self, t, x):
@@ -116,6 +117,7 @@ class ProjectedDynamicalSystem(nn.Module):
         # x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
 
         def dvdx(t, x, value_net):
+            x = x.squeeze()
             with torch.set_grad_enabled(True):
                 x = x.detach().requires_grad_(True)
                 value = value_net(t, x).requires_grad_()
@@ -124,7 +126,7 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        Vx = dvdx(t, x_enc, self.value_func)
+        Vx = dvdx(t, x_enc, self.value_func).unsqueeze(1)
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
         unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x, t))
         xd_trans = - (Vx / norm) * unnorm_porj

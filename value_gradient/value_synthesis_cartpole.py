@@ -11,7 +11,7 @@ from utilities.mujoco_torch import SimulationParams
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 360, .5, 0.008, 3, 1.06, 15, 'hjb'
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 360, .5, 0.008, 3, 1.05, 15, 'hjb'
 Q = torch.diag(torch.Tensor([.5, .2, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -69,6 +69,14 @@ def bounded_traj(x: torch.Tensor):
     return torch.cat((qc, qp, qdc, qdp), 3)
 
 
+def norm_cst(cst: torch.Tensor, dim=0):
+    return cst
+    norm = torch.max(torch.square(cst), dim)[0]
+    return cst/norm.unsqueeze(dim)
+    # return cst
+    # norm = torch.max(torch.abs(cst), dim)[0]
+    # return cst/norm
+
 class NNValueFunction(nn.Module):
     def __init__(self, n_in):
         super(NNValueFunction, self).__init__()
@@ -95,7 +103,9 @@ nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 
 def loss_func(x: torch.Tensor, t):
     x = state_encoder(x)
-    return x @ Q @ x.mT * (discount ** (t*sim_params.dt))
+    l = x @ Q @ x.mT
+    l = (norm_cst(l) * (discount ** (t * sim_params.dt))).squeeze()
+    return l
 
 
 def backup_loss(x: torch.Tensor):
@@ -103,17 +113,18 @@ def backup_loss(x: torch.Tensor):
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
     factor  = lambdas[-1, :, :, :].view(1, nsim, 1, 1).clone()
     x_final_w = batch_state_encoder(x_final)
-    l_running = (x_final_w @ Q @ x_final_w.mT) * factor
-    l_running = torch.sum(l_running, 0).squeeze()
-    value = nn_value_func(0, x_final_w).squeeze()
-    return torch.mean(torch.square(value - l_running))
+    l_running = ((x_final_w @ Q @ x_final_w.mT))
+    l_running = (norm_cst(l_running, dim=1) * factor).squeeze()
+    value = nn_value_func(0, x_final_w.squeeze()).squeeze()
+    loss = torch.square(value - l_running)
+    return torch.mean(loss)
 
 
 def lyapounov_goal_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
     x_final_w = batch_state_encoder(x_final)
-    value = nn_value_func(0, x_final_w).squeeze()
+    value = nn_value_func(0, x_final_w.squeeze())
     return torch.mean(value)
 
 
@@ -122,8 +133,9 @@ def batch_dynamics_loss(x, acc, alpha=1):
     x_reshape = x.reshape((t*b, 1, sim_params.nqv))
     a_reshape = acc.reshape((t*b, 1, sim_params.nv))
     acc_real = cartpole(x_reshape, a_reshape).reshape(x.shape)[:, :, :, sim_params.nv:]
-    l_run = torch.sum((acc - acc_real)**2, 0).squeeze()
-    return torch.mean(l_run) * alpha
+    l_run = norm_cst((acc - acc_real)**2, dim=1)
+    l_run = torch.sum(l_run, 0).squeeze()
+    return torch.mean(l_run) * alpha * 0
 
 
 def batch_state_loss(x: torch.Tensor):
@@ -131,7 +143,9 @@ def batch_state_loss(x: torch.Tensor):
     # t, nsim, r, c = x.shape
     # x_run = x[, :, :, :].view(t-1, nsim, r, c).clone()
     # x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_running = (x @ Q @ x.mT) * lambdas
+    l_running = (x @ Q @ x.mT)
+    l_running = norm_cst(l_running, dim=1) * lambdas
+    # l_running = l_running/torch.max(torch.abs(l_running), dim=1)[0]
     l_running = torch.sum(l_running, 0).squeeze()
     # l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
 
@@ -140,7 +154,9 @@ def batch_state_loss(x: torch.Tensor):
 
 def batch_ctrl_loss(acc: torch.Tensor):
     qddc = acc[:, :, :, 0].unsqueeze(2).clone()
-    l_ctrl = torch.sum(qddc @ R @ qddc.mT, 0).squeeze()
+    l_ctrl = qddc @ R @ qddc.mT
+    l_ctrl = norm_cst(l_ctrl, dim=1)
+    l_ctrl = torch.sum(l_ctrl, 0).squeeze()
     return torch.mean(l_ctrl)
 
 
@@ -152,13 +168,15 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     C = cartpole._Cfull(x_reshape).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
     Tg = cartpole._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
     u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg
-    return torch.mean(torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze()) * 0.00001
+    loss = norm_cst(u_batch @ torch.linalg.inv(M) @ u_batch.mT, dim=1)
+    loss = torch.sum(loss, 0).squeeze()
+    return torch.mean(loss) * 0.00001
 
 
 def loss_function_bellman(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman, l_dyn = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x), batch_dynamics_loss(x, acc, alpha)
-    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, loss dynamics {l_dyn}, alpha {alpha}")
-    return l_ctrl + l_state + l_bellman + l_dyn
+    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x)
+    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, alpha {alpha}")
+    return l_ctrl + l_state + l_bellman
 
 
 def loss_function_lyapounov(x, acc, alpha=1):
@@ -225,7 +243,7 @@ if __name__ == "__main__":
 
             selection = random.randint(0, sim_params.nsim - 1)
 
-            if iteration % 60 == 0 and iteration != 0:
+            if iteration % 10 == 0 and iteration != 0:
                 fig_1 = plt.figure(1)
                 for i in range(sim_params.nsim):
                     qpole = traj[:, i, 0, 1].cpu().detach()
