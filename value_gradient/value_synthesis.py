@@ -9,6 +9,7 @@ from net_utils_torch import LayerInfo
 import torch.nn.functional as Func
 from torch.utils.data import TensorDataset, DataLoader
 from utilities.mujoco_torch import torch_mj_inv, torch_mj_set_attributes, torch_mj_detach, torch_mj_attach
+
 import mujoco
 
 
@@ -59,10 +60,12 @@ d_info = DataParams(
     n_batch=n_sims
 )
 
+
 # Networks and optimizers
 val_input, value_output = d_info.n_state, 1
 layer_dims = [val_input, 32, 64, 32, value_output]
 v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
+<<<<<<< Updated upstream
 value_net = MLP(LayerInfo(*v_layers), False).to(device)
 
 # Mujoco Data
