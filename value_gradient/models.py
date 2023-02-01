@@ -101,6 +101,11 @@ class Cartpole(BaseRBD):
         return torch.hstack((Mtop, Mlow))
         # return self._M.clone()
 
+    def _Mu(self, q):
+        M = self._Mfull(q)
+        Mu, Mua = M[:, 1, 1], M[:, 1, 0]
+        return Mu, Mua
+
     def _Cfull(self, x):
         qp, qdp = x[:, :, 1].unsqueeze(1).clone(), x[:, :, 3].unsqueeze(1).clone()
         C12 = (-self.MASS_P * self.LENGTH * qdp * torch.sin(qp))

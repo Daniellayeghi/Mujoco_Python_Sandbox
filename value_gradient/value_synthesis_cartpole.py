@@ -122,6 +122,7 @@ def batch_state_loss(x: torch.Tensor):
     # x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
     l_running = (x @ Q @ x.mT) * lambdas
     l_running = torch.sum(l_running, 0).squeeze()
+
     # l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
 
     return torch.mean(l_running)
