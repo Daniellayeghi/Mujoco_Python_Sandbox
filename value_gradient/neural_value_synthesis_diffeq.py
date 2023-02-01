@@ -84,12 +84,13 @@ class ProjectedDynamicalSystem(nn.Module):
             C = self._dynamics._Cfull(x)
             G = self._dynamics._Tgrav(q)
             M = self._dynamics._Mfull(q)
+            Mu, Mua = self._dynamics._M
             Minv = torch.linalg.inv(M)
             Tbias = self._dynamics._Tbias(x)
             first = (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
             second = -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
 
-            if torch.mean(torch.sum((first - second), 0)).item() !  = 0:
+            if torch.mean(torch.sum((first - second), 0)).item() != 0:
                 raise "Numerics"
 
             return (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT

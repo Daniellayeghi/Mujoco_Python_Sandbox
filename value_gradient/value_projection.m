@@ -37,6 +37,7 @@ VALUES = load(filename).VALUES;
 
 alpha = 30;
 
+
 % Cost function and their derivatives
 f = @(q, qd, qdd)([qd; qdd]);
 v = @(q, qd)(sqrt(3) * q^2 + 2 * q * qd + sqrt(3) * qd^2);

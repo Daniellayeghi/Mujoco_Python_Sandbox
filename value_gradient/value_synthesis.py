@@ -28,6 +28,7 @@ class PointMassData:
     def get_xxd(self):
         return torch.cat((self.q, self.qd, self.qdd), 2).view(d_info.n_batch, 1, self.d_info.n_full_state).clone()
 
+
     def detach(self):
         self.q.detach()
         self.qd.detach()
