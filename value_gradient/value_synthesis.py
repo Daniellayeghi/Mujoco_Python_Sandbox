@@ -61,11 +61,12 @@ d_info = DataParams(
 )
 
 
+
 # Networks and optimizers
 val_input, value_output = d_info.n_state, 1
 layer_dims = [val_input, 32, 64, 32, value_output]
 v_layers = [layer_dims, [], 0, [torch.nn.Softplus(), torch.nn.Softplus(), torch.nn.Softplus(), None]]
-<<<<<<< Updated upstream
+
 value_net = MLP(LayerInfo(*v_layers), False).to(device)
 
 # Mujoco Data
