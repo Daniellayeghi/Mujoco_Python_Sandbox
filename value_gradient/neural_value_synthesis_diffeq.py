@@ -1,9 +1,18 @@
+import argparse
 import torch
 import torch.nn.functional as Func
 from torch import nn
 import matplotlib.pyplot as plt
 from utilities.torch_device import device
 from utilities.mujoco_torch import SimulationParams
+
+parser = argparse.ArgumentParser('Neural Value Synthesis demo')
+parser.add_argument('--adjoint', action='store_true')
+args = parser.parse_args()
+
+from torchdiffeq import odeint_adjoint as odeint
+print(f"Using the Adjoint method")
+
 
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
@@ -53,7 +62,7 @@ def compose_acc(x, dt):
 
 
 class ProjectedDynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', step=15):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1):
         super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
@@ -62,8 +71,8 @@ class ProjectedDynamicalSystem(nn.Module):
         self._dynamics = dynamics
         self._encoder = encoder
         self._acc_buffer = torch.zeros((sim_params.ntime, sim_params.nsim, 1, sim_params.nv)).to(device).requires_grad_(False)
-        self._scale = 1
-        self.step = step
+        self._scale = scale
+        self.step = 2
         self._policy = None
 
         if mode == 'proj':
@@ -72,10 +81,18 @@ class ProjectedDynamicalSystem(nn.Module):
             self._ctrl = self.hjb
 
         def policy(q, v, x, Vqd):
+            C = self._dynamics._Cfull(x)
+            G = self._dynamics._Tgrav(q)
             M = self._dynamics._Mfull(q)
             Minv = torch.linalg.inv(M)
             Tbias = self._dynamics._Tbias(x)
-            return (Minv @ (Tbias - 0.5 * Vqd).mT).mT
+            first = (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
+            second = -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
+
+            if torch.mean(torch.sum((first - second), 0)).item() !  = 0:
+                raise "Numerics"
+
+            return (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
 
         self._policy = policy
 
@@ -98,7 +115,6 @@ class ProjectedDynamicalSystem(nn.Module):
         xd = torch.cat((v, torch.zeros_like(v)), 2)
 
         def dvdx(t, x, value_net):
-            x = x.squeeze()
             with torch.set_grad_enabled(True):
                 x = x.detach().requires_grad_(True)
                 value = value_net(t, x).requires_grad_()
@@ -107,7 +123,7 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        Vqd = dvdx(t, x_enc, self.value_func).unsqueeze(1)[:, :, self.sim_params.nq:].clone()
+        Vqd = dvdx(t, x_enc, self.value_func)[:, :, self.sim_params.nq:].clone()
         return self._policy(q, v, x, Vqd)
 
     def project(self, t, x):
@@ -117,7 +133,6 @@ class ProjectedDynamicalSystem(nn.Module):
         # x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
 
         def dvdx(t, x, value_net):
-            x = x.squeeze()
             with torch.set_grad_enabled(True):
                 x = x.detach().requires_grad_(True)
                 value = value_net(t, x).requires_grad_()
@@ -126,9 +141,9 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        Vx = dvdx(t, x_enc, self.value_func).unsqueeze(1)
+        Vx = dvdx(t, x_enc, self.value_func)
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
-        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x, t))
+        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
         xd_trans = - (Vx / norm) * unnorm_porj
         return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
 
