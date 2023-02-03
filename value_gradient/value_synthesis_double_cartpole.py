@@ -151,7 +151,7 @@ dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1.5e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 full_iteraiton = 1
 
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
             selection = random.randint(0, sim_params.nsim - 1)
 
-            if iteration % 60 == 0 and iteration != 0:
+            if iteration % 10 == 0 and iteration != 0:
                 fig_1 = plt.figure(1)
                 for i in range(sim_params.nsim):
                     qpole = traj[:, i, 0, 1].cpu().detach()

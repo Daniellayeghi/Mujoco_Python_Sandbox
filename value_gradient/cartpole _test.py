@@ -6,9 +6,6 @@ from torch_mppi import MPPIController, MPPIParams
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-
-
-
     cp_params = ModelParams(2, 2, 1, 4, 4)
     pi_params = MPPIParams(50, 200, .5, 0.16, 0.01, 1.1)
     cp_mppi = Cartpole(pi_params.K, cp_params, 'cpu', mode='norm')

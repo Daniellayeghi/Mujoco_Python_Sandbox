@@ -101,9 +101,9 @@ class Cartpole(BaseRBD):
         return torch.hstack((Mtop, Mlow))
         # return self._M.clone()
 
-    def _Mu(self, q):
+    def _Mu_Mua(self, q):
         M = self._Mfull(q)
-        Mu, Mua = M[:, 1, 1], M[:, 1, 0]
+        Mu, Mua = M[:, 1, 1].clone().view(q.shape[0], 1, 1), M[:, 1, 0].clone().view(q.shape[0], 1, 1)
         return Mu, Mua
 
     def _Cfull(self, x):

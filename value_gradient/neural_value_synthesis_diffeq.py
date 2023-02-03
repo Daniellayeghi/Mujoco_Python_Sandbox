@@ -62,7 +62,7 @@ def compose_acc(x, dt):
 
 
 class ProjectedDynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1, step=1):
         super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
@@ -84,16 +84,18 @@ class ProjectedDynamicalSystem(nn.Module):
             C = self._dynamics._Cfull(x)
             G = self._dynamics._Tgrav(q)
             M = self._dynamics._Mfull(q)
-            Mu, Mua = self._dynamics._M
+            Mu, Mua = self._dynamics._Mu_Mua(q)
             Minv = torch.linalg.inv(M)
             Tbias = self._dynamics._Tbias(x)
             first = (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
             second = -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
+            # main_p = (Minv @ (Tbias - 0.5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua)).mT).mT
+            # main_p_exp = (((Minv @ Tbias.mT).mT @ M - 0.5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua).mT) @ Minv)
 
-            if torch.mean(torch.sum((first - second), 0)).item() != 0:
-                raise "Numerics"
+            # if torch.mean(torch.sum((first - second), 0)).item() != 0:
+            #     raise "Numerics"
 
-            return (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
+            return (Minv @ (Tbias - .5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua)).mT).mT
 
         self._policy = policy
 
