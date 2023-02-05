@@ -44,6 +44,18 @@ class BaseRBD(object):
     def _Tfric(self, qd):
         pass
 
+    def inverse_dynamics(self, x, acc):
+        q, qd = x[:, :, :self._params.nq].clone(), x[:, :, self._params.nq:].clone()
+        M = self._Mfull(q)
+        Tp = self._Tbias(x)
+        Tfric = self._Tfric(qd)
+        M_21, M_22 = M[:, 1, 0].unsqueeze(1).clone(), M[:, 1, 1].unsqueeze(1).clone()
+        qddc = acc[:, :, 0].clone()
+        qddp = 1/M_22 * (Tp[:, :, 1].clone() - Tfric[:, :, 1].clone() - M_21 * qddc)
+        acc = torch.cat((qddc, qddp), dim=1).unsqueeze(0)
+        T = (M @ acc.mT).mT - Tp + Tfric
+        return T
+
     def PFL(self, x, acc):
         pass
 

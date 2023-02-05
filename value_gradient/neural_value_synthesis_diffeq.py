@@ -77,8 +77,10 @@ class ProjectedDynamicalSystem(nn.Module):
 
         if mode == 'proj':
             self._ctrl = self.project
-        else:
+        if mode == 'hjb':
             self._ctrl = self.hjb
+        else:
+            self._ctrl = self.direct
 
         def policy(q, v, x, Vqd):
             C = self._dynamics._Cfull(x)
@@ -149,6 +151,7 @@ class ProjectedDynamicalSystem(nn.Module):
         unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
         xd_trans = - (Vx / norm) * unnorm_porj
         return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
+
 
     def dfdt(self, t, x):
         # TODO: Either the value function is a function of just the actuation space e.g. the cart or it takes into
