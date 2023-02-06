@@ -11,8 +11,8 @@ from utilities.mujoco_torch import SimulationParams
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 360, .5, 0.008, 3, 1.1, 15, 'hjb'
-Q = torch.diag(torch.Tensor([20, .2, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 150, .5, 0.008, 3, 1, 15, 'hjb'
+Q = torch.diag(torch.Tensor([.5, .2, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -70,6 +70,7 @@ def bounded_traj(x: torch.Tensor):
 
 
 def norm_cst(cst: torch.Tensor, dim=0):
+    # return cst
     norm = torch.max(torch.square(cst), dim)[0]
     return cst/norm.unsqueeze(dim)
     # return cst
@@ -112,7 +113,7 @@ def backup_loss(x: torch.Tensor):
     x_initial =  batch_state_encoder(x[0, :, :, :].view(1, nsim, r, c).clone())
     x_final =  batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
     factor  = lambdas[-1, :, :, :].view(1, nsim, 1, 1).clone()
-    l_running = ((x_final @ Q @ x_final.mT))
+    l_running = ((x @ Q @ x.mT))
     l_running = (norm_cst(l_running, dim=1) * factor).squeeze()
     value_final = nn_value_func(0, x_final.squeeze()).squeeze()
     value_initial = nn_value_func(0, x_initial.squeeze()).squeeze()
@@ -170,7 +171,7 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg
     loss = u_batch @ torch.linalg.inv(M) @ u_batch.mT
     loss = torch.sum(loss, 0).squeeze()
-    return torch.mean(loss) * 1
+    return torch.mean(loss) * 0.001
 
 
 def loss_function_bellman(x, acc, alpha=1):
@@ -191,7 +192,7 @@ dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1.5e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-4, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 full_iteraiton = 1
 
@@ -243,7 +244,7 @@ if __name__ == "__main__":
 
             selection = random.randint(0, sim_params.nsim - 1)
 
-            if iteration % 10 == 0 and iteration != 0:
+            if iteration % 60 == 0 and iteration != 0:
                 fig_1 = plt.figure(1)
                 for i in range(sim_params.nsim):
                     qpole = traj[:, i, 0, 1].cpu().detach()
@@ -268,6 +269,7 @@ if __name__ == "__main__":
                 fig_1.clf()
                 fig_2.clf()
 
+            x_init = traj[-1, :, :, :].detach().clone()
             iteration += 1
             full_iteraiton += 1
 

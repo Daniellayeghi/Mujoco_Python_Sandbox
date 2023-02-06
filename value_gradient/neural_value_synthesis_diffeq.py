@@ -112,8 +112,6 @@ class ProjectedDynamicalSystem(nn.Module):
 
             self._policy = policy
 
-
-
     def hjb(self, t, x):
         x_enc = self._encoder(x)
         q, v = decomp_x(x, self.sim_params)

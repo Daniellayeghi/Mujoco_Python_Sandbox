@@ -110,7 +110,7 @@ def loss_func(x: torch.Tensor, t):
 def backup_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    factor  = lambdas[-1, :, :, :].view(1, nsim, 1, 1).clone()
+    factor = lambdas[-1, :, :, :].view(1, nsim, 1, 1).clone()
     x_final_w = batch_state_encoder(x_final)
     l_running = ((x_final_w @ Q @ x_final_w.mT))
     l_running = (norm_cst(l_running, dim=1) * factor).squeeze()
@@ -269,6 +269,7 @@ if __name__ == "__main__":
 
             iteration += 1
             full_iteraiton += 1
+            x_init = traj[-1, :, :, :].detach().clone()
 
         model_scripted = torch.jit.script(dyn_system.value_func.clone().to('cpu'))  # Export to TorchScript
         model_scripted.save(f'{log}.pt')  # Save
