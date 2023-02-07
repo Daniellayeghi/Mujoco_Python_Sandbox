@@ -11,8 +11,8 @@ from utilities.mujoco_torch import SimulationParams
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 150, .5, 0.008, 3, 1, 15, 'hjb'
-Q = torch.diag(torch.Tensor([.5, .2, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 150, .5, 0.01, 3, 1.05, 15, 'hjb'
+Q = torch.diag(torch.Tensor([10, 1, 0.05, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -30,7 +30,7 @@ def state_encoder(x: torch.Tensor):
     b, r, c = x.shape
     x = x.reshape((b, r*c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
-    qp = torch.cos(qp) - 1
+    qp = torch.pi ** 2 * torch.sin(qp/2)
     return torch.cat((qc, qp, v), 1).reshape((b, r, c))
 
 
@@ -70,12 +70,10 @@ def bounded_traj(x: torch.Tensor):
 
 
 def norm_cst(cst: torch.Tensor, dim=0):
-    # return cst
+    return cst
     norm = torch.max(torch.square(cst), dim)[0]
     return cst/norm.unsqueeze(dim)
-    # return cst
-    # norm = torch.max(torch.abs(cst), dim)[0]
-    # return cst/norm
+
 
 class NNValueFunction(nn.Module):
     def __init__(self, n_in):
@@ -89,7 +87,7 @@ class NNValueFunction(nn.Module):
 
         def init_weights(m):
             if isinstance(m, nn.Linear):
-                torch.nn.init.xavier_normal_(m.weight)
+                torch.nn.init.xavier_uniform_(m.weight)
                 torch.nn.init.zeros_(m.bias)
 
         self.nn.apply(init_weights)
@@ -218,7 +216,7 @@ if __name__ == "__main__":
         qp_init1 = torch.FloatTensor(int(nsim/2), 1, 1).uniform_(thetas[0], thetas[i]) * 1
         qp_init2 = torch.FloatTensor(int(nsim/2), 1, 1).uniform_(thetas[-1-i], thetas[-1]) * 1
         qp_init = torch.cat((qp_init1, qp_init2), 0)
-        qc_init = torch.FloatTensor(nsim, 1, 1).uniform_(0, 0) * 1
+        qc_init = torch.FloatTensor(nsim, 1, 1).uniform_(-2, 2) * 1
         qd_init = torch.FloatTensor(nsim, 1, sim_params.nv).uniform_(0, 0) * 1
         x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
         iteration = 0
@@ -244,7 +242,7 @@ if __name__ == "__main__":
 
             selection = random.randint(0, sim_params.nsim - 1)
 
-            if iteration % 60 == 0 and iteration != 0:
+            if iteration % 10 == 1 and iteration != 0:
                 fig_1 = plt.figure(1)
                 for i in range(sim_params.nsim):
                     qpole = traj[:, i, 0, 1].cpu().detach()

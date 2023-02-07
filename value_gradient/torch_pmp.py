@@ -6,13 +6,14 @@ from torch.autograd.functional import jacobian
 from models import Cartpole, ModelParams
 from animations.cartpole import animate_cartpole, init_fig_cp
 
+# fig_3, p, r, width, height = init_fig_cp(0)
 
 # PMP implementation
-dt, T, nx, nu, tol, delta = 0.01, 75, 4, 1, 1e-6, 5
+dt, T, nx, nu, tol, delta, discount = 0.01, 200, 4, 1, 1e-8, .05, 1
 A = torch.Tensor(([1, dt], [0, 1])).requires_grad_()
 B = torch.Tensor(([0, 1])).requires_grad_()
 R = (torch.Tensor(([0.0001])))
-Qr = torch.diag(torch.Tensor([1, 1, 1*dt, 1*dt])) * 10
+Qr = torch.diag(torch.Tensor([1, 1, 1*dt, 1*dt])) * 5
 Qf = torch.diag(torch.Tensor([1, 1, 1*dt, 1*dt])) * 100
 Q = torch.diag(torch.Tensor([1, 1, 1*dt, 1*dt])) * 1
 
@@ -33,11 +34,10 @@ mult = torch.zeros((T+1, 1, nx))
 
 
 def state_encoder(x: torch.Tensor):
-    return x
     b, r, c = x.shape
     x = x.reshape((b, r * c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
-    qp = torch.pi ** 2 * torch.sin(qp/2)
+    qp = torch.cos(qp) - 1
     return torch.cat((qc, qp, v), 1).reshape((b, r, c))
 
 
@@ -47,11 +47,11 @@ def f(x: torch.Tensor, u: torch.Tensor):
 
 def l(x: torch.Tensor, u: torch.Tensor, t):
     x, u = x.unsqueeze(0), u.unsqueeze(0)
-    return state_encoder(x) @ Qr @ state_encoder(x).mT + u @ R @ u.mT
+    return (state_encoder(x) @ Qr @ state_encoder(x).mT + u @ R @ u.mT) * discount ** t.item()
 
 
 def h(x: torch.Tensor, t):
-    return state_encoder(x.reshape(1, 1, nx)) @ Qf @ state_encoder(x.reshape(1, 1, nx)).mT
+    return (state_encoder(x.reshape(1, 1, nx)) @ Qf @ state_encoder(x.reshape(1, 1, nx)).mT) * discount**t.item()
 
 
 def dldx(x: torch.Tensor, u: torch.Tensor, t):
@@ -87,7 +87,7 @@ def forward(x: torch.Tensor, us: torch.Tensor):
 
 def backward(mult: torch.Tensor, lx: torch.Tensor, fx: torch.Tensor, xs: torch.Tensor,
              Hu: torch.Tensor, lu: torch.Tensor, fu: torch.Tensor):
-    mult[-1] = dhdx(xs[-1], torch.Tensor(T-1))
+    mult[-1] = dhdx(xs[-1], torch.Tensor([T-1]))
     for t in range(T-1, -1, -1):
         mult[t] = lx[t] + mult[t+1] @ fx[t]
         Hu[t] = lu[t] + mult[t+1] @ fu[t]
@@ -98,9 +98,9 @@ def optimize(us: torch.Tensor):
     return us, (delta * Hu)
 
 
-def PMP(x: torch.Tensor, us: torch.Tensor, MPC=False):
-    error, xs, iter, max_iter = 1e10, None, 1, 300
-    max_iter = (max_iter * int(not MPC) + 1) + 1
+def PMP(x: torch.Tensor, us: torch.Tensor, max_iter=1):
+    error, xs, iter = 1e10, None, 0
+    print(f"init {x}")
     while error >= tol and iter < max_iter:
         xs = forward(x, us)
         backward(mult, lx, fx, xs, Hu, lu, fu)
@@ -113,13 +113,13 @@ def PMP(x: torch.Tensor, us: torch.Tensor, MPC=False):
         #     pole = xs[:, 0, 1].cpu().detach().numpy()
         #     animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=2)
         #     plt.pause(0.001)
-        #
+
         iter += 1
     return xs, us
 
 
 def pmp_MPC(x: torch.Tensor, us: torch.Tensor):
-    xs, us = PMP(x, us, MPC=True)
+    xs, us = PMP(x, us, max_iter=1)
     u = us[0, :, :]
     us = us.roll(-1, 0)
     us[-1, :, :] *= 0
@@ -130,8 +130,7 @@ if __name__ == "__main__":
     cp_params = ModelParams(2, 2, 1, 4, 4)
     cp = Cartpole(1, cp_params, 'cpu', mode='pfl')
     cp_anim = Cartpole(1, cp_params, 'cpu', mode='pfl')
-    # fig, p, r, width, height = init_fig_cp(0)
-    # fig.show()
+
 
     def f(x, u):
         x, u = x.unsqueeze(0), u.unsqueeze(0)
@@ -139,33 +138,41 @@ if __name__ == "__main__":
         x_next = x + xd * dt
         return x_next.reshape(1, cp_params.nx)
 
-    # def l(x, u, t):
-    #     x, u = x.unsqueeze(0), u.unsqueeze(0)
-    #     q = x[:, :, :cp_params.nq].clone()
-    #     T = cp.inverse_dynamics(x, u)
-    #     u_loss = T @ torch.linalg.inv(cp._Mfull(q)) @ T.mT
-    #     return state_encoder(x) @ Qr @ state_encoder(x).mT + u_loss * 0.0001
+    def l(x, u, t):
+        x, u = x.unsqueeze(0), u.unsqueeze(0)
+        q = x[:, :, :cp_params.nq].clone()
+        T = cp.inverse_dynamics(x, u)
+        u_loss = T @ torch.linalg.inv(cp._Mfull(q)) @ T.mT
+        return state_encoder(x) @ Qr @ state_encoder(x).mT + u_loss * 1
 
     x = torch.Tensor([0, torch.pi, 0, 0]).reshape(1, 1, nx)
-    us = torch.zeros((T, 1, 1))
+    us = torch.rand((T, 1, 1)) * 2
     cart, pole = [0, 0], [0, 0]
+    poles = []
 
-    for i in range(10000):
-        cart[0], pole[0] = x[:, :, 0].item(), x[:, :, 1].item()
-        u = pmp_MPC(x, us).reshape(1, 1, nu)
-        xd = cp_anim(x.reshape(1, 1, nx), u)
-        x = x + xd * 0.01
+    # for i in range(1000):
+    #     cart[0], pole[0] = x[:, :, 0].item(), x[:, :, 1].item()
+    #     u = pmp_MPC(x, us).reshape(1, 1, nu)
+    #     xd = cp_anim(x.reshape(1, 1, nx), u)
+    #     x = x + xd * 0.01
+    #
+    #     if torch.abs(state_encoder(x)[:, :, 1]).item() < 0.012:
+    #         print("STABALIZING")
+    #         Qr = Qf
+    #     else:
+    #         Qr = Q
+    #
+    #     print(f"x: {x}, u: {u}")
+    #     cart[1], pole[1] = x[:, :, 0].item(), x[:, :, 1].item()
+    #
+    #     # plt.scatter(i, pole[1])
+    #     animate_cartpole(np.array(cart), np.array(pole), fig_3, p, r, width, height)
 
-        if torch.abs(state_encoder(x)[:, :, 1]).item() < 0.012:
-            print("STABALIZING")
-            Qr = Qf
-        else:
-            Qr = Q
+    # xs, us = PMP(x, us, max_iter=300)
 
-        print(f"x: {x}, u: {u}")
-        cart[1], pole[1] = x[:, :, 0].item(), x[:, :, 1].item()
-        plt.scatter(i, pole[1])
-        plt.pause(0.00001)
-        # animate_cartpole(np.array(cart), np.array(pole), fig, p, r, width, height)
-
-    xs, us = PMP(x, us)
+    thetas = np.linspace(0, 6 * np.pi, 300)
+    enc = lambda x: np.pi**2 * np.sin(x/2)
+    enc_2 = lambda x: np.cos(x) - 1
+    theta_enc = enc(thetas)**2
+    plt.plot(thetas, theta_enc)
+    plt.show()
