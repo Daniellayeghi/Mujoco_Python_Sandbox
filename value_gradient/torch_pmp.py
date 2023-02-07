@@ -1,14 +1,14 @@
+import matplotlib.pyplot as plt
 import torch
 import numpy as np
 from torch.autograd.functional import jacobian
 # import matplotlib.pyplot as plt
 from models import Cartpole, ModelParams
 from animations.cartpole import animate_cartpole, init_fig_cp
-fig_3, p, r, width, height = init_fig_cp(0)
 
 
 # PMP implementation
-dt, T, nx, nu, tol, delta = 0.01, 200, 4, 1, 1e-6, .05
+dt, T, nx, nu, tol, delta = 0.01, 75, 4, 1, 1e-6, 5
 A = torch.Tensor(([1, dt], [0, 1])).requires_grad_()
 B = torch.Tensor(([0, 1])).requires_grad_()
 R = (torch.Tensor(([0.0001])))
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     cp_params = ModelParams(2, 2, 1, 4, 4)
     cp = Cartpole(1, cp_params, 'cpu', mode='pfl')
     cp_anim = Cartpole(1, cp_params, 'cpu', mode='pfl')
-    fig, p, r, width, height = init_fig_cp(0)
-    fig.show()
+    # fig, p, r, width, height = init_fig_cp(0)
+    # fig.show()
 
     def f(x, u):
         x, u = x.unsqueeze(0), u.unsqueeze(0)
@@ -164,6 +164,8 @@ if __name__ == "__main__":
 
         print(f"x: {x}, u: {u}")
         cart[1], pole[1] = x[:, :, 0].item(), x[:, :, 1].item()
-        animate_cartpole(np.array(cart), np.array(pole), fig, p, r, width, height)
+        plt.scatter(i, pole[1])
+        plt.pause(0.00001)
+        # animate_cartpole(np.array(cart), np.array(pole), fig, p, r, width, height)
 
     xs, us = PMP(x, us)
