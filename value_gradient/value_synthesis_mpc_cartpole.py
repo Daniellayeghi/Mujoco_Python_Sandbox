@@ -172,6 +172,15 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     return torch.mean(loss) * 0.001
 
 
+def barrier_loss(x, x_u, x_l):
+    x_low = x_l - x
+    x_high = x_u - x
+    zeros = torch.zeros_like(x)
+    loss = torch.maximum(x_low, zeros) * 100 + torch.maximum(x_high, zeros) * 100
+    loss = torch.sum(loss, dim=0)
+    loss = torch.mean(loss)
+    return loss
+
 def loss_function_bellman(x, acc, alpha=1):
     l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x)
     print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, alpha {alpha}")
