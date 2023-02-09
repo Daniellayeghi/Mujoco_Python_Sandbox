@@ -72,7 +72,7 @@ class ProjectedDynamicalSystem(nn.Module):
         self._encoder = encoder
         self._acc_buffer = torch.zeros((sim_params.ntime, sim_params.nsim, 1, sim_params.nv)).to(device).requires_grad_(False)
         self._scale = scale
-        self.step = 2
+        self.step = step
         self._policy = None
 
         if mode == 'proj':
@@ -82,7 +82,7 @@ class ProjectedDynamicalSystem(nn.Module):
         else:
             self._ctrl = self.direct
 
-        def policy(q, v, x, Vqd):
+        def underactuated_policy(q, v, x, Vqd):
             C = self._dynamics._Cfull(x)
             G = self._dynamics._Tgrav(q)
             M = self._dynamics._Mfull(q)
@@ -96,10 +96,12 @@ class ProjectedDynamicalSystem(nn.Module):
 
             # if torch.mean(torch.sum((first - second), 0)).item() != 0:
             #     raise "Numerics"
+            nqa = Mua.shape[2]
+            qdd = torch.cat((torch.ones((self.sim_params.nsim, nqa, 1)).to(device), -torch.linalg.inv(Mu)@Mua), dim=1)
 
-            return (Minv @ (Tbias - .5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua)).mT).mT
+            return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
 
-        self._policy = policy
+        self._policy = underactuated_policy
 
         if dynamics is None:
             def dynamics(x, acc):
@@ -108,7 +110,7 @@ class ProjectedDynamicalSystem(nn.Module):
             self._dynamics = dynamics
 
             def policy(q, v, x, Vqd):
-                return -0.5 * (1 * (Vqd))
+                return self._scale * -0.5 * Vqd
 
             self._policy = policy
 

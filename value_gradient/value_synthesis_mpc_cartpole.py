@@ -11,8 +11,8 @@ from utilities.mujoco_torch import SimulationParams
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 150, .5, 0.01, 3, 1.05, 15, 'hjb'
-Q = torch.diag(torch.Tensor([10, 1, 0.05, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 150, .5, 0.01, 3, 1, 15, 1, 'hjb'
+Q = torch.diag(torch.Tensor([1, 1, 0.05, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -106,13 +106,61 @@ def loss_func(x: torch.Tensor, t):
     return l
 
 
-def backup_loss(x: torch.Tensor):
+def barrier_loss(x, x_u, x_l):
+    x = x[:, :, :, :sim_params.nq-1]
+    x_low = x_l - x
+    x_high = -x_u + x
+    zeros = torch.zeros_like(x)
+    loss = torch.maximum(x_low, zeros) * 1e5 + torch.maximum(x_high, zeros) * 1e5
+    loss = torch.sum(loss, dim=0)
+    return loss
+
+
+def barrier_loss_batch(x, x_u, x_l):
+    loss = barrier_loss(x, x_u, x_l)
+    loss = torch.mean(loss)
+    return loss
+
+
+def state_loss(x: torch.Tensor):
+    x = batch_state_encoder(x)
+    # t, nsim, r, c = x.shape
+    # x_run = x[, :, :, :].view(t-1, nsim, r, c).clone()
+    # x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    l_running = (x @ Q @ x.mT)
+    # l_running = l_running/torch.max(torch.abs(l_running), dim=1)[0]
+    l_running = torch.sum(l_running, 0) * lambdas
+    # l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
+    return l_running
+
+
+def state_loss_batch(x: torch.Tensor):
+    l_running = state_loss(x)
+    return torch.mean(l_running)
+
+
+def inv_dynamics_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
+    q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
+    q = q.reshape((q.shape[0] * q.shape[1], 1, sim_params.nq))
+    x_reshape = x.reshape((x.shape[0] * x.shape[1], 1, sim_params.nqv))
+    M = cartpole._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    C = cartpole._Cfull(x_reshape).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    Tg = cartpole._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
+    u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg
+    loss = u_batch @ torch.linalg.inv(M) @ u_batch.mT
+    return torch.sum(loss, 0)
+
+
+def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
+    l_ctrl = inv_dynamics_reg(x, acc, alpha)
+    return torch.mean(l_ctrl) * 1/scale
+
+
+def backup_loss(x: torch.Tensor, acc, alpha):
     t, nsim, r, c = x.shape
     x_initial =  batch_state_encoder(x[0, :, :, :].view(1, nsim, r, c).clone())
     x_final =  batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
-    factor  = lambdas[-1, :, :, :].view(1, nsim, 1, 1).clone()
-    l_running = ((x @ Q @ x.mT))
-    l_running = (norm_cst(l_running, dim=1) * factor).squeeze()
+    l_running = state_loss_batch(x) + inv_dynamics_reg_batch(x, acc, alpha) + barrier_loss(x, 3, -3).squeeze()
     value_final = nn_value_func(0, x_final.squeeze()).squeeze()
     value_initial = nn_value_func(0, x_initial.squeeze()).squeeze()
     loss = torch.square(value_final - value_initial + l_running)
@@ -132,63 +180,29 @@ def batch_dynamics_loss(x, acc, alpha=1):
     x_reshape = x.reshape((t*b, 1, sim_params.nqv))
     a_reshape = acc.reshape((t*b, 1, sim_params.nv))
     acc_real = cartpole(x_reshape, a_reshape).reshape(x.shape)[:, :, :, sim_params.nv:]
-    l_run = norm_cst((acc - acc_real)**2, dim=1)
-    l_run = torch.sum(l_run, 0).squeeze()
+    l_run = (acc - acc_real)**2
+    l_run = torch.sum(l_run, 0)
+    l_run = norm_cst(l_run, dim=0)
     return torch.mean(l_run) * alpha * 0
-
-
-def batch_state_loss(x: torch.Tensor):
-    x = batch_state_encoder(x)
-    # t, nsim, r, c = x.shape
-    # x_run = x[, :, :, :].view(t-1, nsim, r, c).clone()
-    # x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_running = (x @ Q @ x.mT)
-    l_running = norm_cst(l_running, dim=1) * lambdas
-    # l_running = l_running/torch.max(torch.abs(l_running), dim=1)[0]
-    l_running = torch.sum(l_running, 0).squeeze()
-    # l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
-
-    return torch.mean(l_running)
 
 
 def batch_ctrl_loss(acc: torch.Tensor):
     qddc = acc[:, :, :, 0].unsqueeze(2).clone()
     l_ctrl = qddc @ R @ qddc.mT
-    l_ctrl = norm_cst(l_ctrl, dim=1)
-    l_ctrl = torch.sum(l_ctrl, 0).squeeze()
+    l_ctrl = torch.sum(l_ctrl, 0)
+    l_ctrl = norm_cst(l_ctrl, dim=0)
     return torch.mean(l_ctrl)
 
 
-def batch_inv_dynamics_loss(x, acc, alpha):
-    q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
-    q = q.reshape((q.shape[0]*q.shape[1], 1, sim_params.nq))
-    x_reshape = x.reshape((x.shape[0]*x.shape[1], 1, sim_params.nqv))
-    M = cartpole._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
-    C = cartpole._Cfull(x_reshape).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
-    Tg = cartpole._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
-    u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg
-    loss = u_batch @ torch.linalg.inv(M) @ u_batch.mT
-    loss = torch.sum(loss, 0).squeeze()
-    return torch.mean(loss) * 0.001
-
-
-def barrier_loss(x, x_u, x_l):
-    x_low = x_l - x
-    x_high = x_u - x
-    zeros = torch.zeros_like(x)
-    loss = torch.maximum(x_low, zeros) * 100 + torch.maximum(x_high, zeros) * 100
-    loss = torch.sum(loss, dim=0)
-    loss = torch.mean(loss)
-    return loss
 
 def loss_function_bellman(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x)
-    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, alpha {alpha}")
-    return l_ctrl + l_state + l_bellman
+    l_ctrl, l_state, l_bellman, l_barrier = inv_dynamics_reg_batch(x, acc, alpha), state_loss_batch(x), backup_loss(x, acc, alpha), barrier_loss_batch(x, 3, -3)
+    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, barrier_loss: {l_barrier}, alpha {alpha}")
+    return l_bellman
 
 
 def loss_function_lyapounov(x, acc, alpha=1):
-    l_ctrl, l_state, l_lyap = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), lyapounov_goal_loss(x)
+    l_ctrl, l_state, l_lyap = inv_dynamics_reg_batch(x, acc, alpha), state_loss_batch(x), lyapounov_goal_loss(x)
     print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_lyap}, alpha {alpha}")
     return l_ctrl + l_state + l_lyap
 
@@ -196,7 +210,7 @@ def loss_function_lyapounov(x, acc, alpha=1):
 thetas = torch.linspace(torch.pi - 0.6, torch.pi + 0.6, n_bins)
 mid_point = int(len(thetas)/2) + len(thetas) % 2
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step, scale=scale
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-4, amsgrad=True)
@@ -251,7 +265,7 @@ if __name__ == "__main__":
 
             selection = random.randint(0, sim_params.nsim - 1)
 
-            if iteration % 10 == 1 and iteration != 0:
+            if iteration % 3 == 0 and iteration != 0:
                 fig_1 = plt.figure(1)
                 for i in range(sim_params.nsim):
                     qpole = traj[:, i, 0, 1].cpu().detach()
@@ -262,12 +276,11 @@ if __name__ == "__main__":
                 fig_2 = plt.figure(2)
                 ax_2 = plt.axes()
                 plt.plot(traj[:, selection, 0, 0].cpu().detach())
-                plt.plot(acc[:, selection, 0, 0].cpu().detach())
-                plt.plot(acc[:, selection, 0, 1].cpu().detach())
                 plt.pause(0.001)
                 ax_2.set_title(loss.item())
 
                 for i in range(0, sim_params.nsim, 10):
+                    print(i)
                     selection = random.randint(0, sim_params.nsim - 1)
                     cart = traj[:, selection, 0, 0].cpu().detach().numpy()
                     pole = traj[:, selection, 0, 1].cpu().detach().numpy()
@@ -277,6 +290,9 @@ if __name__ == "__main__":
                 fig_2.clf()
 
             x_init = traj[-1, :, :, :].detach().clone()
+            # x_safe = torch.clamp(x_init[:, :, 0], -7.5, 7.5)
+            # x_init[:, :, 0] = x_safe
+            # x_init = x_init.clone()
             iteration += 1
             full_iteraiton += 1
 
