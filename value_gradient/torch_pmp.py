@@ -6,10 +6,10 @@ from torch.autograd.functional import jacobian
 from models import Cartpole, ModelParams
 from animations.cartpole import animate_cartpole, init_fig_cp
 
-# fig_3, p, r, width, height = init_fig_cp(0)
+fig_3, p, r, width, height = init_fig_cp(0)
 
 # PMP implementation
-dt, T, nx, nu, tol, delta, discount = 0.01, 200, 4, 1, 1e-8, .05, 1
+dt, T, nx, nu, tol, delta, discount = 0.01, 300, 4, 1, 1e-8, .002, 1
 A = torch.Tensor(([1, dt], [0, 1])).requires_grad_()
 B = torch.Tensor(([0, 1])).requires_grad_()
 R = (torch.Tensor(([0.0001])))
@@ -37,7 +37,7 @@ def state_encoder(x: torch.Tensor):
     b, r, c = x.shape
     x = x.reshape((b, r * c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
-    qp = torch.cos(qp) - 1
+    qp = torch.pi ** 2 * torch.sin(qp/2)
     return torch.cat((qc, qp, v), 1).reshape((b, r, c))
 
 
@@ -107,12 +107,12 @@ def PMP(x: torch.Tensor, us: torch.Tensor, max_iter=1):
         us, steps = optimize(us)
         error = torch.mean(steps.norm(dim=2))
         print(f"Adaption: {error}, StateT: {xs[-1]}")
-        # if iter % 10 == 0:
+        if iter % 10 == 0:
         #     # plt.plot(xs[:, :, 0].clone().detach().numpy())
-        #     cart = xs[:, 0, 0].cpu().detach().numpy()
-        #     pole = xs[:, 0, 1].cpu().detach().numpy()
-        #     animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=2)
-        #     plt.pause(0.001)
+            cart = xs[:, 0, 0].cpu().detach().numpy()
+            pole = xs[:, 0, 1].cpu().detach().numpy()
+            animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=2)
+            plt.pause(0.001)
 
         iter += 1
     return xs, us
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         q = x[:, :, :cp_params.nq].clone()
         T = cp.inverse_dynamics(x, u)
         u_loss = T @ torch.linalg.inv(cp._Mfull(q)) @ T.mT
-        return state_encoder(x) @ Qr @ state_encoder(x).mT + u_loss * 1
+        return state_encoder(x) @ Qr @ state_encoder(x).mT + u_loss * 1/5
 
     x = torch.Tensor([0, torch.pi, 0, 0]).reshape(1, 1, nx)
     us = torch.rand((T, 1, 1)) * 2
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     #     # plt.scatter(i, pole[1])
     #     animate_cartpole(np.array(cart), np.array(pole), fig_3, p, r, width, height)
 
-    # xs, us = PMP(x, us, max_iter=300)
+    xs, us = PMP(x, us, max_iter=300)
 
     thetas = np.linspace(0, 6 * np.pi, 300)
     enc = lambda x: np.pi**2 * np.sin(x/2)

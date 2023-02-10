@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 50, 0.01)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1, 15, 100, 'hjb'
+sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 501, 0.01)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 250, .5, 0.01, 3, 1, 15, 100, 'hjb'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -33,8 +33,6 @@ def batch_state_encoder(x: torch.Tensor):
 
 def norm_cst(cst: torch.Tensor, dim=0):
     return cst
-    norm = torch.max(torch.square(cst), dim)[0]
-    return cst/norm.unsqueeze(dim)
 
 
 class NNValueFunction(nn.Module):
@@ -96,12 +94,14 @@ def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
 
 def backup_loss(x: torch.Tensor, acc, alpha):
     t, nsim, r, c = x.shape
+    x_initial =  batch_state_encoder(x[0, :, :, :].view(1, nsim, r, c).clone())
     x_final =  batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
     x = batch_state_encoder(x[:-1].view(t-1, nsim, r, c).clone())
     acc = acc[:-1].view(t-1, nsim, r, sim_params.nu).clone()
     l_running = state_loss_batch(x) + inv_dynamics_reg_batch(x, acc, alpha)
     value_final = nn_value_func(0, x_final.squeeze()).squeeze()
-    loss = torch.square(value_final + l_running)
+    value_initial = nn_value_func(0, x_initial.squeeze()).squeeze()
+    loss = torch.square(value_final - value_initial + l_running)
     return torch.mean(loss)
 
 
@@ -125,12 +125,11 @@ def loss_function_lyapounov(x, acc, alpha=1):
     return l_ctrl + l_state + l_lyap
 
 
-pos_arr = torch.linspace(-20, 20, 100).to(device)
-vel_arr = torch.linspace(-20, 20, 100).to(device)
+pos_arr = torch.linspace(-10, 10, 100).to(device)
+vel_arr = torch.linspace(-10, 10, 100).to(device)
 f_mat = torch.zeros((100, 100)).to(device)
 [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
-one_step = torch.linspace(0, dt, 2).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, mode=mode, step=step, scale=scale
@@ -149,7 +148,6 @@ def schedule_lr(optimizer, epoch, rate):
     if epoch % rate == 0:
         for param_group in optimizer.param_groups:
             param_group['lr'] *= (0.75 * (0.95 ** (epoch/rate)))
-
 
 
 if __name__ == "__main__":
@@ -181,16 +179,9 @@ if __name__ == "__main__":
 
         print(f"Epochs: {iteration}, Loss: {loss.item()}, iteration: {iteration % 10}, lr: {get_lr(optimizer)}")
 
-        next = odeint(
-            dyn_system, x_init, one_step, method='euler', options=dict(step_size=dt), adjoint_atol=1e-9, adjoint_rtol=1e-9
-        )
-
-        x_init = next[-1].detach().clone()
-        trajectory = torch.cat((trajectory, x_init.unsqueeze(0)), dim=0)
-
         if iteration % 20 == 1:
             with torch.no_grad():
-                plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=trajectory, contour=True)
+                plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=traj, contour=True)
 
         iteration += 1
 

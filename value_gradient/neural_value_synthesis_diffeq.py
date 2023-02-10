@@ -96,8 +96,11 @@ class ProjectedDynamicalSystem(nn.Module):
 
             # if torch.mean(torch.sum((first - second), 0)).item() != 0:
             #     raise "Numerics"
-            nqa = Mua.shape[2]
-            qdd = torch.cat((torch.ones((self.sim_params.nsim, nqa, 1)).to(device), -torch.linalg.inv(Mu)@Mua), dim=1)
+            if Mu is not None:
+                nqa = Mua.shape[2]
+                qdd = torch.cat((torch.ones((self.sim_params.nsim, nqa, 1)).to(device), -torch.linalg.inv(Mu)@Mua), dim=1)
+            else:
+                qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
 
             return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
 

@@ -73,6 +73,50 @@ class BaseRBD(object):
         xd = torch.cat((qd[:, :, 0:self._params.nx], qdd), 2).clone()
         return xd
 
+class DoubleIntegrator(BaseRBD):
+    MASS = 1
+    FRICTION = .1
+    GEAR = 30
+
+    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
+        super(DoubleIntegrator, self).__init__(nsims, params, device, mode)
+        self._M = torch.ones((nsims, 1, 1)).to(device) * self.MASS
+        self._b = torch.Tensor([1, 0]).repeat(nsims, 1, 1).to(device)
+
+    def _Muact(self, q):
+        return None
+
+    def _Mact(self, q):
+        return self._M
+
+    def _Mfull(self, q):
+        return self._M
+
+    def _Mu_Mua(self, q):
+        return None, self._M
+
+    def _Cfull(self, x):
+        return self._M * 0
+
+    def _Tgrav(self, q):
+        return self._M * 0
+
+    def _Tbias(self, x):
+        return self._M * 0
+
+    def _Bvec(self):
+        return self._b * self.GEAR
+
+    def _Tfric(self, qd):
+        return qd * self.FRICTION
+
+    def __call__(self, x, inputs):
+        return self.simulator(x, inputs)
+
+    def PFL(self, x, acc):
+        xd = torch.cat((x[:, :, 0], x[:, :, 1], acc), 1).unsqueeze(1).clone()
+        return xd
+
 
 class Cartpole(BaseRBD):
     LENGTH = 1
@@ -115,7 +159,7 @@ class Cartpole(BaseRBD):
 
     def _Mu_Mua(self, q):
         M = self._Mfull(q)
-        Mu, Mua = M[:, 1, 1].clone().view(q.shape[0], 1, 1), M[:, 1, 0].clone().view(q.shape[0], 1, 1)
+        Mu, Mua = M[:, 1, 1].clone().view(q.shape[0], 1, 1), M[:, 0, 1].clone().view(q.shape[0], 1, 1)
         return Mu, Mua
 
     def _Cfull(self, x):
