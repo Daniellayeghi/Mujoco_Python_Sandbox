@@ -83,14 +83,16 @@ class ProjectedDynamicalSystem(nn.Module):
             self._ctrl = self.direct
 
         def underactuated_policy(q, v, x, Vqd):
-            C = self._dynamics._Cfull(x)
-            G = self._dynamics._Tgrav(q)
+            # C = self._dynamics._Cfull(x)
+            # G = self._dynamics._Tgrav(q)
             M = self._dynamics._Mfull(q)
             Mu, Mua = self._dynamics._Mu_Mua(q)
             Minv = torch.linalg.inv(M)
             Tbias = self._dynamics._Tbias(x)
-            first = (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
-            second = -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
+            Tfric = self._dynamics._Tfric(v)
+
+            # first = (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
+            # second = -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
             # main_p = (Minv @ (Tbias - 0.5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua)).mT).mT
             # main_p_exp = (((Minv @ Tbias.mT).mT @ M - 0.5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua).mT) @ Minv)
 
@@ -102,7 +104,7 @@ class ProjectedDynamicalSystem(nn.Module):
             else:
                 qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
 
-            return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
+            return self._scale * (Minv @ (Tbias - Tfric - .5 * Vqd @ qdd).mT).mT
 
         self._policy = underactuated_policy
 

@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 300, 75, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 300, 100, 0.01)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 300, .5, 0.01, 3, 1.1, 15, 20, 'hjb'
-Q = torch.diag(torch.Tensor([1, 5, 0.01, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 300, .5, 0.01, 3, 1.1, 1, 1, 'hjb'
+Q = torch.diag(torch.Tensor([0.1, 2, 0.001, 0.02])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
@@ -23,11 +23,10 @@ def build_discounts(lambdas: torch.Tensor, discount: float):
 
 
 def state_encoder(x: torch.Tensor):
-    return x
     b, r, c = x.shape
     x = x.reshape((b, r*c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
-    qp = torch.pi ** 2 * torch.sin(qp/2)
+    qp = torch.cos(qp) - 1
     return torch.cat((qc, qp, v), 1).reshape((b, r, c))
 
 
@@ -77,11 +76,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 32),
+            nn.Linear(n_in, 64),
             nn.Softplus(beta=5),
-            nn.Linear(32, 16),
-            nn.Softplus(beta=5),
-            nn.Linear(16, 1)
+            nn.Linear(64, 1),
         )
 
         def init_weights(m):
@@ -211,13 +208,12 @@ if __name__ == "__main__":
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
-    qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-1, 1) * 2
-    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(torch.pi, torch.pi)
+    qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-1, 1) * 0
+    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_( torch.pi, torch.pi)
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(-1, 1) * 0
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
     trajectory = x_init.detach().clone().unsqueeze(0)
     iteration = 0
-    alpha = 0
 
     while iteration < max_iter:
         optimizer.zero_grad()
@@ -244,7 +240,7 @@ if __name__ == "__main__":
         trajectory = torch.cat((trajectory, x_init.unsqueeze(0)), dim=0)
         selection = random.randint(0, sim_params.nsim - 1)
 
-        if iteration % 10 == 0 and iteration != 0:
+        if iteration % 40 == 0 and iteration != 0:
             fig_1 = plt.figure(1)
             for i in range(sim_params.nsim):
                 qpole = trajectory[:, i, 0, 1].cpu().detach()

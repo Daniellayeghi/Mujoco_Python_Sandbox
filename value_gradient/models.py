@@ -1,6 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 from animations.cartpole import animate_double_cartpole, init_fig_dcp
+from animations.cartpole import animate_cartpole, init_fig_cp
 import numpy as np
 from dataclasses import dataclass
 
@@ -123,7 +124,7 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = .1
+    FRICTION = torch.Tensor([0.05, 0.2]).to('cpu')
     GEAR = 30
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
@@ -306,21 +307,21 @@ if __name__ == "__main__":
         xs = []
         xs.append(x)
         for t in range(time):
-            xd_new = func(x, torch.randn((1, 1, 3)) * 0)
+            xd_new = func(x, torch.randn((1, 1, 2)) * 0)
             x = x + xd_new * dt
             xs.append(x)
 
         return xs
 
 
-    # xs_cp = integrate(cp, x_init_cp, qdd_init_cp, 5000, 0.01)
-    xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 5000, 0.01)
+    xs_cp = integrate(cp.simulate_REG, x_init_cp, qdd_init_cp, 5000, 0.01)
+    # xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 5000, 0.01)
 
-    theta1 = [x[:, :, 1].item() for x in xs_dcp]
-    theta2 = [x[:, :, 2].item() for x in xs_dcp]
-    cart = [x[:, :, 0].item() for x in xs_dcp]
+    theta1 = [x[:, :, 1].item() for x in xs_cp]
+    # theta2 = [x[:, :, 2].item() for x in xs_dcp]
+    cart = [x[:, :, 0].item() for x in xs_cp]
 
     plt.plot(cart)
     plt.show()
-    fig, p, r, width, height = init_fig_dcp(cart[0])
-    animate_double_cartpole(np.array(cart), np.array(theta1), np.array(theta2), fig, p, r, width, height, skip=2)
+    fig, p, r, width, height = init_fig_cp(cart[0])
+    animate_cartpole(np.array(cart), np.array(theta1), fig, p, r, width, height, skip=2)
