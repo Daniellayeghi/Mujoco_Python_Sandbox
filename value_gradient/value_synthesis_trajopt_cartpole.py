@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 300, 75, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 300, 250, 0.01)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 300, .5, 0.01, 3, 1.1, 15, 20, 'hjb'
-Q = torch.diag(torch.Tensor([1, 5, 0.01, 0.01])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1.05, 15, 200, 'hjb'
+Q = torch.diag(torch.Tensor([1, 10, 0.001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
@@ -23,7 +23,6 @@ def build_discounts(lambdas: torch.Tensor, discount: float):
 
 
 def state_encoder(x: torch.Tensor):
-    return x
     b, r, c = x.shape
     x = x.reshape((b, r*c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
@@ -39,49 +38,15 @@ def batch_state_encoder(x: torch.Tensor):
     return torch.cat((qc, qp, v), 1).reshape((t, b, r, c))
 
 
-def wrap_free_state(x: torch.Tensor):
-    q, v = x[:, :, :sim_params.nq], x[:, :, sim_params.nq:]
-    q_new = torch.cat((torch.sin(q[:, :, 1]), torch.cos(q[:, :, 1]) - 1, q[:, :, 0]), 1).unsqueeze(1)
-    return torch.cat((q_new, v), 2)
-
-
-def batch_wrap_free_state(x: torch.Tensor):
-    q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
-    q_new = torch.cat((torch.sin(q[:, :, :, 1]), torch.cos(q[:, :, :, 1]) - 1, q[:, :, :, 0]), 2).unsqueeze(2)
-    return torch.cat((q_new, v), 3)
-
-
-def bounded_state(x: torch.Tensor):
-    qc, qp, qdc, qdp = x[:, :, 0].clone().unsqueeze(1), x[:, :, 1].clone().unsqueeze(1), x[:, :, 2].clone().unsqueeze(1), x[:, :, 3].clone().unsqueeze(1)
-    qp = (qp+2 * torch.pi)%torch.pi
-    return torch.cat((qc, qp, qdc, qdp), 2)
-
-
-def bounded_traj(x: torch.Tensor):
-    def bound(angle):
-        return torch.atan2(torch.sin(angle), torch.cos(angle))
-
-    qc, qp, qdc, qdp = x[:, :, :, 0].clone().unsqueeze(2), x[:, :, :, 1].clone().unsqueeze(2), x[:, :, :, 2].clone().unsqueeze(2), x[:, :, :, 3].clone().unsqueeze(2)
-    qp = bound(qp)
-    return torch.cat((qc, qp, qdc, qdp), 3)
-
-
-def norm_cst(cst: torch.Tensor, dim=0):
-    return cst
-    norm = torch.max(torch.square(cst), dim)[0]
-    return cst/norm.unsqueeze(dim)
-
 
 class NNValueFunction(nn.Module):
     def __init__(self, n_in):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 32),
+            nn.Linear(n_in, 64),
             nn.Softplus(beta=5),
-            nn.Linear(32, 16),
-            nn.Softplus(beta=5),
-            nn.Linear(16, 1)
+            nn.Linear(64, 1)
         )
 
         def init_weights(m):
@@ -101,7 +66,6 @@ nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 def loss_func(x: torch.Tensor, t):
     x = state_encoder(x)
     l = x @ Q @ x.mT
-    l = (norm_cst(l) * (discount ** (t * sim_params.dt))).squeeze()
     return l
 
 
@@ -162,7 +126,6 @@ def batch_dynamics_loss(x, acc, alpha=1):
     acc_real = cartpole(x_reshape, a_reshape).reshape(x.shape)[:, :, :, sim_params.nv:]
     l_run = (acc - acc_real)**2
     l_run = torch.sum(l_run, 0)
-    l_run = norm_cst(l_run, dim=0)
     return torch.mean(l_run) * alpha * 0
 
 
@@ -170,13 +133,11 @@ def batch_ctrl_loss(acc: torch.Tensor):
     qddc = acc[:, :, :, 0].unsqueeze(2).clone()
     l_ctrl = qddc @ R @ qddc.mT
     l_ctrl = torch.sum(l_ctrl, 0)
-    l_ctrl = norm_cst(l_ctrl, dim=0)
     return torch.mean(l_ctrl)
 
 
-
 def loss_function_bellman(x, acc, alpha=1):
-    l_bellman= backup_loss(x, acc, alpha)
+    l_bellman = backup_loss(x, acc, alpha)
     print(f"loss bellman {l_bellman} alpha {alpha}")
     return l_bellman
 
@@ -192,7 +153,7 @@ dyn_system = ProjectedDynamicalSystem(
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 one_step = torch.linspace(0, dt, 2).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 fig_3, p, r, width, height = init_fig_cp(0)
@@ -201,9 +162,10 @@ log = f"m-{mode}_d-{discount}_s-{step}"
 
 
 def schedule_lr(optimizer, epoch, rate):
-    if epoch % rate == 0:
-        for param_group in optimizer.param_groups:
-            param_group['lr'] *= (0.75 * (0.95 ** (epoch/rate)))
+    pass
+    # if epoch % rate == 0:
+    #     for param_group in optimizer.param_groups:
+    #         param_group['lr'] *= (0.75 * (0.95 ** (epoch/rate)))
 
 
 if __name__ == "__main__":
@@ -211,11 +173,10 @@ if __name__ == "__main__":
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
-    qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-1, 1) * 2
-    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(torch.pi, torch.pi)
+    qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(0, 0) * 2
+    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(torch.pi-0.3, torch.pi+0.3)
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(-1, 1) * 0
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
-    trajectory = x_init.detach().clone().unsqueeze(0)
     iteration = 0
     alpha = 0
 
@@ -251,11 +212,11 @@ if __name__ == "__main__":
             plt.pause(0.001)
             ax_2.set_title(loss.item())
 
-            for i in range(0, sim_params.nsim, 30):
+            for i in range(0, sim_params.nsim, 60):
                 selection = random.randint(0, sim_params.nsim - 1)
                 cart = traj[:, selection, 0, 0].cpu().detach().numpy()
                 pole = traj[:, selection, 0, 1].cpu().detach().numpy()
-                animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=1)
+                animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=3)
 
             fig_1.clf()
             fig_2.clf()

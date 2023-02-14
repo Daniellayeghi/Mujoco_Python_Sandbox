@@ -88,22 +88,22 @@ class DoubleIntegrator(BaseRBD):
         return None
 
     def _Mact(self, q):
-        return self._M
+        return self.MASS * torch.ones_like(q)
 
     def _Mfull(self, q):
-        return self._M
+        return self.MASS * torch.ones_like(q)
 
     def _Mu_Mua(self, q):
         return None, self._M
 
     def _Cfull(self, x):
-        return self._M * 0
+        return self.MASS * torch.ones_like(x[:,:,0].unsqueeze(2))
 
     def _Tgrav(self, q):
-        return self._M * 0
+        return torch.ones_like(q) * 0
 
     def _Tbias(self, x):
-        return self._M * 0
+        return torch.ones_like(x[:,:,0].unsqueeze(2)) * 0
 
     def _Bvec(self):
         return self._b * self.GEAR
@@ -115,7 +115,7 @@ class DoubleIntegrator(BaseRBD):
         return self.simulator(x, inputs)
 
     def PFL(self, x, acc):
-        xd = torch.cat((x[:, :, 0], x[:, :, 1], acc), 1).unsqueeze(1).clone()
+        xd = torch.cat((x[:, :, -1].unsqueeze(2), acc), 2).clone()
         return xd
 
 
@@ -124,7 +124,7 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = torch.Tensor([0.05, 0.2]).to('cpu')
+    FRICTION = torch.Tensor([0.02, 0.02]).to('cuda')
     GEAR = 30
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
@@ -204,7 +204,7 @@ class DoubleCartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = 9.81
-    FRICTION = .1
+    FRICTION = .01
     GEAR = 30
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
@@ -253,6 +253,11 @@ class DoubleCartpole(BaseRBD):
         )
 
         return Mfull, Mact, Muact
+
+    def _Mu_Mua(self, q):
+        M = self._Mfull(q)
+        Mu, Mua = M[:, 1:, 1:].clone().view(q.shape[0], 2, 2), M[:, 1:, 0].clone().view(q.shape[0], 1, 2)
+        return Mu, Mua
 
     def _Cfull(self, x):
         pass

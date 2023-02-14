@@ -2,15 +2,17 @@ import random
 
 import torch
 
-from models import Cartpole, ModelParams
+from models import DoubleIntegrator, ModelParams
 from animations.cartpole import init_fig_cp, animate_cartpole
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 50, 0.01)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1, 15, 100, 'hjb'
+di_params = ModelParams(1,1,1,2,2)
+sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 200, 0.01)
+di = DoubleIntegrator(sim_params.nsim, di_params, device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 200, .5, 0.01, 3, 1, 15, 100, 'hjb'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -31,25 +33,19 @@ def batch_state_encoder(x: torch.Tensor):
     return x
 
 
-def norm_cst(cst: torch.Tensor, dim=0):
-    return cst
-    norm = torch.max(torch.square(cst), dim)[0]
-    return cst/norm.unsqueeze(dim)
-
-
 class NNValueFunction(nn.Module):
     def __init__(self, n_in):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 32),
+            nn.Linear(n_in, 16),
             nn.Softplus(beta=5),
-            nn.Linear(32, 1),
+            nn.Linear(16, 1),
         )
 
         def init_weights(m):
             if isinstance(m, nn.Linear):
-                torch.nn.init.xavier_uniform_(m.weight)
+                torch.nn.init.xavier_normal_(m.weight)
                 torch.nn.init.zeros_(m.bias)
 
         self.nn.apply(init_weights)
@@ -64,7 +60,6 @@ nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 def loss_func(x: torch.Tensor, t):
     x = state_encoder(x)
     l = x @ Q @ x.mT
-    l = (norm_cst(l) * (discount ** (t * sim_params.dt))).squeeze()
     return l
 
 
@@ -84,8 +79,15 @@ def state_loss_batch(x: torch.Tensor):
 
 
 def inv_dynamics_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
-    u_batch = torch.linalg.inv(R) @ acc
-    loss = u_batch @ R @ u_batch.mT
+    q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
+    q = q.reshape((q.shape[0] * q.shape[1], 1, sim_params.nq))
+    x_reshape = x.reshape((x.shape[0] * x.shape[1], 1, sim_params.nqv))
+    M = di._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    C = di._Cfull(x_reshape).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    Tg = di._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
+    Tfric = di._Tfric(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
+    u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg + Tfric
+    loss = u_batch @ torch.linalg.inv(M) @ u_batch.mT
     return torch.sum(loss, 0)
 
 
@@ -94,15 +96,19 @@ def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
     return torch.mean(l_ctrl) * 1/scale
 
 
+
 def backup_loss(x: torch.Tensor, acc, alpha):
     t, nsim, r, c = x.shape
-    x_final =  batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
+    x_initial = batch_state_encoder(x[0, :, :, :].view(1, nsim, r, c).clone())
+    x_final = batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
     x = batch_state_encoder(x[:-1].view(t-1, nsim, r, c).clone())
     acc = acc[:-1].view(t-1, nsim, r, sim_params.nu).clone()
     l_running = state_loss_batch(x) + inv_dynamics_reg_batch(x, acc, alpha)
     value_final = nn_value_func(0, x_final.squeeze()).squeeze()
-    loss = torch.square(value_final + l_running)
+    value_initial = nn_value_func(0, x_initial.squeeze()).squeeze()
+    loss = torch.square(value_final - value_initial + l_running)
     return torch.mean(loss)
+
 
 
 def lyapounov_goal_loss(x: torch.Tensor):
@@ -133,7 +139,7 @@ time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(devic
 one_step = torch.linspace(0, dt, 2).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, mode=mode, step=step, scale=scale
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale
 ).to(device)
 
 
@@ -188,7 +194,7 @@ if __name__ == "__main__":
         x_init = next[-1].detach().clone()
         trajectory = torch.cat((trajectory, x_init.unsqueeze(0)), dim=0)
 
-        if iteration % 20 == 1:
+        if iteration % 50 == 1:
             with torch.no_grad():
                 plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=trajectory, contour=True)
 

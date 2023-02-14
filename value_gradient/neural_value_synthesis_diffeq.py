@@ -82,31 +82,26 @@ class ProjectedDynamicalSystem(nn.Module):
         else:
             self._ctrl = self.direct
 
-        def underactuated_policy(q, v, x, Vqd):
-            # C = self._dynamics._Cfull(x)
-            # G = self._dynamics._Tgrav(q)
+        def underactuated_inv_policy(q, v, x, Vx):
+            Vqd = Vx[:,:, self.sim_params.nq:].clone()
             M = self._dynamics._Mfull(q)
             Mu, Mua = self._dynamics._Mu_Mua(q)
             Minv = torch.linalg.inv(M)
-            Tbias = self._dynamics._Tbias(x)
-            Tfric = self._dynamics._Tfric(v)
+            Tbias = self._dynamics._Tbias(x) - self._dynamics._Tfric(v)
 
-            # first = (Minv @ (0.5 * Tbias - 0.5 * Vqd).mT).mT
-            # second = -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
-            # main_p = (Minv @ (Tbias - 0.5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua)).mT).mT
-            # main_p_exp = (((Minv @ Tbias.mT).mT @ M - 0.5 * Vqd * (1 - torch.linalg.inv(Mu)*Mua).mT) @ Minv)
-
-            # if torch.mean(torch.sum((first - second), 0)).item() != 0:
-            #     raise "Numerics"
-            if Mu is not None:
-                nqa = Mua.shape[2]
-                qdd = torch.cat((torch.ones((self.sim_params.nsim, nqa, 1)).to(device), -torch.linalg.inv(Mu)@Mua), dim=1)
-            else:
+            if Mu is None:
                 qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
+                return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
 
-            return self._scale * (Minv @ (Tbias - Tfric - .5 * Vqd @ qdd).mT).mT
+            Tubias = Tbias[:, :, 1:].clone()
+            invMu = torch.inverse(Mu)
+            ones = torch.ones((v.shape[0], 1, 1)).to(device)
+            zeros = torch.zeros((v.shape[0], 1, 1)).to(device)
+            Ba = torch.cat((ones, (-invMu @ Mua.mT).mT), dim=2)
+            Fm = torch.cat((zeros, (invMu @ Tubias.mT).mT), dim=2)
+            return torch.inverse(Ba @ M @ Ba.mT) @ (Ba @ Tbias.mT - 0.5 * self._scale * Vqd @ Ba.mT - Ba @ M @ Fm.mT)
 
-        self._policy = underactuated_policy
+        self._policy = underactuated_inv_policy
 
         if dynamics is None:
             def dynamics(x, acc):
@@ -133,8 +128,8 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        Vqd = dvdx(t, x_enc, self.value_func)[:, :, self.sim_params.nq:].clone()
-        return self._policy(q, v, x, Vqd)
+        Vx= dvdx(t, x_enc, self.value_func)
+        return self._policy(q, v, x, Vx)
 
     def project(self, t, x):
         x_enc = self._encoder(x)

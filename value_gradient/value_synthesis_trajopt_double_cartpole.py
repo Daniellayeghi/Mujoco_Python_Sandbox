@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(9,6,3,3,1,1,80,400,0.08)
+sim_params = SimulationParams(9,6,3,3,1,1,80,400,0.01)
 dcp_params = ModelParams(3, 3, 1, 6, 6)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 500, .5, 0.008, 3, 1.025, 15, 'hjb'
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 500, .5, 0.001, 3, 1.025, 15, 'hjb'
 Q = torch.diag(torch.Tensor([.5, .2, .2, 0.0001, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 300, 10, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -165,7 +165,6 @@ if __name__ == "__main__":
     qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(0, 0) * 1
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(0, 0) * 1
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
-    trajectory = x_init.detach().clone().unsqueeze(0)
     iteration = 0
 
     def schedule_lr(optimizer, epoch, rate):
@@ -194,35 +193,27 @@ if __name__ == "__main__":
 
         print(f"Epochs: {iteration}, Loss: {loss.item()}, iteration: {iteration % 10}, lr: {get_lr(optimizer)}")
 
-        next = odeint(
-            dyn_system, x_init, one_step, method='euler', options=dict(step_size=dt), adjoint_atol=1e-9,
-            adjoint_rtol=1e-9
-        )
-
-        x_init = next[-1].detach().clone()
-        trajectory = torch.cat((trajectory, x_init.unsqueeze(0)), dim=0)
         selection = random.randint(0, sim_params.nsim - 1)
 
-
-        if iteration % 10 == 0 and iteration != 0:
+        if iteration % 50 == 0 and iteration != 0:
             fig_1 = plt.figure(1)
             for i in range(sim_params.nsim):
-                qpole = trajectory[:, i, 0, 1].cpu().detach()
-                qdpole = trajectory[:, i, 0, 3].cpu().detach()
+                qpole = traj[:, i, 0, 1].cpu().detach()
+                qdpole = traj[:, i, 0, 3].cpu().detach()
                 plt.plot(qpole, qdpole)
 
             plt.pause(0.001)
             fig_2 = plt.figure(2)
             ax_2 = plt.axes()
-            plt.plot(trajectory[:, selection, 0, 0].cpu().detach())
+            plt.plot(traj[:, selection, 0, 0].cpu().detach())
             plt.pause(0.001)
             ax_2.set_title(loss.item())
 
             for i in range(0, sim_params.nsim, 10):
                 selection = random.randint(0, sim_params.nsim - 1)
-                cart = trajectory[:, selection, 0, 0].cpu().detach().numpy()
-                pole1 = trajectory[:, selection, 0, 1].cpu().detach().numpy()
-                pole2 = trajectory[:, selection, 0, 2].cpu().detach().numpy()
+                cart = traj[:, selection, 0, 0].cpu().detach().numpy()
+                pole1 = traj[:, selection, 0, 1].cpu().detach().numpy()
+                pole2 = traj[:, selection, 0, 2].cpu().detach().numpy()
 
                 animate_double_cartpole(cart, pole1, pole2, fig_3, p, r, width, height, skip=2)
 
