@@ -9,11 +9,12 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-di_params = ModelParams(1,1,1,2,2)
+di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 200, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 200, .5, 0.01, 3, 1, 15, 100, 'hjb'
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 200, .5, 0.01, 3, 1, 15, 100, 'fwd'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
+
 R = torch.diag(torch.Tensor([1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 
@@ -65,12 +66,13 @@ def loss_func(x: torch.Tensor, t):
 
 def state_loss(x: torch.Tensor):
     x = batch_state_encoder(x)
-    # t, nsim, r, c = x.shape
-    # x_run = x[, :, :, :].view(t-1, nsim, r, c).clone()
-    # x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_running = (x @ Q @ x.mT)
+    t, nsim, r, c = x.shape
+    x_run = x[:-1, :, :, :].view(t-1, nsim, r, c).clone()
+    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    l_final = (x_final @ Qf @ x_final.mT)
+    l_running = (x_run @ Q @ x_run.mT)
     l_running = torch.sum(l_running, 0) * lambdas
-    return l_running
+    return l_running + l_final
 
 
 def state_loss_batch(x: torch.Tensor):
@@ -91,7 +93,24 @@ def inv_dynamics_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
     return torch.sum(loss, 0)
 
 
+def ctrl_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
+    q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
+    q = q.reshape((q.shape[0] * q.shape[1], 1, sim_params.nq))
+    x_reshape = x.reshape((x.shape[0] * x.shape[1], 1, sim_params.nqv))
+    M = di._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    C = di._Cfull(x_reshape).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    Tg = di._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
+    Tfric = di._Tfric(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
+    u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg + Tfric
+    loss = u_batch @ R @ u_batch.mT
+    return torch.sum(loss, 0)
+
 def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
+    l_ctrl = inv_dynamics_reg(x, acc, alpha)
+    return torch.mean(l_ctrl) * 1/scale
+
+
+def ctrl_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
     l_ctrl = inv_dynamics_reg(x, acc, alpha)
     return torch.mean(l_ctrl) * 1/scale
 
@@ -101,9 +120,9 @@ def backup_loss(x: torch.Tensor, acc, alpha):
     t, nsim, r, c = x.shape
     x_initial = batch_state_encoder(x[0, :, :, :].view(1, nsim, r, c).clone())
     x_final = batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
-    x = batch_state_encoder(x[:-1].view(t-1, nsim, r, c).clone())
+    x_run = batch_state_encoder(x[:-1].view(t-1, nsim, r, c).clone())
     acc = acc[:-1].view(t-1, nsim, r, sim_params.nu).clone()
-    l_running = state_loss_batch(x) + inv_dynamics_reg_batch(x, acc, alpha)
+    l_running = state_loss_batch(x) + ctrl_reg_batch(x_run, acc, alpha)
     value_final = nn_value_func(0, x_final.squeeze()).squeeze()
     value_initial = nn_value_func(0, x_initial.squeeze()).squeeze()
     loss = torch.square(value_final - value_initial + l_running)
@@ -139,7 +158,7 @@ time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(devic
 one_step = torch.linspace(0, dt, 2).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
 ).to(device)
 
 
@@ -156,8 +175,6 @@ def schedule_lr(optimizer, epoch, rate):
         for param_group in optimizer.param_groups:
             param_group['lr'] *= (0.75 * (0.95 ** (epoch/rate)))
 
-
-
 if __name__ == "__main__":
 
     def get_lr(optimizer):
@@ -173,15 +190,16 @@ if __name__ == "__main__":
     while iteration < max_iter:
         optimizer.zero_grad()
 
+        dyn_system.collect = True
         traj = odeint(
             dyn_system, x_init, time, method='euler',
             options=dict(step_size=dt), adjoint_atol=1e-9, adjoint_rtol=1e-9
         )
 
-        acc = compose_acc(traj, dt)
-        xxd = compose_xxd(traj, acc)
-        traj = traj.clone()
+        # acc = compose_acc(traj, dt)
+        acc = dyn_system._acc_buffer.clone()
         loss = loss_function_bellman(traj, acc, alpha)
+        dyn_system.collect = False
         loss.backward()
         optimizer.step()
 

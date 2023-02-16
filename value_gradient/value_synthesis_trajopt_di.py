@@ -1,16 +1,17 @@
 import random
-
 import torch
-
-from models import Cartpole, ModelParams
+from models import DoubleIntegrator, ModelParams
 from animations.cartpole import init_fig_cp, animate_cartpole
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
+from PSDNets import PosDefICNN
 
+di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 501, 0.01)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 250, .5, 0.01, 3, 1, 15, 100, 'hjb'
+di = DoubleIntegrator(sim_params.nsim, di_params, device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1, 1, 1, 'fwd'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -56,7 +57,9 @@ class NNValueFunction(nn.Module):
         return self.nn(x)
 
 
-nn_value_func = NNValueFunction(sim_params.nqv).to(device)
+# nn_value_func = NNValueFunction(sim_params.nqv).to(device)
+nn_value_func = PosDefICNN([sim_params.nqv, 32, 32, 1], eps=0.01, negative_slope=0.3).to(device)
+
 
 
 def loss_func(x: torch.Tensor, t):
@@ -87,8 +90,17 @@ def inv_dynamics_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
     return torch.sum(loss, 0)
 
 
+def ctrl_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
+    loss = acc @ R @ acc.mT
+    return torch.sum(loss, 0)
+
 def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
     l_ctrl = inv_dynamics_reg(x, acc, alpha)
+    return torch.mean(l_ctrl) * 1/scale
+
+
+def ctrl_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
+    l_ctrl = ctrl_reg(x, acc, alpha)
     return torch.mean(l_ctrl) * 1/scale
 
 
@@ -98,7 +110,7 @@ def backup_loss(x: torch.Tensor, acc, alpha):
     x_final =  batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
     x = batch_state_encoder(x[:-1].view(t-1, nsim, r, c).clone())
     acc = acc[:-1].view(t-1, nsim, r, sim_params.nu).clone()
-    l_running = state_loss_batch(x) + inv_dynamics_reg_batch(x, acc, alpha)
+    l_running = state_loss_batch(x) + ctrl_reg_batch(x, acc, alpha)
     value_final = nn_value_func(0, x_final.squeeze()).squeeze()
     value_initial = nn_value_func(0, x_initial.squeeze()).squeeze()
     loss = torch.square(value_final - value_initial + l_running)
@@ -132,9 +144,8 @@ f_mat = torch.zeros((100, 100)).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, mode=mode, step=step, scale=scale
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
 ).to(device)
-
 
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
@@ -165,19 +176,22 @@ if __name__ == "__main__":
     while iteration < max_iter:
         optimizer.zero_grad()
 
+        dyn_system.collect = True
         traj = odeint(
             dyn_system, x_init, time, method='euler',
             options=dict(step_size=dt), adjoint_atol=1e-9, adjoint_rtol=1e-9
         )
 
-        acc = compose_acc(traj, dt)
-        xxd = compose_xxd(traj, acc)
-        traj = traj.clone()
+        # acc = compose_acc(traj, dt)
+        acc = dyn_system._acc_buffer.clone()
         loss = loss_function_bellman(traj, acc, alpha)
+        dyn_system.collect = False
         loss.backward()
         optimizer.step()
+        schedule_lr(optimizer, iteration, 60)
 
-        print(f"Epochs: {iteration}, Loss: {loss.item()}, iteration: {iteration % 10}, lr: {get_lr(optimizer)}")
+        print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
+
 
         if iteration % 20 == 1:
             with torch.no_grad():

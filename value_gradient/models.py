@@ -1,5 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
+from utilities.torch_device import device
 from animations.cartpole import animate_double_cartpole, init_fig_dcp
 from animations.cartpole import animate_cartpole, init_fig_cp
 import numpy as np
@@ -64,25 +65,24 @@ class BaseRBD(object):
         return self.PFL(x, acc)
 
     def simulate_REG(self, x, tau):
-        tau = tau.clamp(-1, 1)
         q, qd = x[:, :, :self._params.nq].clone(), x[:, :, self._params.nq:].clone()
         Minv = torch.linalg.inv(self._Mfull(q))
         Tp = self._Tbias(x)
         Tfric = self._Tfric(qd)
         B = self._Bvec()
-        qdd = (Minv @ (Tp - Tfric + B * tau).mT).mT
+        qdd = (Minv @ (Tp + Tfric + B * tau).mT).mT
         xd = torch.cat((qd[:, :, 0:self._params.nx], qdd), 2).clone()
         return xd
 
 class DoubleIntegrator(BaseRBD):
     MASS = 1
     FRICTION = .1
-    GEAR = 30
+    GEAR = 1
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(DoubleIntegrator, self).__init__(nsims, params, device, mode)
         self._M = torch.ones((nsims, 1, 1)).to(device) * self.MASS
-        self._b = torch.Tensor([1, 0]).repeat(nsims, 1, 1).to(device)
+        self._b = torch.Tensor([1]).repeat(nsims, 1, 1).to(device)
 
     def _Muact(self, q):
         return None
@@ -124,8 +124,8 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = torch.Tensor([0.02, 0.02]).to('cuda')
-    GEAR = 30
+    FRICTION = torch.Tensor([0.02, 0.5]).to(device)
+    GEAR = 60
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(Cartpole, self).__init__(nsims, params, device, mode)
@@ -299,27 +299,28 @@ class DoubleCartpole(BaseRBD):
 
 if __name__ == "__main__":
     cp_params = ModelParams(2, 2, 1, 4, 4)
-    cp = Cartpole(1, cp_params, 'cpu', mode='norm')
+    cp = Cartpole(1, cp_params, 'cpu', mode='pfl')
     dcp_params = ModelParams(3, 3, 1, 6, 6)
     dcp = DoubleCartpole(1, dcp_params, 'cpu', mode='pfl')
-    x_init_cp = torch.Tensor([0, .1, 0, 0]).view(1, 1, 4)
+    x_init_cp = torch.Tensor([0, torch.pi-0.3, 0, 0]).view(1, 1, 4)
     qdd_init_cp = torch.Tensor([0, 0]).view(1, 1, 2)
     x_init_dcp = torch.Tensor([0, 2, 2, 0, 0, 0]).view(1, 1, 6)
     qdd_init_dcp = torch.Tensor([0, 0, 0]).view(1, 1, 3)
-
+    ctrl = np.load('ctrl.npy')
+    ctrl = torch.Tensor(ctrl)
 
     def integrate(func, x, xd, time, dt):
         xs = []
         xs.append(x)
         for t in range(time):
-            xd_new = func(x, torch.randn((1, 1, 2)) * 0)
+            xd_new = func(x, ctrl[t])
             x = x + xd_new * dt
             xs.append(x)
 
         return xs
 
 
-    xs_cp = integrate(cp.simulate_REG, x_init_cp, qdd_init_cp, 5000, 0.01)
+    xs_cp = integrate(cp.simulate_REG, x_init_cp, qdd_init_cp, 500, 0.01)
     # xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 5000, 0.01)
 
     theta1 = [x[:, :, 1].item() for x in xs_cp]

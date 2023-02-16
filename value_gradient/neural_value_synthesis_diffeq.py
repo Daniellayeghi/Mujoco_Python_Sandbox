@@ -20,7 +20,7 @@ def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, 
     trace = trace.detach().clone().cpu().squeeze()
     for i, x in enumerate(xs):
         for j, y in enumerate(ys):
-            in_tensor = torch.tensor((x, y)).view(1, 1, 2).float().to(device)
+            in_tensor = torch.tensor((x, y)).view(1, 2).float().to(device)
             f_mat[i, j] = func(0, in_tensor).detach().squeeze()
 
     [X, Y] = xy_grid
@@ -62,7 +62,7 @@ def compose_acc(x, dt):
 
 
 class ProjectedDynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1, step=1):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1, step=1, R=None):
         super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
@@ -70,44 +70,62 @@ class ProjectedDynamicalSystem(nn.Module):
         self.nsim = sim_params.nsim
         self._dynamics = dynamics
         self._encoder = encoder
-        self._acc_buffer = torch.zeros((sim_params.ntime, sim_params.nsim, 1, sim_params.nv)).to(device).requires_grad_(False)
+        self._acc_buffer = torch.zeros((sim_params.ntime, sim_params.nsim, 1, 1)).to(device).requires_grad_(False)
         self._scale = scale
         self.step = step
+        self._step_func = self._dynamics
+        self.collect = True
+
+        if R is not None:
+            self._Rinv = torch.inverse(R)
+
         self._policy = None
 
         if mode == 'proj':
             self._ctrl = self.project
-        if mode == 'hjb':
+        if mode == 'fwd':
+            def underactuated_fwd_policy(q, v, x, Vx):
+                dfdu_top = torch.zeros_like(v)
+                M = self._dynamics._Mfull(q)
+                Minv = torch.inverse(M)
+                B = self._dynamics._Bvec()
+                dfdu = torch.cat((dfdu_top, (-Minv @ B.mT).mT), dim=2)
+                return -0.5 * self._scale * self._Rinv @ dfdu @ Vx.mT
+
+            self._policy = underactuated_fwd_policy
             self._ctrl = self.hjb
-        else:
-            self._ctrl = self.direct
+            self._step_func = self._dynamics.simulate_REG
 
-        def underactuated_inv_policy(q, v, x, Vx):
-            Vqd = Vx[:,:, self.sim_params.nq:].clone()
-            M = self._dynamics._Mfull(q)
-            Mu, Mua = self._dynamics._Mu_Mua(q)
-            Minv = torch.linalg.inv(M)
-            Tbias = self._dynamics._Tbias(x) - self._dynamics._Tfric(v)
+        if mode == 'inv':
+            def underactuated_inv_policy(q, v, x, Vx):
+                Vqd = Vx[:, :, self.sim_params.nq:].clone()
+                M = self._dynamics._Mfull(q)
+                Mu, Mua = self._dynamics._Mu_Mua(q)
+                Minv = torch.linalg.inv(M)
+                Tbias = self._dynamics._Tbias(x) - self._dynamics._Tfric(v)
 
-            if Mu is None:
-                qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
-                return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
+                if Mu is None:
+                    qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
+                    return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
 
-            Tubias = Tbias[:, :, 1:].clone()
-            invMu = torch.inverse(Mu)
-            ones = torch.ones((v.shape[0], 1, 1)).to(device)
-            zeros = torch.zeros((v.shape[0], 1, 1)).to(device)
-            Ba = torch.cat((ones, (-invMu @ Mua.mT).mT), dim=2)
-            Fm = torch.cat((zeros, (invMu @ Tubias.mT).mT), dim=2)
-            return torch.inverse(Ba @ M @ Ba.mT) @ (Ba @ Tbias.mT - 0.5 * self._scale * Vqd @ Ba.mT - Ba @ M @ Fm.mT)
+                Tubias = Tbias[:, :, 1:].clone()
+                invMu = torch.inverse(Mu)
+                ones = torch.ones((v.shape[0], 1, 1)).to(device)
+                zeros = torch.zeros((v.shape[0], 1, 1)).to(device)
+                Ba = torch.cat((ones, (-invMu @ Mua.mT).mT), dim=2)
+                Fm = torch.cat((zeros, (invMu @ Tubias.mT).mT), dim=2)
+                return torch.inverse(Ba @ M @ Ba.mT) @ (
+                            Ba @ Tbias.mT - 0.5 * self._scale * Vqd @ Ba.mT - Ba @ M @ Fm.mT)
 
-        self._policy = underactuated_inv_policy
+            self._policy = underactuated_inv_policy
+            self._ctrl = self.hjb
+            self._step_func = self._dynamics.simulate_PFL
 
         if dynamics is None:
             def dynamics(x, acc):
                 v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
                 return torch.cat((v, acc), 2)
-            self._dynamics = dynamics
+            self._step_func = dynamics
 
             def policy(q, v, x, Vqd):
                 return self._scale * -0.5 * Vqd
@@ -128,7 +146,7 @@ class ProjectedDynamicalSystem(nn.Module):
                 )[0]
                 return dvdx
 
-        Vx= dvdx(t, x_enc, self.value_func)
+        Vx = dvdx(t, x_enc, self.value_func)
         return self._policy(q, v, x, Vx)
 
     def project(self, t, x):
@@ -164,6 +182,9 @@ class ProjectedDynamicalSystem(nn.Module):
         # return torch.cat((v, a), 2)
 
     def forward(self, t, x):
-        xd = self.dfdt(t, x)
-        # self._acc_buffer[int(t/self.sim_params.dt), :, :, :] = xd[:, :, self.sim_params.nv:].clone()
+        u = self._ctrl(t, x)
+        xd = self._dynamics(x, u)
+        idx = int((torch.round(t/self.sim_params.dt)).item())
+        if self.collect:
+            self._acc_buffer[idx, :, :, :] = u.clone()
         return xd

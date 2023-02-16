@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 400, 500, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 100, 500, 0.01)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1, 1, 200, 'hjb'
-Q = torch.diag(torch.Tensor([1, 10, 0.001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
-R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1, 1, 50, 'inv'
+Q = torch.diag(torch.Tensor([1., 1, 0.001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
+R = torch.diag(torch.Tensor([1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
 
@@ -93,8 +93,17 @@ def inv_dynamics_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
     return torch.sum(loss, 0)
 
 
+def ctrl_reg(x: torch.Tensor, acc: torch.Tensor, alpha):
+    loss = acc @ R @ acc.mT
+    return torch.sum(loss, 0)
+
 def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
     l_ctrl = inv_dynamics_reg(x, acc, alpha)
+    return torch.mean(l_ctrl) * 1/scale
+
+
+def ctrl_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
+    l_ctrl = ctrl_reg(x, acc, alpha)
     return torch.mean(l_ctrl) * 1/scale
 
 
@@ -129,14 +138,6 @@ def batch_dynamics_loss(x, acc, alpha=1):
     return torch.mean(l_run) * alpha * 0
 
 
-def batch_ctrl_loss(acc: torch.Tensor):
-    qddc = acc[:, :, :, 0].unsqueeze(2).clone()
-    l_ctrl = qddc @ R @ qddc.mT
-    l_ctrl = torch.sum(l_ctrl, 0)
-    return torch.mean(l_ctrl)
-
-
-
 def loss_function_bellman(x, acc, alpha=1):
     l_bellman= backup_loss(x, acc, alpha)
     print(f"loss bellman {l_bellman} alpha {alpha}")
@@ -150,11 +151,11 @@ def loss_function_lyapounov(x, acc, alpha=1):
 
 
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step, scale=scale
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step, scale=scale, R=R
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 one_step = torch.linspace(0, dt, 2).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-3, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 fig_3, p, r, width, height = init_fig_cp(0)
@@ -183,14 +184,16 @@ if __name__ == "__main__":
 
     while iteration < max_iter:
         optimizer.zero_grad()
-
+        dyn_system.collect = True
         traj = odeint(
             dyn_system, x_init, time, method='euler',
             options=dict(step_size=dt), adjoint_atol=1e-9, adjoint_rtol=1e-9
         )
 
-        acc = compose_acc(traj, dt)
+        # acc = compose_acc(traj, dt)
+        acc = dyn_system._acc_buffer.clone()
         loss = loss_function_bellman(traj, acc, alpha)
+        dyn_system.collect = False
         loss.backward()
         optimizer.step()
         schedule_lr(optimizer, iteration, 60)

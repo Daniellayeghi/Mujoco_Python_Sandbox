@@ -55,6 +55,8 @@ class NNValueFunction(nn.Module):
         self.nn = nn.Sequential(
             nn.Linear(n_in, 64),
             nn.Softplus(beta=5),
+            nn.Linear(64, 64),
+            nn.Softplus(beta=5),
             nn.Linear(64, 1),
         )
 
@@ -109,10 +111,10 @@ def batch_state_loss(x: torch.Tensor):
     x = batch_state_encoder(x)
     # t, nsim, r, c = x.shape
     # x_run = x[, :, :, :].view(t-1, nsim, r, c).clone()
-    # x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
     l_running = (x @ Q @ x.mT) * lambdas
     l_running = torch.sum(l_running, 0).squeeze()
-    # l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
+    l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
 
     return torch.mean(l_running)
 
@@ -195,7 +197,7 @@ if __name__ == "__main__":
 
         selection = random.randint(0, sim_params.nsim - 1)
 
-        if iteration % 50 == 0 and iteration != 0:
+        if iteration % 20 == 0 and iteration != 0:
             fig_1 = plt.figure(1)
             for i in range(sim_params.nsim):
                 qpole = traj[:, i, 0, 1].cpu().detach()
