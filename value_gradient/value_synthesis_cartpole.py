@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from utilities.adahessian import AdaHessian
 from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 80, 240, 0.008)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 200, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
 prev_cost, diff, tol, max_iter, alpha, dt, n_bins = 0, 100.0, 0, 2000, .5, 0.008, 3
 Q = torch.diag(torch.Tensor([.05, 5, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -33,32 +33,6 @@ def batch_state_encoder(x: torch.Tensor):
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
     qp = torch.cos(qp) - 1
     return torch.cat((qc, qp, v), 1).reshape((t, b, r, c))
-
-def wrap_free_state(x: torch.Tensor):
-    q, v = x[:, :, :sim_params.nq], x[:, :, sim_params.nq:]
-    q_new = torch.cat((torch.sin(q[:, :, 1]), torch.cos(q[:, :, 1]) - 1, q[:, :, 0]), 1).unsqueeze(1)
-    return torch.cat((q_new, v), 2)
-
-
-def batch_wrap_free_state(x: torch.Tensor):
-    q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
-    q_new = torch.cat((torch.sin(q[:, :, :, 1]), torch.cos(q[:, :, :, 1]) - 1, q[:, :, :, 0]), 2).unsqueeze(2)
-    return torch.cat((q_new, v), 3)
-
-
-def bounded_state(x: torch.Tensor):
-    qc, qp, qdc, qdp = x[:, :, 0].clone().unsqueeze(1), x[:, :, 1].clone().unsqueeze(1), x[:, :, 2].clone().unsqueeze(1), x[:, :, 3].clone().unsqueeze(1)
-    qp = (qp+2 * torch.pi)%torch.pi
-    return torch.cat((qc, qp, qdc, qdp), 2)
-
-
-def bounded_traj(x: torch.Tensor):
-    def bound(angle):
-        return torch.atan2(torch.sin(angle), torch.cos(angle))
-
-    qc, qp, qdc, qdp = x[:, :, :, 0].clone().unsqueeze(2), x[:, :, :, 1].clone().unsqueeze(2), x[:, :, :, 2].clone().unsqueeze(2), x[:, :, :, 3].clone().unsqueeze(2)
-    qp = bound(qp)
-    return torch.cat((qc, qp, qdc, qdp), 3)
 
 
 class NNValueFunction(nn.Module):
@@ -92,10 +66,13 @@ nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 def backup_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    x_init = x[0, :, :, :].view(1, nsim, r, c).clone()
     x_final_w = batch_state_encoder(x_final)
-    l_running = torch.sum(x_final_w @ Q @ x_final_w.mT, 0).squeeze()
-    value = nn_value_func(0, x_final_w).squeeze()
-    return torch.mean(torch.square(value - l_running))
+    x_init_w = batch_state_encoder(x_init)
+    value_final = nn_value_func(0, x_final_w).squeeze()
+    value_init = nn_value_func(0, x_init_w).squeeze()
+
+    return value_init - value_final
 
 
 def batch_dynamics_loss(x, acc, alpha=1):
@@ -113,7 +90,7 @@ def batch_state_loss(x: torch.Tensor):
     x_run = x[:-1, :, :, :].view(t-1, nsim, r, c).clone()
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
     l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
-    l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
+    l_terminal = (x_final @ Qf @ x_final.mT).squeeze()
 
     return torch.mean(l_running + l_terminal)
 
@@ -130,14 +107,14 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     M = cartpole._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
     C = cartpole._Cfull(x_reshape).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
     Tg = cartpole._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
-    u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg
-    return torch.mean(torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze()) * 0.00001
+    Tf = cartpole._Tfric(v).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
+    u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg + Tf
+    return torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze() * 0.00001
 
 
 def loss_function(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman, l_dyn = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x), batch_dynamics_loss(x, acc, alpha)
-    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, loss dynamics {l_dyn}, alpha {alpha}")
-    return l_ctrl + l_state + l_bellman + l_dyn
+    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x)
+    return torch.mean(torch.square(l_ctrl + l_state + l_bellman))
 
 
 thetas = torch.linspace(torch.pi - 0.6, torch.pi + 0.6, n_bins)

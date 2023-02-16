@@ -98,6 +98,9 @@ class Cartpole(BaseRBD):
         grav = (-self.MASS_P * self.GRAVITY * self.LENGTH * torch.sin(qp))
         return torch.cat((torch.zeros_like(grav), grav), 2)
 
+    def _Tfric(self, v):
+        return v * self.FRICTION
+
     def __call__(self, x, acc):
         return self.simulate(x, acc)
 

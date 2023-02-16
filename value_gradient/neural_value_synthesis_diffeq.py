@@ -64,7 +64,7 @@ def compose_acc(x, dt):
 
 
 class ProjectedDynamicalSystem(nn.Module):
-    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=2):
+    def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1):
         super(ProjectedDynamicalSystem, self).__init__()
         self.value_func = value_function
         self.loss_func = loss
@@ -86,8 +86,9 @@ class ProjectedDynamicalSystem(nn.Module):
             M = self._dynamics._Mfull(q)
             C = self._dynamics._Cfull(x)
             G = self._dynamics._Tgrav(q)
+            Tf = self._dynamics._Tfric(v)
 
-            return -0.5 * (torch.linalg.inv(M) @ (Vqd + (C @ v.mT).mT - G).mT).mT * self._scale
+            return (torch.linalg.inv(M) @ (-0.5 * Vqd - (C @ v.mT).mT + G - Tf).mT).mT
 
         self._policy = policy
 
