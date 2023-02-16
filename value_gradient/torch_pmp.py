@@ -9,11 +9,11 @@ from animations.cartpole import animate_cartpole, init_fig_cp
 fig_3, p, r, width, height = init_fig_cp(0)
 
 # PMP implementation
-dt, T, nx, nu, tol, delta, discount = 0.01, 300, 4, 1, 1e-8, .002, 1
+dt, T, nx, nu, tol, delta, discount = 0.01, 400, 4, 1, 1e-6, 0.005, 1
 A = torch.Tensor(([1, dt], [0, 1])).requires_grad_()
 B = torch.Tensor(([0, 1])).requires_grad_()
 R = (torch.Tensor(([0.0001])))
-Qr = torch.diag(torch.Tensor([1, 1, 1*dt, 1*dt])) * 5
+Qr = torch.diag(torch.Tensor([1, 0.01, 1*dt, 0.01*dt])) * 1
 Qf = torch.diag(torch.Tensor([1, 1, 1*dt, 1*dt])) * 100
 Q = torch.diag(torch.Tensor([1, 1, 1*dt, 1*dt])) * 1
 
@@ -34,6 +34,7 @@ mult = torch.zeros((T+1, 1, nx))
 
 
 def state_encoder(x: torch.Tensor):
+    return x
     b, r, c = x.shape
     x = x.reshape((b, r * c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
@@ -143,10 +144,10 @@ if __name__ == "__main__":
         q = x[:, :, :cp_params.nq].clone()
         T = cp.inverse_dynamics(x, u)
         u_loss = T @ torch.linalg.inv(cp._Mfull(q)) @ T.mT
-        return state_encoder(x) @ Qr @ state_encoder(x).mT + u_loss * 1/5
+        return state_encoder(x) @ Qr @ state_encoder(x).mT + u_loss/10
 
     x = torch.Tensor([0, torch.pi, 0, 0]).reshape(1, 1, nx)
-    us = torch.rand((T, 1, 1)) * 2
+    us = torch.zeros((T, 1, 1)) * 2
     cart, pole = [0, 0], [0, 0]
     poles = []
 
@@ -169,10 +170,3 @@ if __name__ == "__main__":
     #     animate_cartpole(np.array(cart), np.array(pole), fig_3, p, r, width, height)
 
     xs, us = PMP(x, us, max_iter=300)
-
-    thetas = np.linspace(0, 6 * np.pi, 300)
-    enc = lambda x: np.pi**2 * np.sin(x/2)
-    enc_2 = lambda x: np.cos(x) - 1
-    theta_enc = enc(thetas)**2
-    plt.plot(thetas, theta_enc)
-    plt.show()

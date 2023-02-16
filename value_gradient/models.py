@@ -124,7 +124,7 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = -9.81
-    FRICTION = torch.Tensor([0.02, 0.5]).to(device)
+    FRICTION = torch.Tensor([0.1, 0.1]).to(device)
     GEAR = 60
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):

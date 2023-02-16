@@ -11,7 +11,7 @@ from PSDNets import PosDefICNN
 di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 501, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1, 1, 1, 'fwd'
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1, 1, 20, 'inv'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -57,8 +57,8 @@ class NNValueFunction(nn.Module):
         return self.nn(x)
 
 
-# nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-nn_value_func = PosDefICNN([sim_params.nqv, 32, 32, 1], eps=0.01, negative_slope=0.3).to(device)
+nn_value_func = NNValueFunction(sim_params.nqv).to(device)
+# nn_value_func = PosDefICNN([sim_params.nqv, 32, 32, 1], eps=0.01, negative_slope=0.05).to(device)
 
 
 
@@ -110,7 +110,7 @@ def backup_loss(x: torch.Tensor, acc, alpha):
     x_final =  batch_state_encoder(x[-1, :, :, :].view(1, nsim, r, c).clone())
     x = batch_state_encoder(x[:-1].view(t-1, nsim, r, c).clone())
     acc = acc[:-1].view(t-1, nsim, r, sim_params.nu).clone()
-    l_running = state_loss_batch(x) + ctrl_reg_batch(x, acc, alpha)
+    l_running = state_loss_batch(x) + inv_dynamics_reg_batch(x, acc, alpha)
     value_final = nn_value_func(0, x_final.squeeze()).squeeze()
     value_initial = nn_value_func(0, x_initial.squeeze()).squeeze()
     loss = torch.square(value_final - value_initial + l_running)
@@ -168,14 +168,14 @@ if __name__ == "__main__":
             return param_group['lr']
 
     q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 10
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 10
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     trajectory = x_init.detach().clone().unsqueeze(0)
     iteration = 0
 
     while iteration < max_iter:
         optimizer.zero_grad()
-
+        x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
         dyn_system.collect = True
         traj = odeint(
             dyn_system, x_init, time, method='euler',

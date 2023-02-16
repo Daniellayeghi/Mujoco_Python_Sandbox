@@ -67,12 +67,12 @@ def loss_func(x: torch.Tensor, t):
 def state_loss(x: torch.Tensor):
     x = batch_state_encoder(x)
     t, nsim, r, c = x.shape
-    x_run = x[:-1, :, :, :].view(t-1, nsim, r, c).clone()
+    x_run = x[:, :, :, :].view(t, nsim, r, c).clone()
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_final = (x_final @ Qf @ x_final.mT)
+    # l_final = (x_final @ Qf @ x_final.mT)
     l_running = (x_run @ Q @ x_run.mT)
     l_running = torch.sum(l_running, 0) * lambdas
-    return l_running + l_final
+    return l_running
 
 
 def state_loss_batch(x: torch.Tensor):

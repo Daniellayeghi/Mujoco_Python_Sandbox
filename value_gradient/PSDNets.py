@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+
 class ICNN(nn.Module):
     def __init__(self, layer_sizes, activation=F.relu_):
         super().__init__()
@@ -35,7 +36,6 @@ class ICNN(nn.Module):
         return F.linear(x, self.W[-1], self.bias[-1]) + F.linear(z, F.softplus(self.U[-1])) / self.U[-1].shape[0]
 
 
-
 class ReHU(nn.Module):
     """ Rectified Huber unit"""
     def __init__(self, d):
@@ -45,6 +45,7 @@ class ReHU(nn.Module):
 
     def forward(self, x):
         return torch.max(torch.clamp(torch.sign(x)*self.a/2*x**2,min=0,max=-self.b),x+self.b)
+
 
 class MakePSD(nn.Module):
     def __init__(self, f, n, eps=0.01, d=1.0):
@@ -59,6 +60,7 @@ class MakePSD(nn.Module):
         smoothed_output = self.rehu(self.f(x) - self.zero)
         quadratic_under = self.eps*(x**2).sum(1,keepdim=True)
         return smoothed_output + quadratic_under
+
 
 class PosDefICNN(nn.Module):
     def __init__(self, layer_sizes, eps=0.1, negative_slope=0.05):
