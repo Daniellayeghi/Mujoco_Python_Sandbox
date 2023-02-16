@@ -109,7 +109,7 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     Tg = cartpole._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
     Tf = cartpole._Tfric(v).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
     u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg + Tf
-    return torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze() * 0.00001
+    return torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze() * 0.01
 
 
 def loss_function(x, acc, alpha=1):

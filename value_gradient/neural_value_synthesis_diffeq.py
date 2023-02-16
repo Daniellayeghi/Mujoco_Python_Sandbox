@@ -87,8 +87,15 @@ class ProjectedDynamicalSystem(nn.Module):
             C = self._dynamics._Cfull(x)
             G = self._dynamics._Tgrav(q)
             Tf = self._dynamics._Tfric(v)
-
-            return (torch.linalg.inv(M) @ (-0.5 * Vqd - (C @ v.mT).mT + G - Tf).mT).mT
+            Tbias = (-1 * (C @ v.mT).mT + G - Tf)
+            Tbiasc, Tbiasu = Tbias[:, :, 0].reshape(self.sim_params.nsim, 1, 1).clone(), Tbias[:, :, 1:].reshape(self.sim_params.nsim, 1, 1).clone()
+            Mcc, Mcu, Muu = M[:, 0, 0].reshape(self.sim_params.nsim, 1, 1).clone(), M[:, 0, 1].reshape(self.sim_params.nsim, 1, 1).clone(), M[:, 1, 1].reshape(self.sim_params.nsim, 1, 1).clone()
+            Mhat = -Mcu @ torch.linalg.inv(Mcc) @ Mcu + Muu
+            Mprime = -Mcu @ torch.linalg.inv(Mcc)
+            dfdqdd = torch.Tensor([1, 0]).repeat(self.sim_params.nsim, 1, 1).to(device)
+            qdd_new = torch.linalg.inv(Mcc) @ (-Mcu @ torch.linalg.inv(Mhat)@ (Mprime @ Tbiasc + Tbiasu) + Tbiasc -0.5 * 100 * Vqd @dfdqdd.mT)
+            qdd_old = (torch.linalg.inv(M) @ (-0.5 * Vqd - (C @ v.mT).mT + G - Tf).mT).mT * 2
+            return qdd_new
 
         self._policy = policy
 
