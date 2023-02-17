@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 from PSDNets import PosDefICNN
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 1000, 300, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 200, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.01, 3, 1.0, 15, 1, 'fwd'
-Q = torch.diag(torch.Tensor([1, 1, 1e-2, 1e-2])).repeat(sim_params.nsim, 1, 1).to(device)
-Qf = torch.diag(torch.Tensor([1e1, 1e1, 1e-2, 1e-2])).repeat(sim_params.nsim, 1, 1).to(device)
+prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.008, 3, 1.0, 15, 10000, 'fwd'
+Q = torch.diag(torch.Tensor([.05, 5, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
+Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-0, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
@@ -28,7 +28,7 @@ def state_encoder(x: torch.Tensor):
     b, r, c = x.shape
     x = x.reshape((b, r*c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
-    qp = torch.pi ** 2 * torch.sin(qp/2)
+    qp = torch.cos(qp) - 1
     return torch.cat((qc, qp, v), 1).reshape((b, r, c))
 
 
@@ -36,7 +36,7 @@ def batch_state_encoder(x: torch.Tensor):
     t, b, r, c = x.shape
     x = x.reshape((t*b, r*c))
     qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
-    qp = torch.pi ** 2 * torch.sin(qp/2)
+    qp = torch.cos(qp) - 1
     return torch.cat((qc, qp, v), 1).reshape((t, b, r, c))
 
 
@@ -46,9 +46,7 @@ class NNValueFunction(nn.Module):
 
         self.nn = nn.Sequential(
             nn.Linear(n_in, 64),
-            nn.Softplus(beta=5),
-            nn.Linear(64, 64),
-            nn.Softplus(beta=5),
+            nn.Softplus(),
             nn.Linear(64, 1),
         )
 
@@ -193,7 +191,7 @@ if __name__ == "__main__":
             return param_group['lr']
 
     qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(0, 0) * 2
-    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(0, 0.3)
+    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(torch.pi - 0.3, torch.pi + 0.3)
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(-1, 1)
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
     iteration = 0

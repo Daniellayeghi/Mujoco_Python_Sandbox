@@ -90,7 +90,7 @@ class ProjectedDynamicalSystem(nn.Module):
                 Minv = torch.inverse(M)
                 B = self._dynamics._Bvec()
                 dfdu = torch.cat((dfdu_top, (-Minv @ B.mT).mT), dim=2)
-                return -0.5 * self._scale * self._Rinv @ dfdu @ Vx.mT
+                return -0.5 * self._Rinv @ dfdu @ Vx.mT
 
             self._policy = underactuated_fwd_policy
             self._ctrl = self.hjb
