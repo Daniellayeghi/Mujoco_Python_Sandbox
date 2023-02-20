@@ -83,19 +83,27 @@ class ProjectedDynamicalSystem(nn.Module):
             self._ctrl = self.hjb
 
         def policy(q, v, x, Vqd):
+
+
             M = self._dynamics._Mfull(q)
             C = self._dynamics._Cfull(x)
             G = self._dynamics._Tgrav(q)
             Tf = self._dynamics._Tfric(v)
+            ones = torch.ones((v.shape[0], 1, 1)).to(device)
+            zeros = torch.zeros((v.shape[0], 1, 1)).to(device)
             Tbias = (-1 * (C @ v.mT).mT + G - Tf)
             Tbiasc, Tbiasu = Tbias[:, :, 0].reshape(self.sim_params.nsim, 1, 1).clone(), Tbias[:, :, 1:].reshape(self.sim_params.nsim, 1, 1).clone()
             Mcc, Mcu, Muu = M[:, 0, 0].reshape(self.sim_params.nsim, 1, 1).clone(), M[:, 0, 1].reshape(self.sim_params.nsim, 1, 1).clone(), M[:, 1, 1].reshape(self.sim_params.nsim, 1, 1).clone()
+            Ba = torch.cat((ones, (-torch.inverse(Muu) @ Mcu.mT).mT), dim=2)
+            Fm = torch.cat((zeros, (torch.inverse(Muu) @ Tbiasu.mT).mT), dim=2)
+            qdd_new_2 = torch.inverse(Ba @ M @ Ba.mT) @ (Ba @ Tbias.mT - 0.5 * 100 * Vqd @ Ba.mT - Ba @ M @ Fm.mT)
+
             Mhat = -Mcu @ torch.linalg.inv(Mcc) @ Mcu + Muu
             Mprime = -Mcu @ torch.linalg.inv(Mcc)
             dfdqdd = torch.Tensor([1, 0]).repeat(self.sim_params.nsim, 1, 1).to(device)
             qdd_new = torch.linalg.inv(Mcc) @ (-Mcu @ torch.linalg.inv(Mhat)@ (Mprime @ Tbiasc + Tbiasu) + Tbiasc -0.5 * 100 * Vqd @dfdqdd.mT)
             qdd_old = (torch.linalg.inv(M) @ (-0.5 * Vqd - (C @ v.mT).mT + G - Tf).mT).mT * 2
-            return qdd_new
+            return qdd_new_2
 
         self._policy = policy
 
