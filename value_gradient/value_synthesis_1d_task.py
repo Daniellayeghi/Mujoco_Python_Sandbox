@@ -106,8 +106,8 @@ if __name__ == "__main__":
 
         dyn_system.step *= step_size
         print(f"Stepping with {dyn_system.step}")
-
         loss.backward()
+
         optimizer.step()
 
         for param in dyn_system.parameters():

@@ -6,17 +6,6 @@ import matplotlib.pyplot as plt
 from utilities.torch_device import device
 from utilities.mujoco_torch import SimulationParams
 
-parser = argparse.ArgumentParser('Neural Value Synthesis demo')
-parser.add_argument('--adjoint', action='store_true')
-args = parser.parse_args()
-
-if args.adjoint:
-    from torchdiffeq import odeint_adjoint as odeint
-    print(f"Using the Adjoint method")
-else:
-    from torchdiffeq import odeint
-
-
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
     assert len(xs) == len(ys)
     trace = trace.detach().clone().cpu().squeeze()
@@ -55,13 +44,10 @@ def compose_xxd(x, acc):
     return torch.cat((x, acc), dim=3)
 
 
-def compose_acc(x, dt):
-    ntime, nsim, r, c = x.shape
-    v = x[:, :, :, int(c/2):].clone()
-    acc = torch.diff(v, dim=0) / dt
-    acc_null = torch.zeros_like((acc[0, :, :, :])).view(1, nsim, r, int(c/2))
-    return torch.cat((acc, acc_null), dim=0)
-
+def compose_acc(qd, dt):
+    ntime, nsim, r, c = qd.shape
+    acc = torch.diff(qd, dim=0) / dt
+    return acc
 
 class ProjectedDynamicalSystem(nn.Module):
     def __init__(self, value_function, loss, sim_params: SimulationParams, dynamics=None, encoder=None, mode='proj', scale=1):
@@ -76,6 +62,7 @@ class ProjectedDynamicalSystem(nn.Module):
         self._scale = scale
         self.step = 2
         self._policy = None
+        self.collect = True
 
         if mode == 'proj':
             self._ctrl = self.project
@@ -172,4 +159,8 @@ class ProjectedDynamicalSystem(nn.Module):
     def forward(self, t, x):
         xd = self.dfdt(t, x)
         # self._acc_buffer[int(t/self.sim_params.dt), :, :, :] = xd[:, :, self.sim_params.nv:].clone()
+
+        idx = int((torch.round(t/self.sim_params.dt)).item())
+        if self.collect:
+            self._acc_buffer[idx] = xd[:, :, self.sim_params.nv:].clone()
         return xd

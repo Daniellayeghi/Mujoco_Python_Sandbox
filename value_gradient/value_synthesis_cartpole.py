@@ -7,6 +7,7 @@ import torch
 from models import Cartpole, ModelParams
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
+from torchdiffeq import odeint_adjoint as odeint
 from utilities.adahessian import AdaHessian
 from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
 
@@ -47,7 +48,7 @@ class NNValueFunction(nn.Module):
 
         def init_weights(net):
             if type(net) == nn.Linear:
-                torch.nn.init.xavier_uniform(net.weight)
+                torch.nn.init.xavier_normal_(net.weight)
 
         self.nn.apply(init_weights)
 
@@ -101,6 +102,7 @@ def batch_ctrl_loss(acc: torch.Tensor):
 
 
 def batch_inv_dynamics_loss(x, acc, alpha):
+    x = x[:-1].clone()
     q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
     q = q.reshape((q.shape[0]*q.shape[1], 1, sim_params.nq))
     x_reshape = x.reshape((x.shape[0]*x.shape[1], 1, sim_params.nqv))
@@ -146,10 +148,11 @@ if __name__ == "__main__":
         print(f"Theta range {thetas[0]} to {thetas[i]} and {thetas[-1-i]} to {thetas[-1]}")
         while iteration < max_iter:
             optimizer.zero_grad()
+            dyn_system.collect = True
             traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
-            acc = compose_acc(traj, dt)
-            xxd = compose_xxd(traj, acc)
+            acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
             loss = loss_function(traj, acc, alpha)
+            dyn_system.collect = False
             loss.backward()
             optimizer.step()
             sc.step()
