@@ -165,6 +165,7 @@ if __name__ == "__main__":
         traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
         acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
         loss = loss_function(traj, acc, alpha)
+        loss_buffer.append(loss.item())
         loss.backward()
         optimizer.step()
         schedule_lr(optimizer, iteration, 20)
@@ -184,7 +185,7 @@ if __name__ == "__main__":
         fig_1 = plt.figure(1)
         fig_1.clf()
 
-        if iteration % 10 == 0 and iteration != 0:
+        if iteration % 40 == 0 and iteration != 0:
             for i in range(sim_params.nsim):
                 qpole = traj[:, i, 0, 1].cpu().detach()
                 qdpole = traj[:, i, 0, 3].cpu().detach()
