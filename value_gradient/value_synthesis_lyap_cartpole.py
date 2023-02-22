@@ -1,5 +1,7 @@
 import random
 import numpy as np
+import torch
+
 from models import Cartpole, ModelParams
 from animations.cartpole import init_fig_cp, animate_cartpole
 from neural_value_synthesis_diffeq import *
@@ -7,17 +9,15 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 from PSDNets import PosDefICNN
-from mj_renderer import *
-
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 200, 240, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.008, 3, 1.0, 15, 100, 'inv'
+max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.008, 1.0, 1, 100, 'proj'
 Q = torch.diag(torch.Tensor([.05, 5, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-0, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
-renderer = MjRenderer("../xmls/cartpole.xml")
+
 
 def build_discounts(lambdas: torch.Tensor, discount: float):
     for i in range(lambdas.shape[0]):
@@ -72,8 +72,8 @@ nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 
 def backup_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
-    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    x_init = x[0, :, :, :].view(1, nsim, r, c).clone()
+    x_final = x[-1].view(1, nsim, r, c).clone()
+    x_init = x[0].view(1, nsim, r, c).clone()
     x_final_w = batch_state_encoder(x_final)
     x_init_w = batch_state_encoder(x_init)
     value_final = nn_value_func(0, x_final_w).squeeze()
@@ -101,11 +101,6 @@ def batch_state_loss(x: torch.Tensor):
 
     return torch.mean(l_running + l_terminal)
 
-def batch_ctrl_loss(acc: torch.Tensor):
-    qddc = acc[:, :, :, 0].unsqueeze(2).clone()
-    l_ctrl = torch.sum(qddc @ R @ qddc.mT, 0).squeeze()
-    return torch.mean(l_ctrl)
-
 
 def batch_inv_dynamics_loss(x, acc, alpha):
     x = x[:-1].clone()
@@ -122,8 +117,8 @@ def batch_inv_dynamics_loss(x, acc, alpha):
 
 def loss_function(x, acc, alpha=1):
     l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x)
-    return torch.mean(torch.square(l_ctrl + l_state + l_bellman))
-
+    loss = torch.mean(l_ctrl + l_state + l_bellman)
+    return torch.maximum(loss, torch.zeros_like(loss))
 
 
 dyn_system = ProjectedDynamicalSystem(
@@ -131,7 +126,7 @@ dyn_system = ProjectedDynamicalSystem(
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 one_step = torch.linspace(0, dt, 2).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=6e-3, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 fig_3, p, r, width, height = init_fig_cp(0)
@@ -171,6 +166,7 @@ if __name__ == "__main__":
 
         print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
 
+        selection = random.randint(0, sim_params.nsim - 1)
         fig_5 = plt.figure(5)
         ax_2 = plt.axes()
         ax_5 = plt.axes()
@@ -184,7 +180,7 @@ if __name__ == "__main__":
         fig_1 = plt.figure(1)
         fig_1.clf()
 
-        if iteration % 10 == 0 and iteration != 0:
+        if iteration % 40 == 0 and iteration != 0:
             for i in range(sim_params.nsim):
                 qpole = traj[:, i, 0, 1].cpu().detach()
                 qdpole = traj[:, i, 0, 3].cpu().detach()
@@ -194,10 +190,9 @@ if __name__ == "__main__":
 
             for i in range(0, sim_params.nsim, 60):
                 selection = random.randint(0, sim_params.nsim - 1)
-                renderer.render(traj[:, selection, 0, :sim_params.nq].cpu().detach().numpy())
-                # cart = traj[:, selection, 0, 0].cpu().detach().numpy()
-                # pole = traj[:, selection, 0, 1].cpu().detach().numpy()
-                # animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=3)
+                cart = traj[:, selection, 0, 0].cpu().detach().numpy()
+                pole = traj[:, selection, 0, 1].cpu().detach().numpy()
+                animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=3)
 
 
         iteration += 1

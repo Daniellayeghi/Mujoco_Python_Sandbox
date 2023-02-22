@@ -209,13 +209,6 @@ class DoubleCartpole(BaseRBD):
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(DoubleCartpole, self).__init__(nsims, params, device, mode)
-        self._L1 = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
-        self._L2 = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
-        self._Mp1 = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
-        self._Mp2 = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
-        self._Mc = torch.ones((nsims, 1, 1)).to(device) * self.MASS_C
-        self._I1 = torch.ones((nsims, 1, 1)).to(device) * 1/12 * self.LENGTH * self.MASS_P * 1
-        self._I2 = torch.ones((nsims, 1, 1)).to(device) * 1/12 * self.LENGTH * self.MASS_P * 1
         self._b = torch.Tensor([1, 0, 0]).repeat(nsims, 1, 1).to(device)
 
     def _Mact(self, q):

@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 
-sim_params = SimulationParams(9,6,3,3,1,1,80,400,0.01)
+sim_params = SimulationParams(9,6,3,3,1,1,200,240,0.008)
 dcp_params = ModelParams(3, 3, 1, 6, 6)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, mode = 0, 100.0, 0, 500, .5, 0.001, 3, 1.025, 15, 'hjb'
-Q = torch.diag(torch.Tensor([.5, .2, .2, 0.0001, 0.0001, 0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
+max_iter, alpha, dt, n_bins, discount, step, scale, mode = 500, .5, 0.008, 3, 1.0, 15, 100, 'inv'
+Q = torch.diag(torch.Tensor([.5, 5, 5, .1, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 300, 10, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
-cartpole = DoubleCartpole(sim_params.nsim, dcp_params, device)
+double_cp = DoubleCartpole(sim_params.nsim, dcp_params, device)
 
 
 def build_discounts(lambdas: torch.Tensor, discount: float):
@@ -39,25 +39,15 @@ def batch_state_encoder(x: torch.Tensor):
     return torch.cat((qc, qp, v), 1).reshape((t, b, r, c))
 
 
-def bounded_traj(x: torch.Tensor):
-    def bound(angle):
-        return torch.atan2(torch.sin(angle), torch.cos(angle))
-
-    qc, qp, qdc, qdp = x[:, :, :, 0].clone().unsqueeze(2), x[:, :, :, 1].clone().unsqueeze(2), x[:, :, :, 2].clone().unsqueeze(2), x[:, :, :, 3].clone().unsqueeze(2)
-    qp = bound(qp)
-    return torch.cat((qc, qp, qdc, qdp), 3)
-
 
 class NNValueFunction(nn.Module):
     def __init__(self, n_in):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 64),
+            nn.Linear(n_in, 256),
             nn.Softplus(beta=5),
-            nn.Linear(64, 64),
-            nn.Softplus(beta=5),
-            nn.Linear(64, 1),
+            nn.Linear(256, 1)
         )
 
         def init_weights(m):
@@ -70,54 +60,44 @@ class NNValueFunction(nn.Module):
     def forward(self, t, x):
         return self.nn(x)
 
+def loss_func(x: torch.Tensor):
+    x = state_encoder(x)
+    return x @ Q @ x.mT
+
 
 nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-
-
-def loss_func(x: torch.Tensor, t):
-    x = state_encoder(x)
-    return x @ Q @ x.mT * (discount ** (t*sim_params.dt))
 
 
 def backup_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    factor = lambdas[-1, :, :, :].view(1, nsim, 1, 1).clone()
+    x_init = x[0, :, :, :].view(1, nsim, r, c).clone()
     x_final_w = batch_state_encoder(x_final)
-    l_running = (x_final_w @ Q @ x_final_w.mT) * factor
-    l_running = torch.sum(l_running, 0).squeeze()
-    value = nn_value_func(0, x_final_w).squeeze()
-    return torch.mean(torch.square(value - l_running))
+    x_init_w = batch_state_encoder(x_init)
+    value_final = nn_value_func(0, x_final_w).squeeze()
+    value_init = nn_value_func(0, x_init_w).squeeze()
 
-
-def lyapounov_goal_loss(x: torch.Tensor):
-    t, nsim, r, c = x.shape
-    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    x_final_w = batch_state_encoder(x_final)
-    value = nn_value_func(0, x_final_w).squeeze()
-    return torch.mean(value)
+    return -value_init + value_final
 
 
 def batch_dynamics_loss(x, acc, alpha=1):
     t, b, r, c = x.shape
     x_reshape = x.reshape((t*b, 1, sim_params.nqv))
     a_reshape = acc.reshape((t*b, 1, sim_params.nv))
-    acc_real = cartpole(x_reshape, a_reshape).reshape(x.shape)[:, :, :, sim_params.nv:]
+    acc_real = double_cp(x_reshape, a_reshape).reshape(x.shape)[:, :, :, sim_params.nv:]
     l_run = torch.sum((acc - acc_real)**2, 0).squeeze()
     return torch.mean(l_run) * alpha
 
 
 def batch_state_loss(x: torch.Tensor):
     x = batch_state_encoder(x)
-    # t, nsim, r, c = x.shape
-    # x_run = x[, :, :, :].view(t-1, nsim, r, c).clone()
+    t, nsim, r, c = x.shape
+    x_run = x[:-1, :, :, :].view(t-1, nsim, r, c).clone()
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_running = (x @ Q @ x.mT) * lambdas
-    l_running = torch.sum(l_running, 0).squeeze()
-    l_terminal = (x_final @ Qf @ x_final.mT).squeeze() * 0
+    l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
+    l_terminal = (x_final @ Qf @ x_final.mT).squeeze()
 
-    return torch.mean(l_running)
-
+    return torch.mean(l_running + l_terminal)
 
 def batch_ctrl_loss(acc: torch.Tensor):
     qddc = acc[:, :, :, 0].unsqueeze(2).clone()
@@ -126,34 +106,29 @@ def batch_ctrl_loss(acc: torch.Tensor):
 
 
 def batch_inv_dynamics_loss(x, acc, alpha):
+    x = x[:-1].clone()
     q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
     q = q.reshape((q.shape[0]*q.shape[1], 1, sim_params.nq))
-    x_reshape = x.reshape((x.shape[0]*x.shape[1], 1, sim_params.nqv))
-    M = cartpole._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
-    C = cartpole._Tbias(x_reshape).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
-    u_batch = (M @ acc.mT).mT + C
-    return torch.mean(torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze()) * 0.00001
+    v = v.reshape((q.shape[0]*q.shape[1], 1, sim_params.nv))
+    x_reshape = x.reshape((q.shape[0]*q.shape[1], 1, sim_params.nqv))
+    M = double_cp._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    Tb = double_cp._Tbias(x_reshape).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
+    Tf = double_cp._Tfric(v).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
+    u_batch = (M @ acc.mT).mT - Tb + Tf
+    return torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze() / scale
 
 
-def loss_function_bellman(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman, l_dyn = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x), batch_dynamics_loss(x, acc, alpha)
-    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_bellman}, loss dynamics {l_dyn}, alpha {alpha}")
-    return l_ctrl + l_state + l_bellman + l_dyn
+def loss_function(x, acc, alpha=1):
+    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x)
+    return torch.mean(torch.square(l_ctrl + l_state + l_bellman))
 
 
-def loss_function_lyapounov(x, acc, alpha=1):
-    l_ctrl, l_state, l_lyap = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), lyapounov_goal_loss(x)
-    print(f"loss ctrl {l_ctrl}, loss state {l_state}, loss bellman {l_lyap}, alpha {alpha}")
-    return l_ctrl + l_state + l_lyap
-
-
-thetas = torch.linspace(torch.pi - 0.6, torch.pi + 0.6, n_bins)
+thetas = torch.linspace(torch.pi - 0.3, torch.pi + 0.3, n_bins)
 mid_point = int(len(thetas)/2) + len(thetas) % 2
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=double_cp, mode=mode, step=step
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
-one_step = torch.linspace(0, dt, 2).to(device)
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
@@ -169,15 +144,6 @@ if __name__ == "__main__":
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
     iteration = 0
 
-    def schedule_lr(optimizer, epoch, rate):
-        pass
-        if epoch % rate == 0:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] *= (0.75 * (0.95 ** (epoch / rate)))
-
-    def get_lr(optimizer):
-        for param_group in optimizer.param_groups:
-            return param_group['lr']
 
     while iteration < max_iter:
         optimizer.zero_grad()
@@ -187,13 +153,12 @@ if __name__ == "__main__":
             options=dict(step_size=dt), adjoint_atol=1e-9, adjoint_rtol=1e-9
         )
 
-        acc = compose_acc(traj, dt)
-        loss = loss_function_bellman(traj, acc, alpha)
+        acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
+        loss = loss_function(traj, acc, alpha)
         loss.backward()
         optimizer.step()
-        schedule_lr(optimizer, iteration, 60)
 
-        print(f"Epochs: {iteration}, Loss: {loss.item()}, iteration: {iteration % 10}, lr: {get_lr(optimizer)}")
+        print(f"Epochs: {iteration}, Loss: {loss.item()}, iteration: {iteration % 10}")
 
         selection = random.randint(0, sim_params.nsim - 1)
 
