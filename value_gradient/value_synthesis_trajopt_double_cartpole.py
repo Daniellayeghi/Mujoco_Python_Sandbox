@@ -5,15 +5,17 @@ from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
+from mj_renderer import *
 
-sim_params = SimulationParams(9,6,3,3,1,1,200,240,0.008)
+sim_params = SimulationParams(9,6,3,3,1,1,200,75,0.008)
 dcp_params = ModelParams(3, 3, 1, 6, 6)
-max_iter, alpha, dt, n_bins, discount, step, scale, mode = 500, .5, 0.008, 3, 1.0, 15, 100, 'inv'
+max_iter, alpha, dt, n_bins, discount, step, scale, mode = 500, .5, 0.008, 3, 1.0, 15, 500, 'inv'
 Q = torch.diag(torch.Tensor([.5, 5, 5, .1, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([5, 300, 300, 10, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 double_cp = DoubleCartpole(sim_params.nsim, dcp_params, device)
+renderer = MjRenderer('../xmls/double_cart_pole.xml', dt)
 
 
 def build_discounts(lambdas: torch.Tensor, discount: float):
@@ -114,7 +116,7 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     M = double_cp._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
     Tb = double_cp._Tbias(x_reshape).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
     Tf = double_cp._Tfric(v).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
-    u_batch = (M @ acc.mT).mT - Tb + Tf
+    u_batch = ((M @ acc.mT).mT - Tb + Tf) * torch.Tensor([1, 0, 0]).to(device)
     return torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze() / scale
 
 
@@ -126,10 +128,10 @@ def loss_function(x, acc, alpha=1):
 thetas = torch.linspace(torch.pi - 0.3, torch.pi + 0.3, n_bins)
 mid_point = int(len(thetas)/2) + len(thetas) % 2
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=double_cp, mode=mode, step=step
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=double_cp, mode=mode, step=step, scale=scale
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 fig_3, p, r, width, height = init_fig_dcp(0)
@@ -146,6 +148,10 @@ if __name__ == "__main__":
 
 
     while iteration < max_iter:
+        if iteration % 60 == 0:
+            sim_params.ntime = int(sim_params.ntime * 1.2)
+            time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
+
         optimizer.zero_grad()
 
         traj = odeint(
@@ -162,7 +168,7 @@ if __name__ == "__main__":
 
         selection = random.randint(0, sim_params.nsim - 1)
 
-        if iteration % 20 == 0 and iteration != 0:
+        if iteration % 50 == 0 and iteration != 0:
             fig_1 = plt.figure(1)
             for i in range(sim_params.nsim):
                 qpole = traj[:, i, 0, 1].cpu().detach()
@@ -178,11 +184,13 @@ if __name__ == "__main__":
 
             for i in range(0, sim_params.nsim, 10):
                 selection = random.randint(0, sim_params.nsim - 1)
-                cart = traj[:, selection, 0, 0].cpu().detach().numpy()
-                pole1 = traj[:, selection, 0, 1].cpu().detach().numpy()
-                pole2 = traj[:, selection, 0, 2].cpu().detach().numpy()
+                traj_mj = (traj.clone() - torch.Tensor([0, 0, torch.pi, 0, 0, 0]).to(device))* torch.Tensor([1, -1, -1, 1, 1, 1]).to(device)
+                renderer.render(traj_mj[:, selection, 0, :sim_params.nq].cpu().detach().numpy())
+                # cart = traj[:, selection, 0, 0].cpu().detach().numpy()
+                # pole1 = traj[:, selection, 0, 1].cpu().detach().numpy()
+                # pole2 = traj[:, selection, 0, 2].cpu().detach().numpy()
 
-                animate_double_cartpole(cart, pole1, pole2, fig_3, p, r, width, height, skip=2)
+                # animate_double_cartpole(cart, pole1, pole2, fig_3, p, r, width, height, skip=2)
 
             fig_1.clf()
             fig_2.clf()
