@@ -204,18 +204,11 @@ class DoubleCartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = 9.81
-    FRICTION = .01
+    FRICTION = .005
     GEAR = 30
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(DoubleCartpole, self).__init__(nsims, params, device, mode)
-        self._L1 = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
-        self._L2 = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
-        self._Mp1 = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
-        self._Mp2 = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
-        self._Mc = torch.ones((nsims, 1, 1)).to(device) * self.MASS_C
-        self._I1 = torch.ones((nsims, 1, 1)).to(device) * 1/12 * self.LENGTH * self.MASS_P * 1
-        self._I2 = torch.ones((nsims, 1, 1)).to(device) * 1/12 * self.LENGTH * self.MASS_P * 1
         self._b = torch.Tensor([1, 0, 0]).repeat(nsims, 1, 1).to(device)
 
     def _Mact(self, q):
@@ -298,6 +291,8 @@ class DoubleCartpole(BaseRBD):
 
 
 if __name__ == "__main__":
+    from mj_renderer import *
+    ren = MjRenderer('../xmls/double_cart_pole.xml')
     cp_params = ModelParams(2, 2, 1, 4, 4)
     cp = Cartpole(1, cp_params, 'cpu', mode='pfl')
     dcp_params = ModelParams(3, 3, 1, 6, 6)
@@ -306,28 +301,31 @@ if __name__ == "__main__":
     qdd_init_cp = torch.Tensor([0, 0]).view(1, 1, 2)
     x_init_dcp = torch.Tensor([0, 2, 2, 0, 0, 0]).view(1, 1, 6)
     qdd_init_dcp = torch.Tensor([0, 0, 0]).view(1, 1, 3)
-    ctrl = np.load('ctrl.npy')
-    ctrl = torch.Tensor(ctrl)
+    traj = torch.zeros((500, 1, 1, dcp_params.nx))
 
     def integrate(func, x, xd, time, dt):
         xs = []
         xs.append(x)
         for t in range(time):
-            xd_new = func(x, ctrl[t])
+            xd_new = func(x, torch.zeros((1, 1, 1)))
             x = x + xd_new * dt
+            traj[t] = x
             xs.append(x)
 
         return xs
 
 
-    xs_cp = integrate(cp.simulate_REG, x_init_cp, qdd_init_cp, 500, 0.01)
-    # xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 5000, 0.01)
+    # xs_cp = integrate(cp.simulate_REG, x_init_cp, qdd_init_cp, 500, 0.01)
+    xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 500, 0.01)
+    offset = torch.zeros_like(traj)
+    offset[:, :, :, dcp_params.nq-1] = traj[:, :, :, dcp_params.nq-2]
+    traj_mj = (traj.clone() - offset) * torch.Tensor(
+        [1, -1, 1, 1, 1, 1])
+    ren.render(traj_mj[:, 0, 0, :dcp_params.nq].cpu().detach().numpy())
 
-    theta1 = [x[:, :, 1].item() for x in xs_cp]
-    # theta2 = [x[:, :, 2].item() for x in xs_dcp]
-    cart = [x[:, :, 0].item() for x in xs_cp]
+    theta1 = [x[:, :, 1].item() for x in xs_dcp]
+    theta2 = [x[:, :, 2].item() for x in xs_dcp]
+    cart = [x[:, :, 0].item() for x in xs_dcp]
 
-    plt.plot(cart)
-    plt.show()
-    fig, p, r, width, height = init_fig_cp(cart[0])
-    animate_cartpole(np.array(cart), np.array(theta1), fig, p, r, width, height, skip=2)
+    fig, p, r, width, height = init_fig_dcp(0)
+    animate_double_cartpole(np.array(cart), np.array(theta1), np.array(theta2), fig, p, r, width, height, skip=2)

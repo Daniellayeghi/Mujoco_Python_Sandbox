@@ -53,12 +53,9 @@ def compose_xxd(x, acc):
     return torch.cat((x, acc), dim=3)
 
 
-def compose_acc(x, dt):
-    ntime, nsim, r, c = x.shape
-    v = x[:, :, :, int(c/2):].clone()
-    acc = torch.diff(v, dim=0) / dt
-    acc_null = torch.zeros_like((acc[0, :, :, :])).view(1, nsim, r, int(c/2))
-    return torch.cat((acc, acc_null), dim=0)
+def compose_acc(qd, dt):
+    acc = torch.diff(qd, dim=0) / dt
+    return acc
 
 
 class ProjectedDynamicalSystem(nn.Module):
@@ -99,23 +96,29 @@ class ProjectedDynamicalSystem(nn.Module):
         if mode == 'inv':
             def underactuated_inv_policy(q, v, x, Vx):
                 Vqd = Vx[:, :, self.sim_params.nq:].clone()
+
                 M = self._dynamics._Mfull(q)
+                Tb = self._dynamics._Tbias(x)
+                Tf = self._dynamics._Tfric(v)
+                ones = torch.ones((v.shape[0], 1, 1)).to(device)
+                zeros = torch.zeros((v.shape[0], 1, 1)).to(device)
+                Tbias = (Tb - Tf)
+
                 Mu, Mua = self._dynamics._Mu_Mua(q)
-                Minv = torch.linalg.inv(M)
-                Tbias = self._dynamics._Tbias(x) - self._dynamics._Tfric(v)
 
                 if Mu is None:
+                    Minv = torch.linalg.inv(M)
                     qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
                     return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
 
-                Tubias = Tbias[:, :, 1:].clone()
-                invMu = torch.inverse(Mu)
-                ones = torch.ones((v.shape[0], 1, 1)).to(device)
-                zeros = torch.zeros((v.shape[0], 1, 1)).to(device)
-                Ba = torch.cat((ones, (-invMu @ Mua.mT).mT), dim=2)
-                Fm = torch.cat((zeros, (invMu @ Tubias.mT).mT), dim=2)
-                return torch.inverse(Ba @ M @ Ba.mT) @ (
-                            Ba @ Tbias.mT - 0.5 * self._scale * Vqd @ Ba.mT - Ba @ M @ Fm.mT)
+                Tbiasc, Tbiasu = Tbias[:, :, 0].reshape(self.sim_params.nsim, 1, 1).clone(), Tbias[:, :, 1:].reshape(
+                    self.sim_params.nsim, 1, self.sim_params.nv-1).clone()
+                Mcc, Mcu, Muu = M[:, 0, 0].reshape(self.sim_params.nsim, 1, 1).clone(), M[:, 0, 1:].reshape(
+                    self.sim_params.nsim, 1, self.sim_params.nv-1).clone(), M[:, 1:, 1:].reshape(self.sim_params.nsim, self.sim_params.nv-1, self.sim_params.nv-1).clone()
+                Ba = torch.cat((ones, (-torch.inverse(Muu) @ Mcu.mT).mT), dim=2)
+                Fm = torch.cat((zeros, (torch.inverse(Muu) @ Tbiasu.mT).mT), dim=2)
+                return torch.inverse(Ba @ M @ Ba.mT) @ (Ba @ Tbias.mT - 0.5 * self._scale * Vqd @ Ba.mT - Ba @ M @ Fm.mT)
+
 
             self._policy = underactuated_inv_policy
             self._ctrl = self.hjb
@@ -153,7 +156,6 @@ class ProjectedDynamicalSystem(nn.Module):
         x_enc = self._encoder(x)
         q, v = decomp_x(x, self.sim_params)
         xd = torch.cat((v, torch.zeros_like(v)), 2)
-        # x_xd = torch.cat((q, v, torch.zeros_like(v)), 2)
 
         def dvdx(t, x, value_net):
             with torch.set_grad_enabled(True):
@@ -184,7 +186,7 @@ class ProjectedDynamicalSystem(nn.Module):
     def forward(self, t, x):
         u = self._ctrl(t, x)
         xd = self._dynamics(x, u)
-        idx = int((torch.round(t/self.sim_params.dt)).item())
-        if self.collect:
-            self._acc_buffer[idx, :, :, :] = u.clone()
+        # idx = int((torch.round(t/self.sim_params.dt)).item())
+        # if self.collect:
+        #     self._acc_buffer[idx, :, :, :] = u.clone()
         return xd
