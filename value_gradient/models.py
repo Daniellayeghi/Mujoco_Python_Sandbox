@@ -70,7 +70,7 @@ class BaseRBD(object):
         Tp = self._Tbias(x)
         Tfric = self._Tfric(qd)
         B = self._Bvec()
-        qdd = (Minv @ (Tp + Tfric + B * tau).mT).mT
+        qdd = (Minv @ (Tp - Tfric + B * tau).mT).mT
         xd = torch.cat((qd[:, :, 0:self._params.nx], qdd), 2).clone()
         return xd
 
@@ -204,7 +204,7 @@ class DoubleCartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = 9.81
-    FRICTION = .005
+    FRICTION = .1
     GEAR = 30
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
@@ -225,12 +225,12 @@ class DoubleCartpole(BaseRBD):
         M11 = (self.MASS_P + self.MASS_P + self.MASS_C) * torch.ones_like(qc)
         M12 = -0.5 * (self.MASS_P + self.MASS_P) * self.LENGTH * torch.cos(qp1)
         M13 = -0.5 * self.MASS_P * self.LENGTH * torch.cos(qp2)
-        M22 = (self.MASS_P * self.LENGTH ** 2 + (1/12 * self.LENGTH * self.MASS_P) + 0.25 * self.MASS_P * self.LENGTH ** 2) * torch.ones_like(qc)
+        M22 = (self.MASS_P * self.LENGTH ** 2 + (1/12 * self.LENGTH**2 * self.MASS_P) + 0.25 * self.MASS_P * self.LENGTH ** 2) * torch.ones_like(qc)
         M23 = 0.5 * self.MASS_P * self.LENGTH ** 2 * torch.cos((qp1 - qp2))
-        M33 = (0.25 * self.MASS_P * self.LENGTH ** 2 + (1/12 * self.LENGTH * self.MASS_P) ) * torch.ones_like(qc)
+        M33 = (0.25 * self.MASS_P * self.LENGTH ** 2 + (1/12 * self.LENGTH**2 * self.MASS_P)) * torch.ones_like(qc)
 
         M1s = torch.cat((M11, M12, M13), dim=2)
-        M2s = torch.cat((M13, M22, M23), dim=2)
+        M2s = torch.cat((M12, M22, M23), dim=2)
         M3s = torch.cat((M13, M23, M33), dim=2)
 
         Mact = torch.hstack(
@@ -315,12 +315,14 @@ if __name__ == "__main__":
         return xs
 
 
+    def transform_coordinates(traj: torch.Tensor):
+       # traj[:, :, :, 1] = traj[:, :, :, 1] + 2 * (torch.pi - traj[:, :, :, 1])
+       traj[:, :, :, 2] = torch.pi - (traj[:, :, :, 1] + (torch.pi - traj[:, :, :, 2]))
+       return traj
+
     # xs_cp = integrate(cp.simulate_REG, x_init_cp, qdd_init_cp, 500, 0.01)
     xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 500, 0.01)
-    offset = torch.zeros_like(traj)
-    offset[:, :, :, dcp_params.nq-1] = traj[:, :, :, dcp_params.nq-2]
-    traj_mj = (traj.clone() - offset) * torch.Tensor(
-        [1, -1, 1, 1, 1, 1])
+    traj_mj = transform_coordinates(traj)
     ren.render(traj_mj[:, 0, 0, :dcp_params.nq].cpu().detach().numpy())
 
     theta1 = [x[:, :, 1].item() for x in xs_dcp]

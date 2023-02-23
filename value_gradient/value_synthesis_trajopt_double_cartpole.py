@@ -18,6 +18,10 @@ double_cp = DoubleCartpole(sim_params.nsim, dcp_params, device)
 renderer = MjRenderer('../xmls/double_cart_pole.xml', dt)
 
 
+def coordinate_transform(traj: torch.Tensor):
+
+    pass
+
 def build_discounts(lambdas: torch.Tensor, discount: float):
     for i in range(lambdas.shape[0]):
         lambdas[i, :, :, :] *= (discount)**i

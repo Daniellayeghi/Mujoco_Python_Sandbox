@@ -48,9 +48,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 64),
+            nn.Linear(n_in, 512),
             nn.Softplus(),
-            nn.Linear(64, 1),
+            nn.Linear(512, 1),
         )
 
         def init_weights(net):
@@ -63,9 +63,17 @@ class NNValueFunction(nn.Module):
         return self.nn(x)
 
 
+def loss_quadratic(x, gain):
+    return x @ gain @ x.mT
+
+
+def loss_exp(x, gain):
+    return 1 - torch.exp(-0.5 * loss_quadratic(x, gain))
+
+
 def loss_func(x: torch.Tensor):
     x = state_encoder(x)
-    return x @ Q @ x.mT
+    return loss_quadratic(x, Q)
 
 
 nn_value_func = NNValueFunction(sim_params.nqv).to(device)
@@ -97,8 +105,8 @@ def batch_state_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
     x_run = x[:-1, :, :, :].view(t-1, nsim, r, c).clone()
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
-    l_terminal = (x_final @ Qf @ x_final.mT).squeeze()
+    l_running = torch.sum(loss_quadratic(x_run, Q), 0).squeeze()
+    l_terminal = (loss_quadratic(x_final, Qf)).squeeze()
 
     return torch.mean(l_running + l_terminal)
 
@@ -142,9 +150,9 @@ log = f"m-{mode}_d-{discount}_s-{step}"
 
 def schedule_lr(optimizer, epoch, rate):
     pass
-    # if epoch % rate == 0:
-    #     for param_group in optimizer.param_groups:
-    #         param_group['lr'] *= (0.75 * (0.95 ** (epoch / rate)))
+    if epoch == 200:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] *= 0.25
 
 loss_buffer = []
 
@@ -154,7 +162,7 @@ if __name__ == "__main__":
             return param_group['lr']
 
     qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(0, 0) * 2
-    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(torch.pi - 0.3, torch.pi + 0.3)
+    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(torch.pi - 0.6, torch.pi + 0.6)
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(-1, 1)
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
     iteration = 0
@@ -186,7 +194,7 @@ if __name__ == "__main__":
         fig_1 = plt.figure(1)
         fig_1.clf()
 
-        if iteration % 40 == 0 and iteration != 0:
+        if iteration % 30 == 0 and iteration != 0:
             for i in range(sim_params.nsim):
                 qpole = traj[:, i, 0, 1].cpu().detach()
                 qdpole = traj[:, i, 0, 3].cpu().detach()
@@ -207,4 +215,3 @@ if __name__ == "__main__":
     model_scripted = torch.jit.script(dyn_system.value_func.clone().to('cpu'))  # Export to TorchScript
     model_scripted.save(f'{log}.pt')  # Save
     input()
-
