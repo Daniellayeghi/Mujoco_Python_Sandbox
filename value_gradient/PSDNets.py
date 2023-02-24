@@ -81,12 +81,15 @@ class PosDefICNN(nn.Module):
             nn.init.kaiming_uniform_(U, a=5**0.5)
 
     def forward(self, t, x):
-        z = F.linear(x, self.W[0])
+        nsim = x.shape[0]
+        time = torch.ones(nsim, 1, 1) * t
+        aug_x = torch.cat((x, time), dim=2)
+        z = F.linear(aug_x, self.W[0])
         F.leaky_relu_(z, negative_slope=self.negative_slope)
 
         for W,U in zip(self.W[1:-1], self.U[:-1]):
-            z = F.linear(x, W) + F.linear(z, F.softplus(U))*self.negative_slope
+            z = F.linear(aug_x, W) + F.linear(z, F.softplus(U))*self.negative_slope
             z = F.leaky_relu_(z, negative_slope=self.negative_slope)
 
-        z = F.linear(x, self.W[-1]) + F.linear(z, F.softplus(self.U[-1]))
-        return F.relu(z) + self.eps*(x**2).sum(1)[:,None]
+        z = F.linear(aug_x, self.W[-1]) + F.linear(z, F.softplus(self.U[-1]))
+        return F.relu(z) + self.eps*(aug_x**2).sum(1)[:,None]

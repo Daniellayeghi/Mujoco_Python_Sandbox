@@ -183,6 +183,7 @@ class ProjectedDynamicalSystem(nn.Module):
         # a = xd.clone()
         # return torch.cat((v, a), 2)
 
+
     def forward(self, t, x):
         u = self._ctrl(t, x)
         xd = self._dynamics(x, u)
