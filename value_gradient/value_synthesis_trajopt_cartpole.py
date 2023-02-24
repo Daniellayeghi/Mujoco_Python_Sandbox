@@ -48,9 +48,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 512),
+            nn.Linear(n_in, 128),
             nn.Softplus(),
-            nn.Linear(512, 1),
+            nn.Linear(128, 1),
         )
 
         def init_weights(net):
@@ -150,7 +150,7 @@ log = f"m-{mode}_d-{discount}_s-{step}"
 
 def schedule_lr(optimizer, epoch, rate):
     pass
-    if epoch == 200:
+    if epoch == 250:
         for param_group in optimizer.param_groups:
             param_group['lr'] *= 0.25
 
@@ -168,50 +168,58 @@ if __name__ == "__main__":
     iteration = 0
     alpha = 0
 
-    while iteration < max_iter:
-        optimizer.zero_grad()
-        x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
-        traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
-        acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
-        loss = loss_function(traj, acc, alpha)
-        loss_buffer.append(loss.item())
-        loss.backward()
-        optimizer.step()
-        schedule_lr(optimizer, iteration, 20)
+    try:
+        while iteration < max_iter:
+            optimizer.zero_grad()
+            x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
+            traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+            acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
+            loss = loss_function(traj, acc, alpha)
+            loss_buffer.append(loss.item())
+            loss.backward()
+            optimizer.step()
+            schedule_lr(optimizer, iteration, 20)
 
-        print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
+            print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
 
-        fig_5 = plt.figure(5)
-        ax_2 = plt.axes()
-        ax_5 = plt.axes()
-        ax_5.set_title('Loss')
-        plt.plot(loss_buffer)
-        fig_2 = plt.figure(2)
-        plt.plot(acc[:, 0, 0, 0].cpu().detach())
-        plt.pause(0.001)
-        fig_2.clf()
-        fig_5.clf()
-        fig_1 = plt.figure(1)
-        fig_1.clf()
-
-        if iteration % 30 == 0 and iteration != 0:
-            for i in range(sim_params.nsim):
-                qpole = traj[:, i, 0, 1].cpu().detach()
-                qdpole = traj[:, i, 0, 3].cpu().detach()
-                plt.plot(qpole, qdpole)
-
+            fig_5 = plt.figure(5)
+            ax_2 = plt.axes()
+            ax_5 = plt.axes()
+            ax_5.set_title('Loss')
+            plt.plot(loss_buffer)
+            fig_2 = plt.figure(2)
+            plt.plot(acc[:, 0, 0, 0].cpu().detach())
             plt.pause(0.001)
+            fig_2.clf()
+            fig_5.clf()
+            fig_1 = plt.figure(1)
+            fig_1.clf()
 
-            for i in range(0, sim_params.nsim, 60):
-                selection = random.randint(0, sim_params.nsim - 1)
-                renderer.render(traj[:, selection, 0, :sim_params.nq].cpu().detach().numpy())
-                # cart = traj[:, selection, 0, 0].cpu().detach().numpy()
-                # pole = traj[:, selection, 0, 1].cpu().detach().numpy()
-                # animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=3)
+            if iteration % 30 == 0 and iteration != 0:
+                for i in range(sim_params.nsim):
+                    qpole = traj[:, i, 0, 1].cpu().detach()
+                    qdpole = traj[:, i, 0, 3].cpu().detach()
+                    plt.plot(qpole, qdpole)
+
+                plt.pause(0.001)
+
+                for i in range(0, sim_params.nsim, 60):
+                    selection = random.randint(0, sim_params.nsim - 1)
+                    renderer.render(traj[:, selection, 0, :sim_params.nq].cpu().detach().numpy())
+                    # cart = traj[:, selection, 0, 0].cpu().detach().numpy()
+                    # pole = traj[:, selection, 0, 1].cpu().detach().numpy()
+                    # animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=3)
 
 
-        iteration += 1
+            iteration += 1
 
-    model_scripted = torch.jit.script(dyn_system.value_func.clone().to('cpu'))  # Export to TorchScript
-    model_scripted.save(f'{log}.pt')  # Save
-    input()
+        model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+        model_scripted.save(f'{log}.pt')  # Save
+        np.save(f'{log}_loss', np.array(loss_buffer))# Save
+
+        input()
+    except KeyboardInterrupt:
+        print("########## Saving Trace ##########")
+        model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+        model_scripted.save(f'{log}_except.pt')
+        np.save(f'{log}_loss_except', np.array(loss_buffer))# Save
