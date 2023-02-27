@@ -13,7 +13,7 @@ from PSDNets import ReHU, MakePSD, ICNN
 di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 1, 2, 'proj'
+max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 1, 1, 'proj'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([.1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -65,10 +65,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in+1, 64),
+            nn.Linear(n_in, 16),
             nn.Softplus(beta=5),
-            nn.Linear(64, 1),
-            ReHU(0.01)
+            nn.Linear(16, 1)
         )
 
         def init_weights(m):
@@ -81,8 +80,8 @@ class NNValueFunction(nn.Module):
     def forward(self, t, x):
         x = x.reshape(x.shape[0], sim_params.nqv)
         b = x.shape[0]
-        time = torch.ones((b, 1)) * t
-        aug_x = torch.cat((x, time), dim=1)
+        time = torch.ones((b, 1)).to(device) * t
+        aug_x = x #torch.cat((x, time), dim=1)
         return self.nn(aug_x).reshape(b, 1, 1)
 
 
@@ -91,8 +90,8 @@ def loss_func(x: torch.Tensor):
     return x @ Q @ x.mT
 
 import torch.nn.functional as F
-nn_value_func = ICNN([sim_params.nqv+1, 64, 64, 1], F.softplus).to(device)
-# nn_value_func= NNValueFunction(sim_params.nqv).to(device)
+# nn_value_func = ICNN([sim_params.nqv, 64, 64, 1], F.softplus).to(device)
+nn_value_func= NNValueFunction(sim_params.nqv).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
 def batch_state_loss(x: torch.Tensor):
@@ -144,7 +143,7 @@ f_mat = torch.zeros((100, 100)).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=None, mode=mode, step=step, scale=scale, R=R
 ).to(device)
 
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True)
@@ -167,8 +166,8 @@ if __name__ == "__main__":
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 6
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2.5
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     trajectory = x_init.detach().clone().unsqueeze(0)
     iteration = 0

@@ -31,7 +31,7 @@ class ICNN(nn.Module):
         x = x.reshape(x.shape[0], x.shape[-1])
         nsim = x.shape[0]
         time = torch.ones(nsim, 1).to(device) * t
-        aug_x = torch.cat((x, time), dim=1)
+        aug_x = x #torch.cat((x, time), dim=1)
         z = F.linear(aug_x, self.W[0], self.bias[0])
         z = self.act(z)
 

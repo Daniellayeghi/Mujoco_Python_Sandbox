@@ -6,6 +6,32 @@ from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, to
 from torchdiffeq import odeint_adjoint as odeint
 
 
+def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
+    assert len(xs) == len(ys)
+    trace = trace.detach().clone().cpu().squeeze()
+    for i, x in enumerate(xs):
+        for j, y in enumerate(ys):
+            in_tensor = torch.tensor((x, y)).view(1, 1, 2).float().to(device)
+            f_mat[i, j] = func(0, in_tensor).detach().squeeze()
+
+    [X, Y] = xy_grid
+    f_mat = f_mat.cpu()
+    plt.clf()
+    ax = plt.axes()
+    if contour:
+        ax.contourf(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    else:
+        ax = plt.axes(projection='3d')
+        ax.plot_surface(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    ax.set_title('surface')
+    ax.set_xlabel('Pos')
+    ax.set_ylabel('Vel')
+    n_plots = trace.shape[1]
+    for i in range(n_plots):
+        ax.plot(trace[:, i, 0], trace[:, i, 1])
+    plt.pause(0.001)
+
+
 if __name__ == "__main__":
     m = mujoco.MjModel.from_xml_path("/home/daniel/Repos/OptimisationBasedControl/models/doubleintegrator.xml")
     d = mujoco.MjData(m)
@@ -65,10 +91,9 @@ if __name__ == "__main__":
             super(NNValueFunction, self).__init__()
 
             self.nn = nn.Sequential(
-                nn.Linear(n_in, 4, bias=False),
+                nn.Linear(n_in, 16, bias=False),
                 nn.Softplus(),
-                nn.Linear(4, 1, bias=False),
-                nn.Sigmoid()
+                nn.Linear(16, 1, bias=False),
             )
 
             def init_weights(net):
@@ -90,7 +115,7 @@ if __name__ == "__main__":
     time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
     optimizer = torch.optim.Adam(dyn_system.parameters(), lr=1e-2)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2.5
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
     # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
@@ -108,14 +133,9 @@ if __name__ == "__main__":
         # xxd = compose_xxd(traj, acc)
         # loss = batch_state_ctrl_loss(traj, xxd)
 
-        dyn_system.step *= step_size
-        print(f"Stepping with {dyn_system.step}")
-
+        # dyn_system.step *= step_size
         loss.backward()
         optimizer.step()
-
-        for param in dyn_system.parameters():
-            print(f"\n{param}\n")
 
         print(f"Epochs: {iteration}, Loss: {loss.item()}")
         iteration += 1
