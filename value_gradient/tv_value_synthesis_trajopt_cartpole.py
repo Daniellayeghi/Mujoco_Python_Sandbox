@@ -89,7 +89,7 @@ def backup_loss(x: torch.Tensor):
     x_final_w = batch_state_encoder(x_final).reshape(nsim, r, c)
     x_init_w = batch_state_encoder(x_init).reshape(nsim, r, c)
     value_final = nn_value_func(0, x_final_w).squeeze()
-    value_init = nn_value_func(0, x_init_w).squeeze()
+    value_init = nn_value_func((sim_params.ntime - 1) * dt, x_init_w).squeeze()
 
     return -value_init + value_final
 

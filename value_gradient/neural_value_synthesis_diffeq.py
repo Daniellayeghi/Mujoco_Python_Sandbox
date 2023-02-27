@@ -14,33 +14,6 @@ from torchdiffeq import odeint_adjoint as odeint
 print(f"Using the Adjoint method")
 
 
-
-def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
-    assert len(xs) == len(ys)
-    trace = trace.detach().clone().cpu().squeeze()
-    for i, x in enumerate(xs):
-        for j, y in enumerate(ys):
-            in_tensor = torch.tensor((x, y)).view(1, 2).float().to(device)
-            f_mat[i, j] = func(0, in_tensor).detach().squeeze()
-
-    [X, Y] = xy_grid
-    f_mat = f_mat.cpu()
-    plt.clf()
-    ax = plt.axes()
-    if contour:
-        ax.contourf(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-    else:
-        ax = plt.axes(projection='3d')
-        ax.plot_surface(X, Y, f_mat, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-    ax.set_title('surface')
-    ax.set_xlabel('Pos')
-    ax.set_ylabel('Vel')
-    n_plots = trace.shape[1]
-    for i in range(n_plots):
-        ax.plot(trace[:, i, 0], trace[:, i, 1])
-    plt.pause(0.001)
-
-
 def decomp_x(x, sim_params: SimulationParams):
     return x[:, :, 0:sim_params.nq].clone(), x[:, :, sim_params.nq:].clone()
 
@@ -138,7 +111,6 @@ class ProjectedDynamicalSystem(nn.Module):
     def hjb(self, t, x):
         x_enc = self._encoder(x)
         q, v = decomp_x(x, self.sim_params)
-        xd = torch.cat((v, torch.zeros_like(v)), 2)
 
         def dvdx(t, x, value_net):
             with torch.set_grad_enabled(True):
@@ -157,6 +129,16 @@ class ProjectedDynamicalSystem(nn.Module):
         q, v = decomp_x(x, self.sim_params)
         xd = torch.cat((v, torch.zeros_like(v)), 2)
 
+        def dvdt(t, x, value_net):
+            with torch.set_grad_enabled(True):
+                time = t.detach().requires_grad_(True)
+                x = x.detach().requires_grad_(True)
+                value = value_net(time, x).requires_grad_()
+                dvdt = torch.autograd.grad(
+                    value, time, grad_outputs=torch.ones_like(value), create_graph=True, only_inputs=True
+                )[0]
+                return dvdt
+
         def dvdx(t, x, value_net):
             with torch.set_grad_enabled(True):
                 x = x.detach().requires_grad_(True)
@@ -167,10 +149,11 @@ class ProjectedDynamicalSystem(nn.Module):
                 return dvdx
 
         Vx = dvdx(t, x_enc, self.value_func)
+        Vt = dvdt(t, x_enc, self.value_func)
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
-        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
+        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x) + Vt)
         xd_trans = - (Vx / norm) * unnorm_porj
-        return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
+        return torch.clamp(xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv), -70, 70)
 
 
     def dfdt(self, t, x):
@@ -179,15 +162,8 @@ class ProjectedDynamicalSystem(nn.Module):
         acc = self._ctrl(t, x)
         return self._dynamics(x, acc)
 
-        # v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
-        # a = xd.clone()
-        # return torch.cat((v, a), 2)
-
 
     def forward(self, t, x):
         u = self._ctrl(t, x)
         xd = self._dynamics(x, u)
-        # idx = int((torch.round(t/self.sim_params.dt)).item())
-        # if self.collect:
-        #     self._acc_buffer[idx, :, :, :] = u.clone()
         return xd

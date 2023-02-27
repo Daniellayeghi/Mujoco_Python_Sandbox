@@ -1,10 +1,11 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+from utilities.torch_device import device
 
 
 class ICNN(nn.Module):
-    def __init__(self, layer_sizes, activation=F.relu_):
+    def __init__(self, layer_sizes, activation=F.relu_, eps=0.01):
         super().__init__()
         self.W = nn.ParameterList([nn.Parameter(torch.Tensor(l, layer_sizes[0]))
                                    for l in layer_sizes[1:]])
@@ -13,6 +14,7 @@ class ICNN(nn.Module):
         self.bias = nn.ParameterList([nn.Parameter(torch.Tensor(l)) for l in layer_sizes[1:]])
         self.act = activation
         self.reset_parameters()
+        self.eps = eps
 
     def reset_parameters(self):
         # copying from PyTorch Linear
@@ -25,15 +27,19 @@ class ICNN(nn.Module):
             bound = 1 / (fan_in**0.5)
             nn.init.uniform_(b, -bound, bound)
 
-    def forward(self, x):
-        z = F.linear(x, self.W[0], self.bias[0])
+    def forward(self, t, x):
+        x = x.reshape(x.shape[0], x.shape[-1])
+        nsim = x.shape[0]
+        time = torch.ones(nsim, 1).to(device) * t
+        aug_x = torch.cat((x, time), dim=1)
+        z = F.linear(aug_x, self.W[0], self.bias[0])
         z = self.act(z)
 
         for W,b,U in zip(self.W[1:-1], self.bias[1:-1], self.U[:-1]):
-            z = F.linear(x, W, b) + F.linear(z, F.softplus(U)) / U.shape[0]
+            z = F.linear(aug_x, W, b) + F.linear(z, F.softplus(U)) / U.shape[0]
             z = self.act(z)
 
-        return F.linear(x, self.W[-1], self.bias[-1]) + F.linear(z, F.softplus(self.U[-1])) / self.U[-1].shape[0]
+        return (F.linear(aug_x, self.W[-1], self.bias[-1]) + F.linear(z, F.softplus(self.U[-1])) / self.U[-1].shape[0]) + self.eps*(aug_x**2).sum(1)[:,None]
 
 
 class ReHU(nn.Module):
@@ -56,40 +62,11 @@ class MakePSD(nn.Module):
         self.d = d
         self.rehu = ReHU(self.d)
 
-    def forward(self, x):
-        smoothed_output = self.rehu(self.f(x) - self.zero)
-        quadratic_under = self.eps*(x**2).sum(1,keepdim=True)
-        return smoothed_output + quadratic_under
-
-
-class PosDefICNN(nn.Module):
-    def __init__(self, layer_sizes, eps=0.1, negative_slope=0.05):
-        super().__init__()
-        self.W = nn.ParameterList([nn.Parameter(torch.Tensor(l, layer_sizes[0]))
-                                   for l in layer_sizes[1:]])
-        self.U = nn.ParameterList([nn.Parameter(torch.Tensor(layer_sizes[i+1], layer_sizes[i]))
-                                   for i in range(1,len(layer_sizes)-1)])
-        self.eps = eps
-        self.negative_slope = negative_slope
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        # copying from PyTorch Linear
-        for W in self.W:
-            nn.init.kaiming_uniform_(W, a=5**0.5)
-        for U in self.U:
-            nn.init.kaiming_uniform_(U, a=5**0.5)
-
     def forward(self, t, x):
+        x = x.reshape(x.shape[0], x.shape[-1])
         nsim = x.shape[0]
-        time = torch.ones(nsim, 1, 1) * t
-        aug_x = torch.cat((x, time), dim=2)
-        z = F.linear(aug_x, self.W[0])
-        F.leaky_relu_(z, negative_slope=self.negative_slope)
-
-        for W,U in zip(self.W[1:-1], self.U[:-1]):
-            z = F.linear(aug_x, W) + F.linear(z, F.softplus(U))*self.negative_slope
-            z = F.leaky_relu_(z, negative_slope=self.negative_slope)
-
-        z = F.linear(aug_x, self.W[-1]) + F.linear(z, F.softplus(self.U[-1]))
-        return F.relu(z) + self.eps*(aug_x**2).sum(1)[:,None]
+        time = torch.ones(nsim, 1) * t
+        aug_x = torch.cat((x, time), dim=1)
+        smoothed_output = self.rehu(self.f(aug_x) - self.zero)
+        quadratic_under = self.eps*(aug_x**2).sum(1,keepdim=True)
+        return (smoothed_output + quadratic_under).reshape(nsim, 1, 1)
