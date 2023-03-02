@@ -82,7 +82,7 @@ class ProjectedDynamicalSystem(nn.Module):
                 if Mu is None:
                     Minv = torch.linalg.inv(M)
                     qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
-                    return self._scale * (Minv @ (Tbias - .5 * Vqd @ qdd).mT).mT
+                    return (Minv @ (Tbias - .5 * self._scale * Vqd @ qdd).mT).mT
 
                 Tbiasc, Tbiasu = Tbias[:, :, 0].reshape(self.sim_params.nsim, 1, 1).clone(), Tbias[:, :, 1:].reshape(
                     self.sim_params.nsim, 1, self.sim_params.nv-1).clone()
@@ -101,6 +101,7 @@ class ProjectedDynamicalSystem(nn.Module):
             def dynamics(x, acc):
                 v = x[:, :, self.sim_params.nq:].view(self.sim_params.nsim, 1, self.sim_params.nv).clone()
                 return torch.cat((v, acc), 2)
+
             self._step_func = dynamics
 
             def policy(q, v, x, Vqd):
@@ -149,11 +150,11 @@ class ProjectedDynamicalSystem(nn.Module):
                 return dvdx
 
         Vx = dvdx(t, x_enc, self.value_func)
-        # Vt = dvdt(t, x_enc, self.value_func)
+        Vt = dvdt(t, x_enc, self.value_func)
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
-        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
+        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x) + Vt)
         xd_trans = - (Vx / norm) * unnorm_porj
-        return xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv)
+        return torch.clamp(xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv), -40, 40)
 
 
     def dfdt(self, t, x):

@@ -295,7 +295,7 @@ class TwoLink(BaseRBD):
     MASS_P = 1
     GRAVITY = 0
     FRICTION = 1
-    GEAR = 30
+    GEAR = 10
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(TwoLink, self).__init__(nsims, params, device, mode)
@@ -380,7 +380,7 @@ if __name__ == "__main__":
     qdd_init_dcp = torch.Tensor([0, 0, 0]).view(1, 1, 3)
     traj_dcp = torch.zeros((500, 1, 1, dcp_params.nx))
 
-    x_init_tl = torch.Tensor([0, 2, 10, 10]).view(1, 1, 4)
+    x_init_tl = torch.Tensor([0, 0, 0, 0]).view(1, 1, 4)
     qdd_init_tl = torch.Tensor([0, 0]).view(1, 1, 2)
     traj_tl = torch.zeros((500, 1, 1, tl_params.nx))
 

@@ -2,7 +2,7 @@ import argparse
 import mujoco
 from neural_value_synthesis_diffeq import *
 from utilities.torch_utils import save_models
-from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams, torch_mj_inv
+from utilities.mujoco_torch import torch_mj_set_attributes, SimulationParams
 from torchdiffeq import odeint_adjoint as odeint
 
 
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     d = mujoco.MjData(m)
     sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
     prev_cost, diff, iteration, tol, max_iter, step_size = 0, 100.0, 1, 0.5, 100, 1.07
-    Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
+    Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 10
     R = torch.diag(torch.Tensor([0.5])).repeat(sim_params.nsim, 1, 1).to(device)
-    Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
+    Qf = torch.diag(torch.Tensor([1, 0.01])).repeat(sim_params.nsim, 1, 1).to(device) * 100
     torch_mj_set_attributes(m, sim_params)
 
     def loss_func(x: torch.Tensor):
@@ -52,38 +52,34 @@ if __name__ == "__main__":
         l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
         l_terminal = (x_final @ Qf @ x_final.mT).squeeze()
 
-        return torch.mean(l_running + l_terminal)
-
-    def batch_ctrl_loss(xxd: torch.Tensor):
-        return torch.mean(torch.sum(torch_mj_inv.apply(xxd), 0))
-
-    def batch_state_ctrl_loss(x, xxd):
-        return batch_state_loss(x) + 1 * batch_ctrl_loss(xxd)
+        return l_running + l_terminal
 
 
-    class LinValueFunction(nn.Module):
-        """
-        Value function is J = xSx
-        """
-
-        def __init__(self, n_in, Sinit):
-            super(LinValueFunction, self).__init__()
-            self.S = nn.Linear(2, 2, bias=-False)
-            self.S.weight = nn.Parameter(Sinit)
-
-        def forward(self, t: float, x: torch.Tensor):
-            return self.S(x) @ x.mT
+    def inv_dynamics_reg(acc: torch.Tensor, alpha):
+        u_batch = acc
+        loss = u_batch @ R @ u_batch.mT
+        return torch.sum(loss, 0)
 
 
-    class Encoder(nn.Module):
-        def __init__(self, weight, sim_params: SimulationParams):
-            super(Encoder, self).__init__()
-            self.nin = sim_params.nqv
-            self.E = nn.Linear(self.nin, 1).requires_grad_(False)
-            self.E.weight = nn.Parameter(weight)
+    def backup_loss(x: torch.Tensor):
+        t, nsim, r, c = x.shape
+        x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+        x_init = x[0, :, :, :].view(1, nsim, r, c).clone()
+        value_final = nn_value_func((sim_params.ntime - 1) * 0.01, x_final).squeeze()
+        value_init = nn_value_func(0, x_init).squeeze()
 
-        def forward(self, x):
-            return self.E(x)
+        return -value_init + value_final
+
+
+    def batch_inv_dynamics_loss(acc, alpha):
+        l_ctrl = inv_dynamics_reg(acc, alpha)
+        return l_ctrl
+
+
+    def loss_function(x, acc, alpha=1):
+        l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(acc, alpha), batch_state_loss(x), backup_loss(x)
+        loss = torch.mean(l_ctrl + l_state + l_bellman)
+        return torch.maximum(loss, torch.zeros_like(loss))
 
 
     class NNValueFunction(nn.Module):
@@ -109,14 +105,13 @@ if __name__ == "__main__":
 
     S_init = torch.FloatTensor(sim_params.nqv, sim_params.nqv).uniform_(0, 5).to(device)
     # S_init = torch.Tensor([[1.7, 1], [1, 1.7]]).to(device)
-    lin_value_func = LinValueFunction(sim_params.nqv, S_init).to(device)
     nn_value_func = NNValueFunction(sim_params.nqv).to(device)
     dyn_system = ProjectedDynamicalSystem(nn_value_func, loss_func, sim_params, encoder=x_encoder).to(device)
     time = torch.linspace(0, (sim_params.ntime - 1) * 0.01, sim_params.ntime).to(device)
-    optimizer = torch.optim.Adam(dyn_system.parameters(), lr=1e-2)
+    optimizer = torch.optim.Adam(dyn_system.parameters(), lr=5e-3)
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2.5
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 5.5
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2
     # q_init = torch.ones((sim_params.nsim, 1, 1 * sim_params.nee))
     # qd_init = torch.zeros((sim_params.nsim, 1, 1 * sim_params.nee))
     x_init = torch.cat((q_init, qd_init), 2).to(device)
@@ -128,8 +123,8 @@ if __name__ == "__main__":
     while diff > tol or iteration > max_iter:
         optimizer.zero_grad()
         traj = odeint(dyn_system, x_init, time, method='euler')
-        loss = batch_state_loss(traj)
-        # acc = compose_acc(traj, 0.01)
+        acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), 0.01)
+        loss = loss_function(traj, acc)
         # xxd = compose_xxd(traj, acc)
         # loss = batch_state_ctrl_loss(traj, xxd)
 
@@ -144,5 +139,5 @@ if __name__ == "__main__":
             with torch.no_grad():
                 plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=traj, contour=True)
 
-    save_models("./neural_value", lin_value_func)
+    save_models("./neural_value", nn_value_func)
     plt.show()

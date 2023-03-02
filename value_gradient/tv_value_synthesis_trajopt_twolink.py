@@ -1,24 +1,24 @@
 import random
 import numpy as np
-from models import Cartpole, ModelParams
-from animations.cartpole import init_fig_cp, animate_cartpole
+import torch
+
+from models import TwoLink, ModelParams
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
-from PSDNets import PosDefICNN
+from PSDNets import ICNN
 
 from mj_renderer import *
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 200, 300, 0.008)
-cp_params = ModelParams(2, 2, 1, 4, 4)
-prev_cost, diff, tol, max_iter, alpha, dt, n_bins, discount, step, scale, mode = 0, 100.0, 0, 500, .5, 0.008, 3, 1.0, 15, 100, 'inv'
-Q = torch.diag(torch.Tensor([.05, 5, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
-R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
-Qf = torch.diag(torch.Tensor([5, 300, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 10, 700, 0.01)
+tl_params = ModelParams(2, 2, 1, 4, 4)
+max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1.0, 15, 10, 'inv'
+Q = torch.diag(torch.Tensor([5, 5, .0001, .0001])).repeat(sim_params.nsim, 1, 1).to(device)
+Qf = torch.diag(torch.Tensor([1000, 1000, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-0, sim_params.nsim, 1, 1))
-cartpole = Cartpole(sim_params.nsim, cp_params, device)
-renderer = MjRenderer("../xmls/cartpole.xml")
+tl = TwoLink(sim_params.nsim, tl_params, device)
+renderer = MjRenderer("../xmls/reacher.xml", dt=0.000001)
 
 def build_discounts(lambdas: torch.Tensor, discount: float):
     for i in range(lambdas.shape[0]):
@@ -30,7 +30,7 @@ def build_discounts(lambdas: torch.Tensor, discount: float):
 def state_encoder(x: torch.Tensor):
     b, r, c = x.shape
     x = x.reshape((b, r*c))
-    q, v = x[:, :sim_params.nq].clone().unsqueeze(1), x[:, sim_params.nq:].clone()
+    q, v = x[:, :sim_params.nq].clone().unsqueeze(1), x[:, sim_params.nq:].clone().unsqueeze(1)
     q = torch.cos(q) - 1
     return torch.cat((q, v), 1).reshape((b, r, c))
 
@@ -38,9 +38,9 @@ def state_encoder(x: torch.Tensor):
 def batch_state_encoder(x: torch.Tensor):
     t, b, r, c = x.shape
     x = x.reshape((t*b, r*c))
-    q, v = x[:, :sim_params.nq].clone().unsqueeze(1), x[:, sim_params.nq:].clone()
+    q, v = x[:, :sim_params.nq].clone().unsqueeze(1), x[:, sim_params.nq:].clone().unsqueeze(1)
     q = torch.cos(q) - 1
-    return torch.cat((q, v), 1).reshape((b, r, c))
+    return torch.cat((q, v), 1).reshape((t, b, r, c))
 
 
 class NNValueFunction(nn.Module):
@@ -61,7 +61,7 @@ class NNValueFunction(nn.Module):
         self.nn.apply(init_weights)
 
     def forward(self, t, x):
-        time = torch.ones((sim_params.nsim, 1, 1)) * t
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
         aug_x = torch.cat((x, time), dim=2)
         return self.nn(aug_x)
 
@@ -90,59 +90,41 @@ def backup_loss(x: torch.Tensor):
     return -value_init + value_final
 
 
-def batch_dynamics_loss(x, acc, alpha=1):
-    t, b, r, c = x.shape
-    x_reshape = x.reshape((t*b, 1, sim_params.nqv))
-    a_reshape = acc.reshape((t*b, 1, sim_params.nv))
-    acc_real = cartpole(x_reshape, a_reshape).reshape(x.shape)[:, :, :, sim_params.nv:]
-    l_run = torch.sum((acc - acc_real)**2, 0).squeeze()
-    return torch.mean(l_run) * alpha
-
-
 def batch_state_loss(x: torch.Tensor):
     x = batch_state_encoder(x)
     t, nsim, r, c = x.shape
     x_run = x[:-1, :, :, :].view(t-1, nsim, r, c).clone()
     x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    l_running = torch.sum(loss_quadratic(x_run, Q), 0).squeeze()
-    l_terminal = (loss_quadratic(x_final, Qf)).squeeze()
+    l_running = loss_quadratic(x_run, Q).squeeze()
+    l_terminal = loss_quadratic(x_final, Qf).squeeze()
 
-    return torch.mean(l_running + l_terminal)
-
-def batch_ctrl_loss(acc: torch.Tensor):
-    qddc = acc[:, :, :, 0].unsqueeze(2).clone()
-    l_ctrl = torch.sum(qddc @ R @ qddc.mT, 0).squeeze()
-    return torch.mean(l_ctrl)
+    return torch.cat((l_running, l_terminal.unsqueeze(0)), dim=0)
 
 
 def batch_inv_dynamics_loss(x, acc, alpha):
-    x = x[:-1].clone()
     q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
     q = q.reshape((q.shape[0]*q.shape[1], 1, sim_params.nq))
     x_reshape = x.reshape((x.shape[0]*x.shape[1], 1, sim_params.nqv))
-    M = cartpole._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
-    C = cartpole._Cfull(x_reshape).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
-    Tg = cartpole._Tgrav(q).reshape((x.shape[0], x.shape[1], 1, sim_params.nq))
-    Tf = cartpole._Tfric(v).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
-    u_batch = (M @ acc.mT).mT + (C @ v.mT).mT - Tg + Tf
-    return torch.sum(u_batch @ torch.linalg.inv(M) @ u_batch.mT, 0).squeeze() / scale
+    M = tl._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
+    C = tl._Tbias(x_reshape).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
+    u_batch = (M @ acc.mT).mT - C
+    return u_batch @ torch.linalg.inv(M) @ u_batch.mT / scale
 
 
 def loss_function(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(x, acc, alpha), batch_state_loss(x), backup_loss(x)
-    return torch.mean(torch.square(l_ctrl + l_state + l_bellman))
-
+    l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
+    l_bellman = backup_loss(x)
+    return torch.mean(torch.square(l_run + l_bellman))
 
 
 dyn_system = ProjectedDynamicalSystem(
-    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step, scale=scale, R=R
+    nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=tl, mode=mode, step=step, scale=scale
 ).to(device)
-time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
+time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device).requires_grad_(True)
 one_step = torch.linspace(0, dt, 2).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=2e-3, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
-fig_3, p, r, width, height = init_fig_cp(0)
 
 log = f"m-{mode}_d-{discount}_s-{step}"
 
@@ -156,14 +138,18 @@ def schedule_lr(optimizer, epoch, rate):
 loss_buffer = []
 
 if __name__ == "__main__":
+
+    def transform_coordinates_tl(traj: torch.Tensor):
+       traj[:, :, :, 1] = torch.pi - (traj[:, :, :, 0] + (torch.pi - traj[:, :, :, 1]))
+       return traj
+
     def get_lr(optimizer):
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
-    qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(0, 0) * 2
-    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(torch.pi - 0.6, torch.pi + 0.6)
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(-1, 1)
-    x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-torch.pi, torch.pi)
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(-1, 1) * 0
+    x_init = torch.cat((q_init, qd_init), 2).to(device)
     iteration = 0
     alpha = 0
 
@@ -171,8 +157,8 @@ if __name__ == "__main__":
         while iteration < max_iter:
             optimizer.zero_grad()
             x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
-            traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
-            acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
+            traj, dtrj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+            acc = dtrj_dt[:, :, :, sim_params.nv:].clone()
             loss = loss_function(traj, acc, alpha)
             loss_buffer.append(loss.item())
             loss.backward()
@@ -181,36 +167,34 @@ if __name__ == "__main__":
 
             print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
 
-            fig_5 = plt.figure(5)
-            ax_2 = plt.axes()
-            ax_5 = plt.axes()
-            ax_5.set_title('Loss')
-            plt.plot(loss_buffer)
-            fig_2 = plt.figure(2)
-            plt.plot(acc[:, 0, 0, 0].cpu().detach())
-            plt.pause(0.001)
-            fig_2.clf()
-            fig_5.clf()
-            fig_1 = plt.figure(1)
-            fig_1.clf()
+            ax3 = plt.subplot(212)
+            ax3.clear()
+            ax3.margins()  # Values in (-0.5, 0.0) zooms in to center
+            ax3.plot(loss_buffer)
+            ax3.set_title('Loss')
 
-            if iteration % 30 == 0 and iteration != 0:
-                for i in range(sim_params.nsim):
-                    qpole = traj[:, i, 0, 1].cpu().detach()
-                    qdpole = traj[:, i, 0, 3].cpu().detach()
-                    plt.plot(qpole, qdpole)
-
-                plt.pause(0.001)
-
-                for i in range(0, sim_params.nsim, 60):
+            if iteration % 50 == 0:
+                ax1 = plt.subplot(222)
+                ax2 = plt.subplot(221)
+                ax1.clear()
+                ax2.clear()
+                for i in range(0, sim_params.nsim, 20):
                     selection = random.randint(0, sim_params.nsim - 1)
-                    renderer.render(traj[:, selection, 0, :sim_params.nq].cpu().detach().numpy())
-                    # cart = traj[:, selection, 0, 0].cpu().detach().numpy()
-                    # pole = traj[:, selection, 0, 1].cpu().detach().numpy()
-                    # animate_cartpole(cart, pole, fig_3, p, r, width, height, skip=3)
-
+                    ax1.margins(0.05)  # Default margin is 0.05, value 0 means fit
+                    ax1.plot(traj[:, selection, 0, 0].cpu().detach())
+                    ax1.plot(traj[:, selection, 0, 1].cpu().detach())
+                    ax1.set_title('Pos')
+                    ax2 = plt.subplot(221)
+                    ax2.margins(0.05)  # Values >0.0 zoom out
+                    ax2.plot(dtrj_dt[:, selection, 0, 0].cpu().detach())
+                    ax2.plot(dtrj_dt[:, selection, 0, 1].cpu().detach())
+                    ax2.set_title('Acc')
+                    traj_tl_mj = transform_coordinates_tl(traj.clone())
+                    renderer.render(traj_tl_mj[:, selection, 0, :tl_params.nq].cpu().detach().numpy())
 
             iteration += 1
+            plt.pause(0.001)
+
 
         model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
         model_scripted.save(f'{log}.pt')  # Save
