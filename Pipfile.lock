@@ -1031,14 +1031,6 @@
             "index": "pypi",
             "version": "==1.10.1+cu102"
         },
-        "torchdiffeq": {
-            "hashes": [
-                "sha256:b5b01ec1294a2d8d5f77e567bf17c5de1237c0573cb94deefa88326f0e18c338",
-                "sha256:fe75f434b9090ac0c27702e02bed21472b0f87035be6581f51edc5d4013ea31a"
-            ],
-            "index": "pypi",
-            "version": "==0.2.3"
-        },
         "tqdm": {
             "hashes": [
                 "sha256:5f4f682a004951c1b450bc753c710e9280c5746ce6ffedee253ddbcbf54cf1e4",

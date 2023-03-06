@@ -26,10 +26,11 @@ tensorflow-probability = "*"
 joblib = "*"
 numdifftools = "*"
 dm-control = "==1.0.5"
-torchdiffeq = "*"
 absl-py = "*"
 torch = "==1.13.0+cu117"
 mujoco-py = "==2.1.2.14"
+torchdiff-ctrl = {ref = "euler", git = "https://github.com/Daniellayeghi/torchdiffeq_ctrl.git"}
+torchdiffeq = {git = "https://github.com/rtqichen/torchdiffeq.git"}
 
 [requires]
 python_version = "3.7"

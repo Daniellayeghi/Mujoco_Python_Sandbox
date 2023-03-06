@@ -5,13 +5,12 @@ import torch
 from models import TwoLink, ModelParams
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
-from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 from PSDNets import ICNN
-
+from torchdiffeq_ctrl import odeint_adjoint as ctrl_odeint
 from mj_renderer import *
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 10, 700, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 10, 10, 0.01)
 tl_params = ModelParams(2, 2, 1, 4, 4)
 max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1.0, 15, 10, 'inv'
 Q = torch.diag(torch.Tensor([5, 5, .0001, .0001])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -157,7 +156,7 @@ if __name__ == "__main__":
         while iteration < max_iter:
             optimizer.zero_grad()
             x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
-            traj, dtrj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+            traj, dtrj_dt = ctrl_odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
             acc = dtrj_dt[:, :, :, sim_params.nv:].clone()
             loss = loss_function(traj, acc, alpha)
             loss_buffer.append(loss.item())

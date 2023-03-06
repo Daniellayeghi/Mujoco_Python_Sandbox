@@ -6,7 +6,6 @@ from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
-from PSDNets import PosDefICNN
 
 from mj_renderer import *
 
