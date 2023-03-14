@@ -168,35 +168,6 @@ def schedule_lr(optimizer, epoch, rate):
         param_group['lr'] = lr
 
 
-def increase_time_horizon(init_time, time, max_time, num_epochs, epoch, criterion):
-    if criterion:
-        ratio = epoch / num_epochs
-        new_ntime = min(int(init_time + 1/(ratio ** (1/1.9))), max_time)
-        sim_params.ntime = new_ntime
-        return torch.linspace(0, (new_ntime - 1) * dt, new_ntime).to(device).requires_grad_(True)
-
-    return time
-
-
-def moving_loss_decrease(losses_list, n=10):
-    arr = np.array(losses_list)
-    if n > len(arr):
-        return 0
-
-    last_n = arr[-n:]
-    diff = np.diff(last_n)
-    avg_diff = np.mean(diff)
-    return avg_diff
-
-def close_to_goal(x, tol):
-    x = batch_state_encoder(x)
-    t, nsim, r, c = x.shape
-    x_final = x[-4:-1].view(3, nsim, r, c).clone()
-    l_terminal = loss_quadratic(x_final, Qf).squeeze()
-    mean = torch.mean(torch.sum(l_terminal, dim=0)).item()
-    return mean, mean < tol
-
-
 if __name__ == "__main__":
     def get_lr(optimizer):
         for param_group in optimizer.param_groups:
@@ -210,7 +181,6 @@ if __name__ == "__main__":
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
     iteration = 1
     alpha = 0
-    loss_buffer = []
 
     try:
         while iteration < max_iter:
@@ -220,7 +190,6 @@ if __name__ == "__main__":
             traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
             acc = dtraj_dt[:, :, :, sim_params.nv:]
             loss = loss_function(traj, dtraj_dt, alpha)
-            loss_buffer.append(loss.item())
             loss.backward()
             sim_params.ntime = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
             optimizer.step()

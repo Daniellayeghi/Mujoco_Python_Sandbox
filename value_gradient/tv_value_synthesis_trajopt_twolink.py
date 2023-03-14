@@ -6,14 +6,15 @@ from models import TwoLink, ModelParams
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from utilities.mujoco_torch import SimulationParams
+from time_search import optimal_time
 from PSDNets import ICNN
 from torchdiffeq_ctrl import odeint_adjoint as ctrl_odeint
 from mj_renderer import *
 torch.manual_seed(0)
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 10, 700, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 10, 50, 0.01)
 tl_params = ModelParams(2, 2, 1, 4, 4)
-max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1.0, 15, 1, 'fwd'
+max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 300, .5, 0.01, 1.0, 15, 1, 'inv'
 Q = torch.diag(torch.Tensor([10, 10, .0001, .0001])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([1000, 1000, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -118,11 +119,10 @@ def loss_function(x, acc, alpha=1):
     l_bellman = backup_loss(x)
     return torch.mean(torch.square(l_run + l_bellman))
 
-
+init_lr = 4e-2
 dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=tl, mode=mode, step=step, scale=scale
 ).to(device)
-time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device).requires_grad_(True)
 one_step = torch.linspace(0, dt, 2).to(device)
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=4e-3, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
@@ -132,12 +132,10 @@ log = f"m-{mode}_d-{discount}_s-{step}"
 
 
 def schedule_lr(optimizer, epoch, rate):
-    pass
-    if epoch == 250:
-        for param_group in optimizer.param_groups:
-            param_group['lr'] *= 0.25
+    lr = max(init_lr * (1.0 - epoch / 200) ** 2, 1e-3)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
 
-loss_buffer = []
 
 if __name__ == "__main__":
 
@@ -158,27 +156,22 @@ if __name__ == "__main__":
     try:
         while iteration < max_iter:
             optimizer.zero_grad()
+            time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device).requires_grad_(True)
             x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
             traj, dtrj_dt = ctrl_odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
             # acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
             acc = dtrj_dt[:, :, :, sim_params.nv:]
             loss = loss_function(traj, dtrj_dt, alpha)
-            loss_buffer.append(loss.item())
             loss.backward()
+            sim_params.ntime = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
             optimizer.step()
             schedule_lr(optimizer, iteration, 20)
 
             print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
 
-            ax3 = plt.subplot(212)
-            ax3.clear()
-            ax3.margins()  # Values in (-0.5, 0.0) zooms in to center
-            ax3.plot(loss_buffer)
-            ax3.set_title('Loss')
-
-            if iteration % 50 == 0:
-                ax1 = plt.subplot(222)
-                ax2 = plt.subplot(221)
+            if iteration % 25 == 0:
+                ax1 = plt.subplot(122)
+                ax2 = plt.subplot(121)
                 ax1.clear()
                 ax2.clear()
                 for i in range(0, sim_params.nsim, 20):
@@ -201,11 +194,9 @@ if __name__ == "__main__":
 
         model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
         model_scripted.save(f'{log}.pt')  # Save
-        np.save(f'{log}_loss', np.array(loss_buffer))# Save
 
         input()
     except KeyboardInterrupt:
         print("########## Saving Trace ##########")
         model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
         model_scripted.save(f'{log}_except.pt')
-        np.save(f'{log}_loss_except', np.array(loss_buffer))# Save
