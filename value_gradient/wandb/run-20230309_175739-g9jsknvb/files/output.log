@@ -1,0 +1,8 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 192, in <module>
+    time = increase_time_horizon(sim_params.ntime, max_time, max_iter, iteration)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 174, in increase_time_horizon
+    return torch.linspace(0, (new_ntime - 1) * dt, new_ntime).to(time.device).requires_grad_(True)
+NameError: name 'time' is not defined

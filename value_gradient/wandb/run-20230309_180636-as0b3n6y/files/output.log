@@ -1,0 +1,8 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 192, in <module>
+    time = increase_time_horizon(sim_params.ntime, max_time, max_iter, iteration)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 172, in increase_time_horizon
+    new_ntime = min(int(init_time + 1/(ratio ** (1/4))), max_time)
+ZeroDivisionError: float division by zero

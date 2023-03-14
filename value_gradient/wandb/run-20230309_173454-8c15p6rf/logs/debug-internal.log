@@ -1,0 +1,216 @@
+2023-03-09 17:34:54,383 INFO    StreamThr :19451 [internal.py:wandb_internal():90] W&B internal server running at pid: 19451, started at: 2023-03-09 17:34:54.381470
+2023-03-09 17:34:54,389 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status
+2023-03-09 17:34:54,393 INFO    WriterThread:19451 [datastore.py:open_for_write():85] open: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/run-8c15p6rf.wandb
+2023-03-09 17:34:54,404 DEBUG   SenderThread:19451 [sender.py:send():336] send: header
+2023-03-09 17:34:54,472 DEBUG   SenderThread:19451 [sender.py:send():336] send: run
+2023-03-09 17:34:55,095 INFO    SenderThread:19451 [dir_watcher.py:__init__():219] watching files in: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files
+2023-03-09 17:34:55,095 INFO    SenderThread:19451 [sender.py:_start_run_threads():1081] run started: 8c15p6rf with start time 1678383294.375319
+2023-03-09 17:34:55,096 DEBUG   SenderThread:19451 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 17:34:55,096 INFO    SenderThread:19451 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 17:34:55,101 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: check_version
+2023-03-09 17:34:55,103 DEBUG   SenderThread:19451 [sender.py:send_request():363] send_request: check_version
+2023-03-09 17:34:55,280 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: run_start
+2023-03-09 17:34:55,291 DEBUG   HandlerThread:19451 [system_info.py:__init__():31] System info init
+2023-03-09 17:34:55,291 DEBUG   HandlerThread:19451 [system_info.py:__init__():46] System info init done
+2023-03-09 17:34:55,291 INFO    HandlerThread:19451 [system_monitor.py:start():183] Starting system monitor
+2023-03-09 17:34:55,292 INFO    SystemMonitor:19451 [system_monitor.py:_start():147] Starting system asset monitoring threads
+2023-03-09 17:34:55,293 INFO    HandlerThread:19451 [system_monitor.py:probe():204] Collecting system info
+2023-03-09 17:34:55,296 INFO    SystemMonitor:19451 [interfaces.py:start():187] Started cpu monitoring
+2023-03-09 17:34:55,299 INFO    SystemMonitor:19451 [interfaces.py:start():187] Started disk monitoring
+2023-03-09 17:34:55,306 INFO    SystemMonitor:19451 [interfaces.py:start():187] Started gpu monitoring
+2023-03-09 17:34:55,310 INFO    SystemMonitor:19451 [interfaces.py:start():187] Started memory monitoring
+2023-03-09 17:34:55,313 INFO    SystemMonitor:19451 [interfaces.py:start():187] Started network monitoring
+2023-03-09 17:34:55,355 DEBUG   HandlerThread:19451 [system_info.py:probe():195] Probing system
+2023-03-09 17:34:55,366 DEBUG   HandlerThread:19451 [system_info.py:_probe_git():180] Probing git
+2023-03-09 17:34:55,400 DEBUG   HandlerThread:19451 [system_info.py:_probe_git():188] Probing git done
+2023-03-09 17:34:55,401 DEBUG   HandlerThread:19451 [system_info.py:probe():240] Probing system done
+2023-03-09 17:34:55,402 DEBUG   HandlerThread:19451 [system_monitor.py:probe():213] {'os': 'Linux-5.4.0-144-generic-x86_64-with-Ubuntu-18.04-bionic', 'python': '3.7.13', 'heartbeatAt': '2023-03-09T17:34:55.356067', 'startedAt': '2023-03-09T17:34:54.335773', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': '/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'codePath': 'value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'git': {'remote': 'https://github.com/Daniellayeghi/Mujoco_Python_Sandbox.git', 'commit': '2ac229b88c0486b5b22ba426a5459dccd7ee23af'}, 'email': 'Daniellayeghi@gmail.com', 'root': '/home/daniel/Repos/Mujoco_Python_Sandbox', 'host': 'daniel-System-Product-Name', 'username': 'daniel', 'executable': '/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/bin/python', 'cpu_count': 8, 'cpu_count_logical': 16, 'cpu_freq': {'current': 1268.142375, 'min': 1200.0, 'max': 4350.0}, 'cpu_freq_per_core': [{'current': 1200.056, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.03, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.022, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.062, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.975, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.016, 'min': 1200.0, 'max': 4300.0}, {'current': 1300.014, 'min': 1200.0, 'max': 4500.0}, {'current': 1360.544, 'min': 1200.0, 'max': 4500.0}, {'current': 1200.036, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.044, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.108, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.062, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.017, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.042, 'min': 1200.0, 'max': 4300.0}, {'current': 1300.052, 'min': 1200.0, 'max': 4500.0}, {'current': 1304.571, 'min': 1200.0, 'max': 4500.0}], 'disk': {'total': 467.8886032104492, 'used': 234.60959243774414}, 'gpu': 'NVIDIA GeForce GTX 1080 Ti', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11811160064}], 'memory': {'total': 31.042236328125}}
+2023-03-09 17:34:55,402 INFO    HandlerThread:19451 [system_monitor.py:probe():214] Finished collecting system info
+2023-03-09 17:34:55,402 INFO    HandlerThread:19451 [system_monitor.py:probe():217] Publishing system info
+2023-03-09 17:34:55,402 DEBUG   HandlerThread:19451 [system_info.py:_save_pip():52] Saving list of pip packages installed into the current environment
+2023-03-09 17:34:55,408 DEBUG   HandlerThread:19451 [system_info.py:_save_pip():67] Saving pip packages done
+2023-03-09 17:34:55,428 INFO    HandlerThread:19451 [system_monitor.py:probe():219] Finished publishing system info
+2023-03-09 17:34:55,442 DEBUG   SenderThread:19451 [sender.py:send():336] send: files
+2023-03-09 17:34:55,443 INFO    SenderThread:19451 [sender.py:_save_file():1332] saving file wandb-metadata.json with policy now
+2023-03-09 17:34:55,476 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: stop_status
+2023-03-09 17:34:55,485 DEBUG   SenderThread:19451 [sender.py:send_request():363] send_request: stop_status
+2023-03-09 17:34:55,749 DEBUG   SenderThread:19451 [sender.py:send():336] send: telemetry
+2023-03-09 17:34:56,020 DEBUG   SenderThread:19451 [sender.py:send():336] send: telemetry
+2023-03-09 17:34:56,105 INFO    Thread-17 :19451 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files/output.log
+2023-03-09 17:34:56,106 INFO    Thread-17 :19451 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files/wandb-summary.json
+2023-03-09 17:34:56,106 INFO    Thread-17 :19451 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files/requirements.txt
+2023-03-09 17:34:56,106 INFO    Thread-17 :19451 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files/wandb-metadata.json
+2023-03-09 17:34:56,171 INFO    wandb-upload_0:19451 [upload_job.py:push():138] Uploaded file /tmp/tmpcllbuctywandb/it34oglc-wandb-metadata.json
+2023-03-09 17:34:58,098 INFO    Thread-17 :19451 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files/output.log
+2023-03-09 17:35:00,022 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:05,024 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:10,025 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:10,465 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:15,027 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:15,466 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:20,029 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:20,468 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:25,036 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:25,470 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:26,130 INFO    Thread-17 :19451 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files/config.yaml
+2023-03-09 17:35:30,451 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:30,472 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:35,453 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:35,473 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:40,454 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:40,475 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:45,456 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:45,477 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:50,458 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:35:50,479 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:55,314 DEBUG   SystemMonitor:19451 [system_monitor.py:_start():161] Starting system metrics aggregation loop
+2023-03-09 17:35:55,320 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:35:55,481 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:35:56,322 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:00,483 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:01,324 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:05,484 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:06,326 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:10,486 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:11,328 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:15,488 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:16,329 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:20,490 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:21,331 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:25,323 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:36:25,492 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:27,326 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:30,494 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:32,328 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:35,496 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:37,329 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:40,497 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:42,331 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:45,499 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:47,333 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:50,501 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:52,334 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:36:55,327 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:36:55,503 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:36:58,330 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:00,504 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:03,332 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:05,506 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:08,334 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:10,508 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:13,335 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:15,509 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:18,337 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:20,511 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:23,338 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:25,331 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:37:25,513 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:29,334 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:30,515 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:34,336 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:35,516 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:39,338 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:40,518 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:44,340 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:45,520 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:49,342 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:50,522 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:37:54,343 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:37:55,334 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:37:55,524 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:00,338 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:00,526 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:05,339 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:05,528 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:10,341 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:10,530 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:15,343 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:15,532 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:20,344 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:20,534 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:25,338 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:38:25,536 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:26,341 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:30,537 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:31,343 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:35,539 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:36,344 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:40,541 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:41,346 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:45,543 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:46,348 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:50,545 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:51,350 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:38:55,342 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:38:55,547 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:38:57,344 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:00,549 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:02,346 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:05,550 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:07,348 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:10,552 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:12,350 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:15,554 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:17,352 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:20,556 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:22,353 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:25,345 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:39:25,558 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:28,348 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:30,560 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:33,349 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:35,561 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:38,351 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:40,564 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:43,353 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:45,565 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:48,355 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:50,567 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:53,357 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:39:55,348 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:39:55,569 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:39:59,351 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:00,571 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:04,353 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:05,573 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:09,355 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:10,575 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:14,357 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:15,577 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:19,359 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:20,579 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:24,360 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:25,352 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:40:25,580 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:30,356 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:30,582 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:35,357 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:35,584 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:40,359 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:40,586 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:45,361 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:45,588 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:50,363 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:40:50,590 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:55,356 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:40:55,592 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:40:56,359 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:00,593 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:01,361 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:05,595 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:06,363 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:10,597 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:11,364 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:15,599 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:16,366 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:20,601 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:21,368 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:25,359 DEBUG   SenderThread:19451 [sender.py:send():336] send: stats
+2023-03-09 17:41:25,602 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:27,362 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:30,604 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:32,364 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:35,607 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:41:37,365 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:41:42,591 INFO    Thread-17 :19451 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_173454-8c15p6rf/files/output.log
+2023-03-09 17:41:43,229 DEBUG   HandlerThread:19451 [handler.py:handle_request():144] handle_request: status_report

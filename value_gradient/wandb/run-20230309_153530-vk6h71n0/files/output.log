@@ -1,0 +1,73 @@
+
+Creating window glfw
+Epochs: 0, Loss: 2251777536.0, lr: 0.004
+Epochs: 1, Loss: 2266049280.0, lr: 0.004
+Epochs: 2, Loss: 2223866368.0, lr: 0.004
+Epochs: 3, Loss: 2222079232.0, lr: 0.004
+Epochs: 4, Loss: 2213404416.0, lr: 0.004
+Epochs: 5, Loss: 2189352704.0, lr: 0.004
+Epochs: 6, Loss: 2171143424.0, lr: 0.004
+Epochs: 7, Loss: 2162572544.0, lr: 0.004
+Epochs: 8, Loss: 2151016192.0, lr: 0.004
+Epochs: 9, Loss: 2131949824.0, lr: 0.004
+Epochs: 10, Loss: 2112626944.0, lr: 0.004
+Epochs: 11, Loss: 2098309888.0, lr: 0.004
+Epochs: 12, Loss: 2085633536.0, lr: 0.004
+Epochs: 13, Loss: 2068995456.0, lr: 0.004
+Epochs: 14, Loss: 2048982784.0, lr: 0.004
+Epochs: 15, Loss: 2030105600.0, lr: 0.004
+Epochs: 16, Loss: 2013788160.0, lr: 0.004
+Epochs: 17, Loss: 1996763904.0, lr: 0.004
+Epochs: 18, Loss: 1976718592.0, lr: 0.004
+Epochs: 19, Loss: 1955690240.0, lr: 0.004
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 177, in <module>
+    traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 209, in odeint_adjoint
+    adjoint_method, adjoint_options, t.requires_grad, *adjoint_params)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 23, in forward
+    ans, ans_dt = odeint(func, y0, t, rtol=rtol, atol=atol, method=method, options=options)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/odeint.py", line 57, in odeint
+    solution, solution_dt = solver.integrate(t)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/solvers.py", line 72, in integrate
+    dy, f0 = self._step_func(self.func, t0, dt, t1, y0)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/fixed_grid.py", line 9, in _step_func
+    f0 = func(t0, y0, perturb=Perturb.NEXT if self.perturb else Perturb.NONE)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 193, in forward
+    return self.base_func(t, y)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 193, in forward
+    return self.base_func(t, y)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1208, in _call_impl
+    result = forward_call(*input, **kwargs)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/neural_value_synthesis_diffeq.py", line 165, in forward
+    u = self._ctrl(t, x)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/neural_value_synthesis_diffeq.py", line 123, in hjb
+    return self._policy(q, v, x, Vx)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/neural_value_synthesis_diffeq.py", line 89, in underactuated_inv_policy
+    Fm = torch.cat((zeros, (torch.inverse(Muu) @ Tbiasu.mT).mT), dim=2)
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 218, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 64
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

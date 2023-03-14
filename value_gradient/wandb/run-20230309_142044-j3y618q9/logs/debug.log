@@ -1,0 +1,34 @@
+2023-03-09 14:20:44,470 INFO    MainThread:5911 [wandb_setup.py:_flush():76] Configure stats pid to 5911
+2023-03-09 14:20:44,470 INFO    MainThread:5911 [wandb_setup.py:_flush():76] Loading settings from /home/daniel/.config/wandb/settings
+2023-03-09 14:20:44,470 INFO    MainThread:5911 [wandb_setup.py:_flush():76] Loading settings from /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/settings
+2023-03-09 14:20:44,470 INFO    MainThread:5911 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2023-03-09 14:20:44,470 INFO    MainThread:5911 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2023-03-09 14:20:44,470 INFO    MainThread:5911 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'program': 'tv_value_synthesis_trajopt_cartpole.py'}
+2023-03-09 14:20:44,471 INFO    MainThread:5911 [wandb_init.py:_log_setup():506] Logging user logs to /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_142044-j3y618q9/logs/debug.log
+2023-03-09 14:20:44,471 INFO    MainThread:5911 [wandb_init.py:_log_setup():507] Logging internal logs to /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_142044-j3y618q9/logs/debug-internal.log
+2023-03-09 14:20:44,471 INFO    MainThread:5911 [wandb_init.py:init():546] calling init triggers
+2023-03-09 14:20:44,471 INFO    MainThread:5911 [wandb_init.py:init():553] wandb.init called with sweep_config: {}
+config: {}
+2023-03-09 14:20:44,472 INFO    MainThread:5911 [wandb_init.py:init():602] starting backend
+2023-03-09 14:20:44,472 INFO    MainThread:5911 [wandb_init.py:init():606] setting up manager
+2023-03-09 14:20:44,482 INFO    MainThread:5911 [backend.py:_multiprocessing_setup():108] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2023-03-09 14:20:44,487 INFO    MainThread:5911 [wandb_init.py:init():613] backend started and connected
+2023-03-09 14:20:44,495 INFO    MainThread:5911 [wandb_init.py:init():701] updated telemetry
+2023-03-09 14:20:44,539 INFO    MainThread:5911 [wandb_init.py:init():741] communicating run to backend with 60.0 second timeout
+2023-03-09 14:21:05,280 WARNING MainThread:5911 [wandb_init.py:init():1165] interrupted
+Traceback (most recent call last):
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/wandb/sdk/wandb_init.py", line 1144, in init
+    run = wi.init()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/wandb/sdk/wandb_init.py", line 747, in init
+    cancel=True,
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/wandb/sdk/lib/mailbox.py", line 283, in wait
+    found, abandoned = self._slot._get_and_clear(timeout=wait_timeout)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/wandb/sdk/lib/mailbox.py", line 130, in _get_and_clear
+    if self._wait(timeout=timeout):
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/wandb/sdk/lib/mailbox.py", line 126, in _wait
+    return self._event.wait(timeout=timeout)
+  File "/usr/lib/python3.7/threading.py", line 552, in wait
+    signaled = self._cond.wait(timeout)
+  File "/usr/lib/python3.7/threading.py", line 300, in wait
+    gotit = waiter.acquire(True, timeout)
+KeyboardInterrupt

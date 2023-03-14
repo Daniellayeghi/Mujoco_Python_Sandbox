@@ -1,0 +1,141 @@
+Creating window glfw
+Epochs: 1, Loss: 12122220544.0, lr: 0.009940030040090253, time: 50
+Epochs: 2, Loss: 11875956736.0, lr: 0.009880120321448116, time: 50
+Epochs: 3, Loss: 11315093504.0, lr: 0.009820271087351824, time: 50
+Epochs: 4, Loss: 10807644160.0, lr: 0.009760482583301363, time: 50
+Epochs: 5, Loss: 10328095744.0, lr: 0.009700755057050188, time: 50
+Epochs: 6, Loss: 9872143360.0, lr: 0.009641088758637567, time: 50
+Epochs: 7, Loss: 9116249088.0, lr: 0.00958148394042156, time: 60
+Epochs: 8, Loss: 8560118272.0, lr: 0.009521940857112636, time: 60
+Epochs: 9, Loss: 7964076032.0, lr: 0.009462459765807965, time: 60
+Epochs: 10, Loss: 7324151808.0, lr: 0.00940304092602639, time: 60
+Epochs: 11, Loss: 6681705984.0, lr: 0.009343684599744093, time: 60
+Epochs: 12, Loss: 5983281152.0, lr: 0.009284391051430982, time: 60
+Epochs: 13, Loss: 5303225344.0, lr: 0.00922516054808782, time: 60
+Epochs: 14, Loss: 4464556544.0, lr: 0.009165993359284084, time: 67
+Epochs: 15, Loss: 3959137536.0, lr: 0.009106889757196639, time: 67
+Epochs: 16, Loss: 3579052032.0, lr: 0.009047850016649154, time: 67
+Epochs: 17, Loss: 3280759552.0, lr: 0.008988874415152377, time: 67
+Epochs: 18, Loss: 2939201280.0, lr: 0.008929963232945216, time: 67
+Epochs: 19, Loss: 2692293120.0, lr: 0.008871116753036697, time: 67
+Epochs: 20, Loss: 2508138496.0, lr: 0.008812335261248791, time: 67
+Epochs: 21, Loss: 2486332416.0, lr: 0.008753619046260144, time: 72
+Epochs: 22, Loss: 2392772608.0, lr: 0.00869496839965074, time: 72
+Epochs: 23, Loss: 2323810048.0, lr: 0.008636383615947521, time: 72
+Epochs: 24, Loss: 2292338944.0, lr: 0.00857786499267097, time: 72
+Epochs: 25, Loss: 2266413568.0, lr: 0.008519412830382721, time: 72
+Epochs: 26, Loss: 2233204224.0, lr: 0.008461027432734181, time: 72
+Epochs: 27, Loss: 2227954432.0, lr: 0.008402709106516233, time: 72
+Epochs: 28, Loss: 2520741376.0, lr: 0.008344458161710002, time: 76
+Epochs: 29, Loss: 2514448896.0, lr: 0.008286274911538785, time: 76
+Epochs: 30, Loss: 2505093120.0, lr: 0.008228159672521091, time: 76
+Epochs: 31, Loss: 2491680512.0, lr: 0.008170112764524893, time: 76
+Epochs: 32, Loss: 2473735168.0, lr: 0.008112134510823083, time: 76
+Epochs: 33, Loss: 2451163136.0, lr: 0.008054225238150201, time: 76
+Epochs: 34, Loss: 2424249856.0, lr: 0.007996385276760424, time: 76
+Epochs: 35, Loss: 2834125312.0, lr: 0.007938614960486916, time: 80
+Epochs: 36, Loss: 2785590272.0, lr: 0.00788091462680252, time: 80
+Epochs: 37, Loss: 2730167296.0, lr: 0.007823284616881854, time: 80
+Epochs: 38, Loss: 2670965760.0, lr: 0.007765725275664881, time: 80
+Epochs: 39, Loss: 2606081280.0, lr: 0.007708236951921931, time: 80
+Epochs: 40, Loss: 2538091264.0, lr: 0.007650819998320297, time: 80
+Epochs: 41, Loss: 2464870400.0, lr: 0.007593474771492367, time: 80
+Epochs: 42, Loss: 2697410560.0, lr: 0.007536201632105431, time: 83
+Epochs: 43, Loss: 2588888576.0, lr: 0.007479000944933124, time: 83
+Epochs: 44, Loss: 2579789312.0, lr: 0.007421873078928632, time: 83
+Epochs: 45, Loss: 2540520960.0, lr: 0.007364818407299646, time: 83
+Epochs: 46, Loss: 2762247936.0, lr: 0.007307837307585186, time: 83
+Epochs: 47, Loss: 3018301440.0, lr: 0.007250930161734293, time: 83
+Epochs: 48, Loss: 3238736128.0, lr: 0.00719409735618669, time: 83
+Epochs: 49, Loss: 3801670144.0, lr: 0.007137339281955456, time: 86
+Epochs: 50, Loss: 3934404864.0, lr: 0.007080656334711765, time: 86
+Epochs: 51, Loss: 3886749440.0, lr: 0.007024048914871794, time: 86
+Epochs: 52, Loss: 3782534656.0, lr: 0.006967517427685831, time: 86
+Epochs: 53, Loss: 3559580672.0, lr: 0.006911062283329664, time: 86
+Epochs: 54, Loss: 3362365696.0, lr: 0.006854683896998351, time: 86
+Epochs: 55, Loss: 2908591104.0, lr: 0.006798382689002409, time: 86
+Epochs: 56, Loss: 3119535104.0, lr: 0.006742159084866536, time: 89
+Epochs: 57, Loss: 2843759104.0, lr: 0.006686013515430926, time: 89
+Epochs: 58, Loss: 2598866432.0, lr: 0.006629946416955278, time: 89
+Epochs: 59, Loss: 2441521152.0, lr: 0.006573958231225602, time: 89
+Epochs: 60, Loss: 2379156224.0, lr: 0.006518049405663864, time: 89
+Epochs: 61, Loss: 2282510848.0, lr: 0.006462220393440652, time: 89
+Epochs: 62, Loss: 2215952128.0, lr: 0.006406471653590877, time: 89
+Epochs: 63, Loss: 2383384576.0, lr: 0.006350803651132698, time: 92
+Epochs: 64, Loss: 2293926400.0, lr: 0.0062952168571896935, time: 92
+Epochs: 65, Loss: 2214874624.0, lr: 0.006239711749116511, time: 92
+Epochs: 66, Loss: 2149580800.0, lr: 0.006184288810627978, time: 92
+Epochs: 67, Loss: 2079570560.0, lr: 0.006128948531931931, time: 92
+Epochs: 68, Loss: 2005982080.0, lr: 0.006073691409865798, time: 92
+Epochs: 69, Loss: 1971072768.0, lr: 0.006018517948037141, time: 92
+Epochs: 70, Loss: 2005746944.0, lr: 0.005963428656968238, time: 94
+Epochs: 71, Loss: 1896466560.0, lr: 0.005908424054244922, time: 94
+Epochs: 72, Loss: 2225869824.0, lr: 0.005853504664669777, time: 94
+Epochs: 73, Loss: 2295352320.0, lr: 0.005798671020419897, time: 94
+Epochs: 74, Loss: 2512125952.0, lr: 0.00574392366120934, time: 94
+Epochs: 75, Loss: 2957130240.0, lr: 0.0056892631344565014, time: 94
+Epochs: 76, Loss: 3476189696.0, lr: 0.005634689995456556, time: 94
+Epochs: 77, Loss: 3866600704.0, lr: 0.005580204807559186, time: 96
+Epochs: 78, Loss: 3565288960.0, lr: 0.005525808142351796, time: 96
+Epochs: 79, Loss: 3539191040.0, lr: 0.005471500579848428, time: 96
+Epochs: 80, Loss: 3484498688.0, lr: 0.005417282708684606, time: 96
+Epochs: 81, Loss: 3388494592.0, lr: 0.005363155126318348, time: 96
+Epochs: 82, Loss: 3112676864.0, lr: 0.005309118439237588, time: 96
+Epochs: 83, Loss: 2922010368.0, lr: 0.0052551732631742724, time: 96
+Epochs: 84, Loss: 2884053248.0, lr: 0.005201320223325415, time: 98
+Epochs: 85, Loss: 2616734208.0, lr: 0.0051475599545813665, time: 98
+Epochs: 86, Loss: 2522050048.0, lr: 0.005093893101761646, time: 98
+Epochs: 87, Loss: 2405555200.0, lr: 0.0050403203198586, time: 98
+Epochs: 88, Loss: 2172108288.0, lr: 0.004986842274289281, time: 98
+Epochs: 89, Loss: 1927020672.0, lr: 0.00493345964115583, time: 98
+Epochs: 90, Loss: 1669557248.0, lr: 0.004880173107514794, time: 98
+Epochs: 91, Loss: 1688447488.0, lr: 0.00482698337165572, time: 100
+Epochs: 92, Loss: 1597149696.0, lr: 0.004773891143389472, time: 100
+Epochs: 93, Loss: 1546867328.0, lr: 0.004720897144346658, time: 100
+Epochs: 94, Loss: 1425438336.0, lr: 0.004668002108286678, time: 100
+Epochs: 95, Loss: 1169951872.0, lr: 0.004615206781417809, time: 100
+Epochs: 96, Loss: 1146419968.0, lr: 0.004562511922728894, time: 100
+Epochs: 97, Loss: 1137037568.0, lr: 0.004509918304333114, time: 100
+Epochs: 98, Loss: 1376556160.0, lr: 0.00445742671182445, time: 102
+Epochs: 99, Loss: 1479408384.0, lr: 0.004405037944647404, time: 102
+Epochs: 100, Loss: 1724527616.0, lr: 0.004352752816480621, time: 102
+Epochs: 101, Loss: 2002645504.0, lr: 0.00430057215563507, time: 102
+Epochs: 102, Loss: 2472026368.0, lr: 0.004248496805467505, time: 102
+Epochs: 103, Loss: 2640100352.0, lr: 0.004196527624809932, time: 102
+Epochs: 104, Loss: 2571413504.0, lr: 0.004144665488415892, time: 102
+Epochs: 105, Loss: 2311302912.0, lr: 0.004092911287424392, time: 104
+Epochs: 106, Loss: 1743036928.0, lr: 0.0040412659298423685, time: 104
+Epochs: 107, Loss: 1624044544.0, lr: 0.003989730341046647, time: 104
+Epochs: 108, Loss: 1494839680.0, lr: 0.003938305464306383, time: 104
+Epochs: 109, Loss: 1493632512.0, lr: 0.0038869922613270673, time: 104
+Epochs: 110, Loss: 1602307072.0, lr: 0.003835791712817216, time: 104
+Epochs: 111, Loss: 1514341376.0, lr: 0.003784704819078975, time: 104
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 201, in <module>
+    loss.backward()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/_tensor.py", line 488, in backward
+    self, gradient, retain_graph, create_graph, inputs=inputs
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/autograd/__init__.py", line 199, in backward
+    allow_unreachable=True, accumulate_grad=True)  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 239, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 74
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

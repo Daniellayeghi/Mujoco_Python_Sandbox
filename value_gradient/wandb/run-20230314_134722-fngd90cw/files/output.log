@@ -1,0 +1,18 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py", line 224, in <module>
+    sim_params.ntime = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/time_search.py", line 32, in optimal_time
+    return bisection_search(func_wrap, criteria, init_time, max_time)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/time_search.py", line 10, in bisection_search
+    if criteria(func(mid)):
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/time_search.py", line 26, in func_wrap
+    y, dydt = odeint(func, x_init, time, method='euler', options=dict(step_size=dt))
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 202, in odeint_adjoint
+    shapes, func, y0, t, rtol, atol, method, options, decreasing_time = _check_inputs(func, y0, t, rtol, atol, method, options, SOLVERS)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 257, in _check_inputs
+    _check_timelike('t', t, True)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 363, in _check_timelike
+    assert isinstance(timelike, torch.Tensor), '{} must be a torch.Tensor'.format(name)
+AssertionError: t must be a torch.Tensor

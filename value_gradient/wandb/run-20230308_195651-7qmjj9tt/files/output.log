@@ -1,0 +1,55 @@
+
+Creating window glfw
+Epochs: 0, Loss: 1527347412992.0, lr: 0.004
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py", line 171, in <module>
+    loss.backward()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/_tensor.py", line 488, in backward
+    self, gradient, retain_graph, create_graph, inputs=inputs
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/autograd/__init__.py", line 199, in backward
+    allow_unreachable=True, accumulate_grad=True)  # Calls into the C++ engine to run the backward pass
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/autograd/function.py", line 267, in apply
+    return user_fn(self, *args)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 150, in backward
+    time_vjps[0] = aug_state[0]
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 150, in backward
+    time_vjps[0] = aug_state[0]
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/_pydevd_bundle/pydevd_frame.py", line 884, in trace_dispatch
+    self.do_wait_suspend(thread, frame, event, arg)
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/_pydevd_bundle/pydevd_frame.py", line 144, in do_wait_suspend
+    self._args[0].do_wait_suspend(*args, **kwargs)
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/pydevd.py", line 1160, in do_wait_suspend
+    self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread)
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/pydevd.py", line 1175, in _do_wait_suspend
+    time.sleep(0.01)
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/pydevd.py", line 2195, in <module>
+    main()
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/pydevd.py", line 2177, in main
+    globals = debugger.run(setup['file'], None, None, is_module)
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/pydevd.py", line 1489, in run
+    return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/pydevd.py", line 1496, in _exec
+    pydev_imports.execfile(file, globals, locals)  # execute the script
+  File "/snap/pycharm-professional/319/plugins/python/helpers/pydev/_pydev_imps/_pydev_execfile.py", line 18, in execfile
+    exec(compile(contents+"\n", file, 'exec'), glob, loc)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py", line 171, in <module>
+    loss.backward()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py", line 64
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)

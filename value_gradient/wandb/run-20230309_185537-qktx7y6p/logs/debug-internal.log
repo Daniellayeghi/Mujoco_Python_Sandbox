@@ -1,0 +1,851 @@
+2023-03-09 18:55:37,764 INFO    StreamThr :27465 [internal.py:wandb_internal():90] W&B internal server running at pid: 27465, started at: 2023-03-09 18:55:37.763618
+2023-03-09 18:55:37,770 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status
+2023-03-09 18:55:37,773 INFO    WriterThread:27465 [datastore.py:open_for_write():85] open: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/run-qktx7y6p.wandb
+2023-03-09 18:55:37,777 DEBUG   SenderThread:27465 [sender.py:send():336] send: header
+2023-03-09 18:55:37,835 DEBUG   SenderThread:27465 [sender.py:send():336] send: run
+2023-03-09 18:55:38,469 INFO    SenderThread:27465 [dir_watcher.py:__init__():219] watching files in: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files
+2023-03-09 18:55:38,469 INFO    SenderThread:27465 [sender.py:_start_run_threads():1081] run started: qktx7y6p with start time 1678388137.763022
+2023-03-09 18:55:38,470 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:38,470 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:38,474 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: check_version
+2023-03-09 18:55:38,475 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: check_version
+2023-03-09 18:55:38,601 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: run_start
+2023-03-09 18:55:38,618 DEBUG   HandlerThread:27465 [system_info.py:__init__():31] System info init
+2023-03-09 18:55:38,618 DEBUG   HandlerThread:27465 [system_info.py:__init__():46] System info init done
+2023-03-09 18:55:38,618 INFO    HandlerThread:27465 [system_monitor.py:start():183] Starting system monitor
+2023-03-09 18:55:38,619 INFO    SystemMonitor:27465 [system_monitor.py:_start():147] Starting system asset monitoring threads
+2023-03-09 18:55:38,619 INFO    HandlerThread:27465 [system_monitor.py:probe():204] Collecting system info
+2023-03-09 18:55:38,620 INFO    SystemMonitor:27465 [interfaces.py:start():187] Started cpu monitoring
+2023-03-09 18:55:38,621 INFO    SystemMonitor:27465 [interfaces.py:start():187] Started disk monitoring
+2023-03-09 18:55:38,622 INFO    SystemMonitor:27465 [interfaces.py:start():187] Started gpu monitoring
+2023-03-09 18:55:38,623 INFO    SystemMonitor:27465 [interfaces.py:start():187] Started memory monitoring
+2023-03-09 18:55:38,625 INFO    SystemMonitor:27465 [interfaces.py:start():187] Started network monitoring
+2023-03-09 18:55:38,664 DEBUG   HandlerThread:27465 [system_info.py:probe():195] Probing system
+2023-03-09 18:55:38,675 DEBUG   HandlerThread:27465 [system_info.py:_probe_git():180] Probing git
+2023-03-09 18:55:38,709 DEBUG   HandlerThread:27465 [system_info.py:_probe_git():188] Probing git done
+2023-03-09 18:55:38,709 DEBUG   HandlerThread:27465 [system_info.py:probe():240] Probing system done
+2023-03-09 18:55:38,709 DEBUG   HandlerThread:27465 [system_monitor.py:probe():213] {'os': 'Linux-5.4.0-144-generic-x86_64-with-Ubuntu-18.04-bionic', 'python': '3.7.13', 'heartbeatAt': '2023-03-09T18:55:38.664942', 'startedAt': '2023-03-09T18:55:37.744345', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': 'tv_value_synthesis_trajopt_cartpole.py', 'codePath': 'value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'git': {'remote': 'https://github.com/Daniellayeghi/Mujoco_Python_Sandbox.git', 'commit': '2ac229b88c0486b5b22ba426a5459dccd7ee23af'}, 'email': 'Daniellayeghi@gmail.com', 'root': '/home/daniel/Repos/Mujoco_Python_Sandbox', 'host': 'daniel-System-Product-Name', 'username': 'daniel', 'executable': '/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/bin/python3', 'cpu_count': 8, 'cpu_count_logical': 16, 'cpu_freq': {'current': 1244.790625, 'min': 1200.0, 'max': 4350.0}, 'cpu_freq_per_core': [{'current': 1200.024, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.092, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.007, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.081, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.058, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.095, 'min': 1200.0, 'max': 4300.0}, {'current': 1342.093, 'min': 1200.0, 'max': 4500.0}, {'current': 1278.366, 'min': 1200.0, 'max': 4500.0}, {'current': 1200.187, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.076, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.114, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.051, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.06, 'min': 1200.0, 'max': 4300.0}, {'current': 1201.008, 'min': 1200.0, 'max': 4300.0}, {'current': 1599.374, 'min': 1200.0, 'max': 4500.0}, {'current': 1294.964, 'min': 1200.0, 'max': 4500.0}], 'disk': {'total': 467.8886032104492, 'used': 234.62965774536133}, 'gpu': 'NVIDIA GeForce GTX 1080 Ti', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11811160064}], 'memory': {'total': 31.042236328125}}
+2023-03-09 18:55:38,710 INFO    HandlerThread:27465 [system_monitor.py:probe():214] Finished collecting system info
+2023-03-09 18:55:38,710 INFO    HandlerThread:27465 [system_monitor.py:probe():217] Publishing system info
+2023-03-09 18:55:38,710 DEBUG   HandlerThread:27465 [system_info.py:_save_pip():52] Saving list of pip packages installed into the current environment
+2023-03-09 18:55:38,711 DEBUG   HandlerThread:27465 [system_info.py:_save_pip():67] Saving pip packages done
+2023-03-09 18:55:38,713 INFO    HandlerThread:27465 [system_monitor.py:probe():219] Finished publishing system info
+2023-03-09 18:55:38,726 DEBUG   SenderThread:27465 [sender.py:send():336] send: files
+2023-03-09 18:55:38,727 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-metadata.json with policy now
+2023-03-09 18:55:38,739 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: stop_status
+2023-03-09 18:55:38,740 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: stop_status
+2023-03-09 18:55:38,948 DEBUG   SenderThread:27465 [sender.py:send():336] send: telemetry
+2023-03-09 18:55:39,081 DEBUG   SenderThread:27465 [sender.py:send():336] send: telemetry
+2023-03-09 18:55:39,422 INFO    wandb-upload_0:27465 [upload_job.py:push():138] Uploaded file /tmp/tmpxlfegnhkwandb/6mliz030-wandb-metadata.json
+2023-03-09 18:55:39,473 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/requirements.txt
+2023-03-09 18:55:39,473 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:39,473 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-metadata.json
+2023-03-09 18:55:39,474 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:40,181 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:40,184 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:40,184 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:40,185 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:40,470 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:40,966 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:40,968 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:40,968 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:40,968 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:41,471 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:41,471 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:41,719 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:41,721 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:41,721 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:41,721 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:42,471 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:42,496 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:42,498 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:42,498 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:42,499 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:43,221 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:43,223 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:43,223 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:43,223 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:55:43,224 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:43,472 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:43,472 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:43,972 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:43,974 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:43,974 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:43,975 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:44,035 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:44,036 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:44,036 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:44,036 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:44,472 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:44,758 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:44,760 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:44,761 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:44,763 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:45,473 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:45,473 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:45,493 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:45,495 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:45,496 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:45,497 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:46,235 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:46,237 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:46,237 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:46,239 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:46,474 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:47,062 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:47,063 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:47,070 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:47,072 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:47,474 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:47,475 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:47,928 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:47,930 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:47,930 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:47,932 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:48,475 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:48,522 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:48,523 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:48,523 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:48,524 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:48,783 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:48,785 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:48,786 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:48,786 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:55:48,787 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:49,475 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:49,476 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:49,620 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:49,623 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:49,623 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:49,625 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:50,476 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:50,490 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:50,493 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:50,493 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:50,495 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:51,355 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:51,357 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:51,357 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:51,359 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:51,476 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:51,477 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:52,229 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:52,230 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:52,231 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:52,232 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:52,477 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:53,042 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:53,042 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:53,043 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:53,043 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:53,106 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:53,109 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:53,111 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:53,112 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:53,477 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:53,478 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:53,736 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:55:53,969 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:53,972 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:53,973 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:53,973 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:55:53,975 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:54,478 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:54,856 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:54,858 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:54,859 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:54,860 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:55,478 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:55,479 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:55,784 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:55,786 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:55,787 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:55,788 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:56,479 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:56,707 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:56,709 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:56,710 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:56,711 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:57,479 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:57,480 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:57,482 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:57,483 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:57,483 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:57,483 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:57,624 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:57,634 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:57,635 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:57,636 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:58,480 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:58,569 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:58,571 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:58,572 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:58,573 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:55:58,737 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:55:59,480 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:55:59,481 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:55:59,515 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:55:59,517 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:55:59,518 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:55:59,518 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:55:59,519 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:00,421 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:00,423 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:00,424 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:00,424 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:00,481 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:01,482 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:03,745 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:04,634 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:04,637 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:04,637 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:04,640 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:04,641 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:05,217 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:05,218 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:05,218 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:05,218 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:05,484 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:05,484 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:05,635 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:05,639 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:05,640 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:05,642 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:06,484 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:06,580 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:06,583 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:06,583 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:06,584 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:07,485 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:07,485 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:07,524 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:07,527 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:07,527 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:07,528 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:08,485 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:08,545 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:08,548 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:08,548 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:08,550 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:08,746 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:09,486 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:09,486 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:09,582 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:09,584 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:09,585 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:09,590 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:09,724 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:09,725 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:09,725 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:09,726 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:10,486 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:10,596 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:10,603 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:11,487 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:11,708 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:12,732 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:13,740 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:13,747 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:14,366 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:14,367 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:14,367 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:14,368 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:14,870 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:15,991 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:17,089 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:18,135 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:18,749 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:19,103 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:19,103 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:19,104 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:19,104 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:19,199 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:20,357 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:20,585 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,586 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,593 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,593 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,593 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,594 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,594 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,594 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,595 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,595 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,595 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,596 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,596 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,596 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,597 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,597 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,597 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,598 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,598 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,598 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,598 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,599 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,599 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,599 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,599 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,600 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,600 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:20,601 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:20,601 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:20,601 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:21,451 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:21,454 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:21,454 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:21,456 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:21,492 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:21,492 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/config.yaml
+2023-03-09 18:56:21,492 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:22,594 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:22,596 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:22,597 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:22,602 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:23,493 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:23,493 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:23,671 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:23,674 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:23,674 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:23,676 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:23,732 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:23,733 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:23,734 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:23,734 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:23,749 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:24,493 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:24,824 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:24,830 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:24,831 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:24,836 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:25,494 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:25,494 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:25,838 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:25,974 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:25,976 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:25,977 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:25,978 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:26,495 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:27,066 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:27,069 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:27,070 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:27,079 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:27,495 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:27,495 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:28,277 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:28,280 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:28,281 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:28,282 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:28,405 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:28,406 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:28,407 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:28,407 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:28,496 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:28,751 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:29,423 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:29,427 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:29,428 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:29,430 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:29,496 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:29,496 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:30,520 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:30,523 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:30,529 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:30,530 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:31,497 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:31,498 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:31,531 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:33,753 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:34,921 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:34,923 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:34,924 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:34,928 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:35,499 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:35,500 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:36,073 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:36,076 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:36,081 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:36,083 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:36,254 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:36,255 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:36,255 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:36,256 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:36,500 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:37,084 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:37,243 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:37,253 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:37,254 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:37,256 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:37,500 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:37,501 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:38,407 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:38,410 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:38,410 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:38,412 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:38,501 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:38,625 DEBUG   SystemMonitor:27465 [system_monitor.py:_start():161] Starting system metrics aggregation loop
+2023-03-09 18:56:38,627 DEBUG   SenderThread:27465 [sender.py:send():336] send: stats
+2023-03-09 18:56:38,754 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:39,501 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:39,557 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:39,561 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:39,561 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:39,563 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:40,502 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:40,728 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:40,731 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:40,732 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:40,733 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:40,943 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:40,944 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:40,944 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:40,945 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:41,502 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:41,503 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:41,916 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:41,920 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:41,921 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:41,922 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:42,503 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:42,923 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:43,002 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:43,004 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:43,004 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:43,006 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:43,504 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:43,504 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:43,755 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:44,180 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:44,183 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:44,184 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:44,185 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:44,504 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:45,423 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:45,425 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:45,425 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:45,427 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:45,505 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:45,505 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:45,560 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:45,560 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:45,561 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:45,561 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:46,581 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:46,584 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:46,585 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:46,587 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:47,506 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:47,506 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:47,831 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:47,833 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:47,833 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:47,835 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:48,506 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:48,756 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:48,836 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:49,081 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:49,084 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:49,084 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:49,086 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:49,507 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:49,507 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:50,200 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:50,201 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:50,201 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:50,202 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:50,235 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:50,237 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:50,237 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:50,238 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:50,507 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:51,490 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:51,492 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:51,493 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:51,495 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:51,508 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:51,508 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:52,713 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:52,715 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:52,716 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:52,718 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:53,509 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:53,509 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:53,758 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:53,920 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:53,921 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:53,922 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:53,922 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:56:53,924 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:54,509 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:54,846 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:54,846 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:54,847 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:54,847 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:55,137 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:55,151 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:55,151 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:55,153 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:55,510 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:55,510 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:56,347 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:56,349 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:56,349 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:56,352 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:56,510 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:57,511 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:57,558 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:57,561 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:57,561 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:57,562 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:58,511 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:58,759 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:56:58,810 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:58,813 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:56:58,814 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:56:58,815 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:56:59,434 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:59,434 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:59,435 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:59,435 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:56:59,512 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:56:59,512 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:56:59,816 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:00,041 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:00,045 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:00,046 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:00,048 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:00,512 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:01,282 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:01,285 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:01,285 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:01,285 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:01,513 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:01,513 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:02,522 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:02,524 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:02,525 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:02,527 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:03,513 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:03,514 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:03,757 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:03,759 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:03,760 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:03,761 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:03,776 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:04,514 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:05,515 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:05,763 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:07,643 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:07,644 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:07,644 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:07,645 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:08,622 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:08,625 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:08,626 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:08,633 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:08,634 DEBUG   SenderThread:27465 [sender.py:send():336] send: stats
+2023-03-09 18:57:08,779 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:09,517 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:09,517 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:09,833 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:09,836 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:09,837 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:09,839 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:10,518 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:10,840 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:11,073 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:11,076 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:11,076 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:11,078 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:11,518 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:11,519 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:12,316 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:12,319 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:12,320 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:12,321 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:12,358 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:12,359 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:12,359 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:12,360 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:12,519 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:13,519 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:13,617 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:13,621 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:13,623 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:13,624 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:13,780 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:14,520 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:14,909 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:14,913 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:14,913 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:14,915 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:15,520 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:15,521 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:15,916 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:16,279 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:16,282 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:16,282 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:16,284 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:16,521 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:17,026 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:17,026 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:17,034 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:17,034 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:17,477 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:17,489 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:17,490 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:17,492 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:17,521 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:17,522 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:18,711 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:18,713 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:18,714 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:18,720 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:18,781 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:19,522 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:19,523 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:19,991 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:19,993 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:19,993 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:19,995 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:20,523 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:20,996 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:21,274 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:21,277 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:21,277 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:21,279 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:21,524 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:21,524 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:21,577 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:21,578 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:21,578 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:21,579 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:22,494 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:22,498 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:22,499 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:22,501 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:22,524 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:23,525 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:23,783 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:23,866 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:23,869 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:23,869 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:23,870 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:24,525 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:25,191 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:25,192 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:25,192 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:25,195 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:25,526 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:25,526 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:26,196 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:26,483 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:26,484 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:26,484 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:26,485 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:26,567 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:26,571 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:26,572 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:26,574 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:27,527 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:27,527 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:27,822 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:27,825 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:27,825 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:27,827 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:28,527 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:28,784 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:29,129 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:29,132 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:29,132 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:29,138 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:29,528 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:29,528 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:30,393 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:30,396 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:30,397 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:30,398 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:30,528 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:31,040 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:31,041 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:31,041 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:31,041 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:31,399 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:31,529 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:31,707 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:31,709 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:31,710 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:31,712 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:32,529 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:32,985 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:32,989 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:32,989 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:32,990 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:33,530 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:33,530 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:33,785 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:34,250 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:34,252 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:34,253 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:34,254 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:34,530 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:35,531 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:35,537 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:35,540 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:35,540 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:35,542 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:35,629 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:35,630 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:35,630 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:35,630 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:36,531 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:36,543 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:36,839 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:36,855 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:36,856 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:36,858 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:37,532 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:37,532 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:38,193 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:38,195 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:38,196 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:38,197 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:38,532 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:38,634 DEBUG   SenderThread:27465 [sender.py:send():336] send: stats
+2023-03-09 18:57:38,786 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:39,478 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:39,481 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:39,481 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:39,483 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:39,533 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:39,533 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:41,534 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:42,484 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:43,787 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:44,055 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:44,055 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:44,056 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:44,056 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:44,592 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:44,598 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:44,599 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:44,600 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:45,536 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:45,536 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:45,887 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:45,890 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:45,891 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:45,892 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:46,536 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:47,202 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:47,206 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:47,206 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:47,211 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:47,537 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:47,537 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:48,212 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:48,518 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:48,521 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:48,522 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:48,524 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:48,537 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:48,641 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:48,641 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:48,642 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:48,642 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:48,789 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 18:57:49,538 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:49,874 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 18:57:49,876 DEBUG   SenderThread:27465 [sender.py:send():336] send: history
+2023-03-09 18:57:49,878 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 18:57:49,880 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:50,538 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:51,236 DEBUG   SenderThread:27465 [sender.py:send():336] send: exit
+2023-03-09 18:57:51,237 INFO    SenderThread:27465 [sender.py:send_exit():559] handling exit code: 1
+2023-03-09 18:57:51,237 INFO    SenderThread:27465 [sender.py:send_exit():561] handling runtime: 132
+2023-03-09 18:57:51,238 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:51,239 INFO    SenderThread:27465 [sender.py:send_exit():567] send defer
+2023-03-09 18:57:51,239 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,239 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 0
+2023-03-09 18:57:51,240 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,240 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 0
+2023-03-09 18:57:51,240 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 1
+2023-03-09 18:57:51,240 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,240 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 1
+2023-03-09 18:57:51,241 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,241 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 1
+2023-03-09 18:57:51,241 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 2
+2023-03-09 18:57:51,241 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,241 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 2
+2023-03-09 18:57:51,241 INFO    HandlerThread:27465 [system_monitor.py:finish():193] Stopping system monitor
+2023-03-09 18:57:51,243 DEBUG   SystemMonitor:27465 [system_monitor.py:_start():168] Finished system metrics aggregation loop
+2023-03-09 18:57:51,243 INFO    HandlerThread:27465 [interfaces.py:finish():199] Joined cpu monitor
+2023-03-09 18:57:51,243 DEBUG   SystemMonitor:27465 [system_monitor.py:_start():172] Publishing last batch of metrics
+2023-03-09 18:57:51,243 INFO    HandlerThread:27465 [interfaces.py:finish():199] Joined disk monitor
+2023-03-09 18:57:51,321 INFO    HandlerThread:27465 [interfaces.py:finish():199] Joined gpu monitor
+2023-03-09 18:57:51,321 INFO    HandlerThread:27465 [interfaces.py:finish():199] Joined memory monitor
+2023-03-09 18:57:51,322 INFO    HandlerThread:27465 [interfaces.py:finish():199] Joined network monitor
+2023-03-09 18:57:51,323 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,323 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 2
+2023-03-09 18:57:51,323 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 3
+2023-03-09 18:57:51,323 DEBUG   SenderThread:27465 [sender.py:send():336] send: stats
+2023-03-09 18:57:51,323 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,324 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 3
+2023-03-09 18:57:51,324 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,324 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 3
+2023-03-09 18:57:51,324 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 4
+2023-03-09 18:57:51,325 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,325 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 4
+2023-03-09 18:57:51,325 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,325 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 4
+2023-03-09 18:57:51,325 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 5
+2023-03-09 18:57:51,325 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,325 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 5
+2023-03-09 18:57:51,333 DEBUG   SenderThread:27465 [sender.py:send():336] send: summary
+2023-03-09 18:57:51,333 INFO    SenderThread:27465 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 18:57:51,334 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,334 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 5
+2023-03-09 18:57:51,334 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 6
+2023-03-09 18:57:51,334 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,334 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 6
+2023-03-09 18:57:51,335 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,335 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 6
+2023-03-09 18:57:51,335 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 7
+2023-03-09 18:57:51,335 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 18:57:51,335 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:51,336 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 7
+2023-03-09 18:57:51,336 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:51,336 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 7
+2023-03-09 18:57:51,539 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json
+2023-03-09 18:57:51,540 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:52,237 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: poll_exit
+2023-03-09 18:57:53,260 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 8
+2023-03-09 18:57:53,260 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: poll_exit
+2023-03-09 18:57:53,260 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:53,261 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 8
+2023-03-09 18:57:53,262 DEBUG   SenderThread:27465 [sender.py:send_request():363] send_request: defer
+2023-03-09 18:57:53,262 INFO    SenderThread:27465 [sender.py:send_request_defer():583] handle sender defer: 8
+2023-03-09 18:57:53,276 INFO    SenderThread:27465 [sender.py:transition_state():587] send defer: 9
+2023-03-09 18:57:53,277 DEBUG   HandlerThread:27465 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 18:57:53,278 DEBUG   SenderThread:27465 [sender.py:send():336] send: artifact
+2023-03-09 18:57:53,278 INFO    HandlerThread:27465 [handler.py:handle_request_defer():170] handle defer: 9
+2023-03-09 18:57:53,540 INFO    Thread-13 :27465 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:57:54,908 WARNING StreamThr :27465 [internal.py:is_dead():416] Internal process exiting, parent pid 27431 disappeared
+2023-03-09 18:57:54,908 ERROR   StreamThr :27465 [internal.py:wandb_internal():153] Internal process shutdown.
+2023-03-09 18:57:55,283 INFO    HandlerThread:27465 [handler.py:finish():842] shutting down handler
+2023-03-09 18:57:55,283 INFO    WriterThread:27465 [datastore.py:close():298] close: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/run-qktx7y6p.wandb
+2023-03-09 18:57:59,565 INFO    SenderThread:27465 [sender.py:send_artifact():1428] sent artifact job-https___github.com_Daniellayeghi_Mujoco_Python_Sandbox.git_value_gradient_tv_value_synthesis_trajopt_cartpole.py - {'id': 'QXJ0aWZhY3Q6MzkxNzU0ODAw', 'digest': 'a81f0771938c0069b9ef55fd6f9148e5', 'state': 'COMMITTED', 'aliases': [{'artifactCollectionName': 'job-https___github.com_Daniellayeghi_Mujoco_Python_Sandbox.git_value_gradient_tv_value_synthesis_trajopt_cartpole.py', 'alias': 'latest'}, {'artifactCollectionName': 'job-https___github.com_Daniellayeghi_Mujoco_Python_Sandbox.git_value_gradient_tv_value_synthesis_trajopt_cartpole.py', 'alias': 'v1'}], 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjU2MzI4NzAy', 'latestArtifact': {'id': 'QXJ0aWZhY3Q6MzkyNjU1MTg0', 'versionIndex': 6}}, 'version': 'v1'}
+2023-03-09 18:57:59,565 INFO    SenderThread:27465 [sender.py:finish():1504] shutting down sender
+2023-03-09 18:57:59,565 INFO    SenderThread:27465 [dir_watcher.py:finish():365] shutting down directory watcher
+2023-03-09 18:58:00,543 INFO    SenderThread:27465 [dir_watcher.py:finish():395] scan: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files
+2023-03-09 18:58:00,543 INFO    SenderThread:27465 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/config.yaml config.yaml
+2023-03-09 18:58:00,544 INFO    SenderThread:27465 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log output.log
+2023-03-09 18:58:00,552 INFO    SenderThread:27465 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/requirements.txt requirements.txt
+2023-03-09 18:58:00,560 INFO    SenderThread:27465 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json wandb-summary.json
+2023-03-09 18:58:00,568 INFO    SenderThread:27465 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-metadata.json wandb-metadata.json
+2023-03-09 18:58:00,568 INFO    SenderThread:27465 [file_pusher.py:finish():164] shutting down file pusher
+2023-03-09 18:58:00,569 INFO    SenderThread:27465 [file_pusher.py:join():169] waiting for file pusher
+2023-03-09 18:58:01,444 INFO    wandb-upload_0:27465 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/config.yaml
+2023-03-09 18:58:01,446 INFO    wandb-upload_1:27465 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/output.log
+2023-03-09 18:58:01,447 INFO    wandb-upload_3:27465 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/requirements.txt
+2023-03-09 18:58:01,447 INFO    wandb-upload_4:27465 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_185537-qktx7y6p/files/wandb-summary.json

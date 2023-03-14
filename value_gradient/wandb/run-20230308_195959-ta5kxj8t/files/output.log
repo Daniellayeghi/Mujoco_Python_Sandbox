@@ -1,0 +1,72 @@
+
+Creating window glfw
+Epochs: 0, Loss: 1527347281920.0, lr: 0.004
+Epochs: 1, Loss: 1496122916864.0, lr: 0.004
+Epochs: 2, Loss: 1454627356672.0, lr: 0.004
+Epochs: 3, Loss: 1402100514816.0, lr: 0.004
+Epochs: 4, Loss: 1338482098176.0, lr: 0.004
+Epochs: 5, Loss: 1264503750656.0, lr: 0.004
+Epochs: 6, Loss: 1181967843328.0, lr: 0.004
+Epochs: 7, Loss: 1093946179584.0, lr: 0.004
+Epochs: 8, Loss: 1004429574144.0, lr: 0.004
+Epochs: 9, Loss: 917468413952.0, lr: 0.004
+Epochs: 10, Loss: 836683825152.0, lr: 0.004
+Epochs: 11, Loss: 765314793472.0, lr: 0.004
+Epochs: 12, Loss: 705940226048.0, lr: 0.004
+Epochs: 13, Loss: 659471269888.0, lr: 0.004
+Epochs: 14, Loss: 624342925312.0, lr: 0.004
+Epochs: 15, Loss: 597964161024.0, lr: 0.004
+Epochs: 16, Loss: 580589584384.0, lr: 0.004
+Epochs: 17, Loss: 573430890496.0, lr: 0.004
+Epochs: 18, Loss: 575448285184.0, lr: 0.004
+Epochs: 19, Loss: 585735012352.0, lr: 0.004
+Epochs: 20, Loss: 600435785728.0, lr: 0.004
+Epochs: 21, Loss: 613953961984.0, lr: 0.004
+Epochs: 22, Loss: 622364655616.0, lr: 0.004
+Epochs: 23, Loss: 623777021952.0, lr: 0.004
+Epochs: 24, Loss: 617775955968.0, lr: 0.004
+Epochs: 25, Loss: 605099589632.0, lr: 0.004
+Epochs: 26, Loss: 587348967424.0, lr: 0.004
+Epochs: 27, Loss: 566653943808.0, lr: 0.004
+Epochs: 28, Loss: 545402486784.0, lr: 0.004
+Epochs: 29, Loss: 525981843456.0, lr: 0.004
+Epochs: 30, Loss: 510398529536.0, lr: 0.004
+Epochs: 31, Loss: 499809878016.0, lr: 0.004
+Epochs: 32, Loss: 494099660800.0, lr: 0.004
+Epochs: 33, Loss: 492025774080.0, lr: 0.004
+Epochs: 34, Loss: 491943362560.0, lr: 0.004
+Epochs: 35, Loss: 492320129024.0, lr: 0.004
+Epochs: 36, Loss: 491922980864.0, lr: 0.004
+Epochs: 37, Loss: 489956966400.0, lr: 0.004
+Epochs: 38, Loss: 486133891072.0, lr: 0.004
+Epochs: 39, Loss: 480583122944.0, lr: 0.004
+Epochs: 40, Loss: 473678675968.0, lr: 0.004
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 171, in <module>
+    loss.backward()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/_tensor.py", line 488, in backward
+    self, gradient, retain_graph, create_graph, inputs=inputs
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/autograd/__init__.py", line 199, in backward
+    allow_unreachable=True, accumulate_grad=True)  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 210, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 64
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

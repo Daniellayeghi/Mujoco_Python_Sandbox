@@ -70,7 +70,7 @@ class BaseRBD(object):
         Tp = self._Tbias(x)
         Tfric = self._Tfric(qd)
         B = self._Bvec()
-        qdd = (Minv @ (Tp - Tfric + B * tau).mT).mT
+        qdd = (Minv @ (Tp - Tfric + tau).mT).mT
         xd = torch.cat((qd[:, :, 0:self._params.nx], qdd), 2).clone()
         return xd
 
@@ -82,7 +82,7 @@ class DoubleIntegrator(BaseRBD):
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(DoubleIntegrator, self).__init__(nsims, params, device, mode)
         self._M = torch.ones((nsims, 1, 1)).to(device) * self.MASS
-        self._b = torch.Tensor([1]).repeat(nsims, 1, 1).to(device)
+        self._b = torch.diag(torch.Tensor([1])).repeat(nsims, 1, 1).to(device)
 
     def _Muact(self, q):
         return None
@@ -132,7 +132,7 @@ class Cartpole(BaseRBD):
         self._L = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
         self._Mp = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
         self._Mc = torch.ones((nsims, 1, 1)).to(device) * self.MASS_C
-        self._b = torch.Tensor([1, 0]).repeat(nsims, 1, 1).to(device)
+        self._b = torch.diag(torch.Tensor([1, 0])).repeat(nsims, 1, 1).to(device)
 
     def _Muact(self, q):
         qc, qp = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
@@ -209,7 +209,7 @@ class DoubleCartpole(BaseRBD):
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(DoubleCartpole, self).__init__(nsims, params, device, mode)
-        self._b = torch.Tensor([1, 0, 0]).repeat(nsims, 1, 1).to(device)
+        self._b = torch.diag(torch.Tensor([1, 0, 0])).repeat(nsims, 1, 1).to(device)
 
     def _Mact(self, q):
         return self._Ms(q)[1]
@@ -299,7 +299,7 @@ class TwoLink(BaseRBD):
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
         super(TwoLink, self).__init__(nsims, params, device, mode)
-        self._b = torch.Tensor([1, 1]).repeat(nsims, 1, 1).to(device)
+        self._b = torch.diag(torch.Tensor([1, 1])).repeat(nsims, 1, 1).to(device)
 
     def _Mact(self, q):
         return self._Ms(q)[1]

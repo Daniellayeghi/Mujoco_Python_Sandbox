@@ -1,0 +1,12 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 194, in <module>
+    traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 202, in odeint_adjoint
+    shapes, func, y0, t, rtol, atol, method, options, decreasing_time = _check_inputs(func, y0, t, rtol, atol, method, options, SOLVERS)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 257, in _check_inputs
+    _check_timelike('t', t, True)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 363, in _check_timelike
+    assert isinstance(timelike, torch.Tensor), '{} must be a torch.Tensor'.format(name)
+AssertionError: t must be a torch.Tensor

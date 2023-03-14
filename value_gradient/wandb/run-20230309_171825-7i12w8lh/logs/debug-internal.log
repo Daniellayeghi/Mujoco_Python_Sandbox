@@ -1,0 +1,236 @@
+2023-03-09 17:18:25,902 INFO    StreamThr :18148 [internal.py:wandb_internal():90] W&B internal server running at pid: 18148, started at: 2023-03-09 17:18:25.901443
+2023-03-09 17:18:25,909 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status
+2023-03-09 17:18:25,912 INFO    WriterThread:18148 [datastore.py:open_for_write():85] open: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/run-7i12w8lh.wandb
+2023-03-09 17:18:25,916 DEBUG   SenderThread:18148 [sender.py:send():336] send: header
+2023-03-09 17:18:25,981 DEBUG   SenderThread:18148 [sender.py:send():336] send: run
+2023-03-09 17:18:27,150 INFO    SenderThread:18148 [dir_watcher.py:__init__():219] watching files in: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files
+2023-03-09 17:18:27,150 INFO    SenderThread:18148 [sender.py:_start_run_threads():1081] run started: 7i12w8lh with start time 1678382305.901422
+2023-03-09 17:18:27,150 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 17:18:27,151 INFO    SenderThread:18148 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 17:18:27,160 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: check_version
+2023-03-09 17:18:27,160 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: check_version
+2023-03-09 17:18:27,946 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: run_start
+2023-03-09 17:18:27,964 DEBUG   HandlerThread:18148 [system_info.py:__init__():31] System info init
+2023-03-09 17:18:27,964 DEBUG   HandlerThread:18148 [system_info.py:__init__():46] System info init done
+2023-03-09 17:18:27,964 INFO    HandlerThread:18148 [system_monitor.py:start():183] Starting system monitor
+2023-03-09 17:18:27,964 INFO    SystemMonitor:18148 [system_monitor.py:_start():147] Starting system asset monitoring threads
+2023-03-09 17:18:27,965 INFO    HandlerThread:18148 [system_monitor.py:probe():204] Collecting system info
+2023-03-09 17:18:27,966 INFO    SystemMonitor:18148 [interfaces.py:start():187] Started cpu monitoring
+2023-03-09 17:18:27,967 INFO    SystemMonitor:18148 [interfaces.py:start():187] Started disk monitoring
+2023-03-09 17:18:27,969 INFO    SystemMonitor:18148 [interfaces.py:start():187] Started gpu monitoring
+2023-03-09 17:18:27,970 INFO    SystemMonitor:18148 [interfaces.py:start():187] Started memory monitoring
+2023-03-09 17:18:27,971 INFO    SystemMonitor:18148 [interfaces.py:start():187] Started network monitoring
+2023-03-09 17:18:28,010 DEBUG   HandlerThread:18148 [system_info.py:probe():195] Probing system
+2023-03-09 17:18:28,021 DEBUG   HandlerThread:18148 [system_info.py:_probe_git():180] Probing git
+2023-03-09 17:18:28,057 DEBUG   HandlerThread:18148 [system_info.py:_probe_git():188] Probing git done
+2023-03-09 17:18:28,057 DEBUG   HandlerThread:18148 [system_info.py:probe():240] Probing system done
+2023-03-09 17:18:28,057 DEBUG   HandlerThread:18148 [system_monitor.py:probe():213] {'os': 'Linux-5.4.0-144-generic-x86_64-with-Ubuntu-18.04-bionic', 'python': '3.7.13', 'heartbeatAt': '2023-03-09T17:18:28.010673', 'startedAt': '2023-03-09T17:18:25.879908', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': 'tv_value_synthesis_trajopt_cartpole.py', 'codePath': 'value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'git': {'remote': 'https://github.com/Daniellayeghi/Mujoco_Python_Sandbox.git', 'commit': '2ac229b88c0486b5b22ba426a5459dccd7ee23af'}, 'email': 'Daniellayeghi@gmail.com', 'root': '/home/daniel/Repos/Mujoco_Python_Sandbox', 'host': 'daniel-System-Product-Name', 'username': 'daniel', 'executable': '/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/bin/python3', 'cpu_count': 8, 'cpu_count_logical': 16, 'cpu_freq': {'current': 1223.49675, 'min': 1200.0, 'max': 4350.0}, 'cpu_freq_per_core': [{'current': 1200.002, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.053, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.008, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.04, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.05, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.163, 'min': 1200.0, 'max': 4300.0}, {'current': 1292.475, 'min': 1200.0, 'max': 4500.0}, {'current': 1300.001, 'min': 1200.0, 'max': 4500.0}, {'current': 1200.725, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.07, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.113, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.07, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.038, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.095, 'min': 1200.0, 'max': 4300.0}, {'current': 1300.171, 'min': 1200.0, 'max': 4500.0}, {'current': 1300.239, 'min': 1200.0, 'max': 4500.0}], 'disk': {'total': 467.8886032104492, 'used': 234.65468978881836}, 'gpu': 'NVIDIA GeForce GTX 1080 Ti', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11811160064}], 'memory': {'total': 31.042236328125}}
+2023-03-09 17:18:28,058 INFO    HandlerThread:18148 [system_monitor.py:probe():214] Finished collecting system info
+2023-03-09 17:18:28,058 INFO    HandlerThread:18148 [system_monitor.py:probe():217] Publishing system info
+2023-03-09 17:18:28,058 DEBUG   HandlerThread:18148 [system_info.py:_save_pip():52] Saving list of pip packages installed into the current environment
+2023-03-09 17:18:28,059 DEBUG   HandlerThread:18148 [system_info.py:_save_pip():67] Saving pip packages done
+2023-03-09 17:18:28,060 INFO    HandlerThread:18148 [system_monitor.py:probe():219] Finished publishing system info
+2023-03-09 17:18:28,074 DEBUG   SenderThread:18148 [sender.py:send():336] send: files
+2023-03-09 17:18:28,075 INFO    SenderThread:18148 [sender.py:_save_file():1332] saving file wandb-metadata.json with policy now
+2023-03-09 17:18:28,084 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: stop_status
+2023-03-09 17:18:28,089 DEBUG   SenderThread:18148 [sender.py:send():336] send: telemetry
+2023-03-09 17:18:28,090 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: stop_status
+2023-03-09 17:18:28,154 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/requirements.txt
+2023-03-09 17:18:28,154 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/wandb-summary.json
+2023-03-09 17:18:28,155 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/wandb-metadata.json
+2023-03-09 17:18:28,466 DEBUG   SenderThread:18148 [sender.py:send():336] send: telemetry
+2023-03-09 17:18:28,679 INFO    wandb-upload_0:18148 [upload_job.py:push():138] Uploaded file /tmp/tmpy02hjsxtwandb/rokdih18-wandb-metadata.json
+2023-03-09 17:18:29,151 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/output.log
+2023-03-09 17:18:31,152 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/output.log
+2023-03-09 17:18:31,468 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:18:32,055 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-09 17:18:32,058 DEBUG   SenderThread:18148 [sender.py:send():336] send: history
+2023-03-09 17:18:32,058 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 17:18:32,059 INFO    SenderThread:18148 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 17:18:32,153 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/wandb-summary.json
+2023-03-09 17:18:35,155 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/output.log
+2023-03-09 17:18:37,063 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:18:42,065 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:18:43,081 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:18:47,066 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:18:48,082 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:18:52,067 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:18:53,084 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:18:57,073 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:18:58,085 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:18:58,166 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/config.yaml
+2023-03-09 17:19:02,441 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:03,086 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:07,442 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:08,089 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:12,443 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:13,090 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:17,444 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:18,091 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:22,446 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:23,092 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:27,447 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:27,971 DEBUG   SystemMonitor:18148 [system_monitor.py:_start():161] Starting system metrics aggregation loop
+2023-03-09 17:19:27,974 DEBUG   SenderThread:18148 [sender.py:send():336] send: stats
+2023-03-09 17:19:28,093 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:32,976 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:33,094 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:37,977 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:38,096 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:42,979 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:43,097 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:47,980 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:48,098 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:52,981 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:19:53,100 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:57,976 DEBUG   SenderThread:18148 [sender.py:send():336] send: stats
+2023-03-09 17:19:58,101 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:19:58,977 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:03,102 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:03,978 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:08,103 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:08,979 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:13,105 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:13,980 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:18,108 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:18,981 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:23,109 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:23,983 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:27,977 DEBUG   SenderThread:18148 [sender.py:send():336] send: stats
+2023-03-09 17:20:28,110 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:29,979 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:33,111 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:34,980 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:38,113 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:39,981 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:42,686 DEBUG   SenderThread:18148 [sender.py:send():336] send: exit
+2023-03-09 17:20:42,687 INFO    SenderThread:18148 [sender.py:send_exit():559] handling exit code: 1
+2023-03-09 17:20:42,687 INFO    SenderThread:18148 [sender.py:send_exit():561] handling runtime: 134
+2023-03-09 17:20:42,691 INFO    SenderThread:18148 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 17:20:42,691 INFO    SenderThread:18148 [sender.py:send_exit():567] send defer
+2023-03-09 17:20:42,692 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,692 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 0
+2023-03-09 17:20:42,693 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,693 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 0
+2023-03-09 17:20:42,693 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 1
+2023-03-09 17:20:42,693 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,693 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 1
+2023-03-09 17:20:42,693 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,694 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 1
+2023-03-09 17:20:42,694 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 2
+2023-03-09 17:20:42,694 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,694 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 2
+2023-03-09 17:20:42,694 INFO    HandlerThread:18148 [system_monitor.py:finish():193] Stopping system monitor
+2023-03-09 17:20:42,695 DEBUG   SystemMonitor:18148 [system_monitor.py:_start():168] Finished system metrics aggregation loop
+2023-03-09 17:20:42,696 DEBUG   SystemMonitor:18148 [system_monitor.py:_start():172] Publishing last batch of metrics
+2023-03-09 17:20:42,698 INFO    HandlerThread:18148 [interfaces.py:finish():199] Joined cpu monitor
+2023-03-09 17:20:42,698 INFO    HandlerThread:18148 [interfaces.py:finish():199] Joined disk monitor
+2023-03-09 17:20:42,772 INFO    HandlerThread:18148 [interfaces.py:finish():199] Joined gpu monitor
+2023-03-09 17:20:42,772 INFO    HandlerThread:18148 [interfaces.py:finish():199] Joined memory monitor
+2023-03-09 17:20:42,773 INFO    HandlerThread:18148 [interfaces.py:finish():199] Joined network monitor
+2023-03-09 17:20:42,774 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,774 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 2
+2023-03-09 17:20:42,774 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 3
+2023-03-09 17:20:42,774 DEBUG   SenderThread:18148 [sender.py:send():336] send: stats
+2023-03-09 17:20:42,775 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,775 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 3
+2023-03-09 17:20:42,776 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,776 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 3
+2023-03-09 17:20:42,776 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 4
+2023-03-09 17:20:42,776 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,776 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 4
+2023-03-09 17:20:42,777 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,777 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 4
+2023-03-09 17:20:42,777 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 5
+2023-03-09 17:20:42,777 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,777 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 5
+2023-03-09 17:20:42,777 DEBUG   SenderThread:18148 [sender.py:send():336] send: summary
+2023-03-09 17:20:42,778 INFO    SenderThread:18148 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 17:20:42,778 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,778 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 5
+2023-03-09 17:20:42,778 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 6
+2023-03-09 17:20:42,779 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,779 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 6
+2023-03-09 17:20:42,779 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,779 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 6
+2023-03-09 17:20:42,779 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 7
+2023-03-09 17:20:42,780 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:42,780 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:42,780 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 7
+2023-03-09 17:20:42,780 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:42,780 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 7
+2023-03-09 17:20:43,223 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/wandb-summary.json
+2023-03-09 17:20:43,687 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: poll_exit
+2023-03-09 17:20:44,714 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 8
+2023-03-09 17:20:44,714 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: poll_exit
+2023-03-09 17:20:44,715 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:44,715 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 8
+2023-03-09 17:20:44,716 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:44,716 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 8
+2023-03-09 17:20:44,734 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 9
+2023-03-09 17:20:44,735 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:44,735 DEBUG   SenderThread:18148 [sender.py:send():336] send: artifact
+2023-03-09 17:20:44,735 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 9
+2023-03-09 17:20:45,224 INFO    Thread-13 :18148 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/output.log
+2023-03-09 17:20:47,866 INFO    SenderThread:18148 [sender.py:send_artifact():1428] sent artifact job-https___github.com_Daniellayeghi_Mujoco_Python_Sandbox.git_value_gradient_tv_value_synthesis_trajopt_cartpole.py - {'id': 'QXJ0aWZhY3Q6MzkxNzU1Mjgy', 'digest': '82622f952a6bb6db3362b468cb4aeac5', 'state': 'COMMITTED', 'aliases': [{'artifactCollectionName': 'job-https___github.com_Daniellayeghi_Mujoco_Python_Sandbox.git_value_gradient_tv_value_synthesis_trajopt_cartpole.py', 'alias': 'latest'}, {'artifactCollectionName': 'job-https___github.com_Daniellayeghi_Mujoco_Python_Sandbox.git_value_gradient_tv_value_synthesis_trajopt_cartpole.py', 'alias': 'v2'}], 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjU2MzI4NzAy', 'latestArtifact': {'id': 'QXJ0aWZhY3Q6MzkyNTQyMjc1', 'versionIndex': 4}}, 'version': 'v2'}
+2023-03-09 17:20:47,867 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:47,867 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 17:20:47,867 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 9
+2023-03-09 17:20:47,868 INFO    SenderThread:18148 [dir_watcher.py:finish():365] shutting down directory watcher
+2023-03-09 17:20:48,226 INFO    SenderThread:18148 [dir_watcher.py:finish():395] scan: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files
+2023-03-09 17:20:48,226 INFO    SenderThread:18148 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/config.yaml config.yaml
+2023-03-09 17:20:48,227 INFO    SenderThread:18148 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/output.log output.log
+2023-03-09 17:20:48,234 INFO    SenderThread:18148 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/requirements.txt requirements.txt
+2023-03-09 17:20:48,235 INFO    SenderThread:18148 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/wandb-summary.json wandb-summary.json
+2023-03-09 17:20:48,247 INFO    SenderThread:18148 [dir_watcher.py:finish():409] scan save: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/wandb-metadata.json wandb-metadata.json
+2023-03-09 17:20:48,248 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 10
+2023-03-09 17:20:48,257 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:48,257 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 10
+2023-03-09 17:20:48,258 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:48,259 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 10
+2023-03-09 17:20:48,259 INFO    SenderThread:18148 [file_pusher.py:finish():164] shutting down file pusher
+2023-03-09 17:20:48,689 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-09 17:20:49,118 INFO    wandb-upload_0:18148 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/output.log
+2023-03-09 17:20:49,183 INFO    wandb-upload_4:18148 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/wandb-summary.json
+2023-03-09 17:20:49,216 INFO    wandb-upload_2:18148 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/requirements.txt
+2023-03-09 17:20:49,251 INFO    wandb-upload_1:18148 [upload_job.py:push():138] Uploaded file /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/files/config.yaml
+2023-03-09 17:20:49,452 INFO    Thread-12 :18148 [sender.py:transition_state():587] send defer: 11
+2023-03-09 17:20:49,452 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:49,453 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 11
+2023-03-09 17:20:49,453 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:49,453 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 11
+2023-03-09 17:20:49,454 INFO    SenderThread:18148 [file_pusher.py:join():169] waiting for file pusher
+2023-03-09 17:20:49,454 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 12
+2023-03-09 17:20:49,454 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:49,454 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 12
+2023-03-09 17:20:49,455 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:49,455 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 12
+2023-03-09 17:20:49,948 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 13
+2023-03-09 17:20:49,949 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:49,949 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 13
+2023-03-09 17:20:49,950 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:49,950 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 13
+2023-03-09 17:20:49,950 INFO    SenderThread:18148 [sender.py:transition_state():587] send defer: 14
+2023-03-09 17:20:49,951 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: defer
+2023-03-09 17:20:49,951 DEBUG   SenderThread:18148 [sender.py:send():336] send: final
+2023-03-09 17:20:49,951 INFO    HandlerThread:18148 [handler.py:handle_request_defer():170] handle defer: 14
+2023-03-09 17:20:49,951 DEBUG   SenderThread:18148 [sender.py:send():336] send: footer
+2023-03-09 17:20:49,952 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: defer
+2023-03-09 17:20:49,952 INFO    SenderThread:18148 [sender.py:send_request_defer():583] handle sender defer: 14
+2023-03-09 17:20:49,953 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: poll_exit
+2023-03-09 17:20:49,954 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: poll_exit
+2023-03-09 17:20:49,954 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: server_info
+2023-03-09 17:20:49,955 DEBUG   SenderThread:18148 [sender.py:send_request():363] send_request: server_info
+2023-03-09 17:20:49,960 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: get_summary
+2023-03-09 17:20:49,962 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: sampled_history
+2023-03-09 17:20:50,203 INFO    MainThread:18148 [wandb_run.py:_footer_history_summary_info():3429] rendering history
+2023-03-09 17:20:50,204 INFO    MainThread:18148 [wandb_run.py:_footer_history_summary_info():3461] rendering summary
+2023-03-09 17:20:50,204 INFO    MainThread:18148 [wandb_run.py:_footer_sync_info():3387] logging synced files
+2023-03-09 17:20:50,205 DEBUG   HandlerThread:18148 [handler.py:handle_request():144] handle_request: shutdown
+2023-03-09 17:20:50,205 INFO    HandlerThread:18148 [handler.py:finish():842] shutting down handler
+2023-03-09 17:20:50,955 INFO    WriterThread:18148 [datastore.py:close():298] close: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_171825-7i12w8lh/run-7i12w8lh.wandb
+2023-03-09 17:20:51,057 WARNING StreamThr :18148 [internal.py:is_dead():416] Internal process exiting, parent pid 18115 disappeared
+2023-03-09 17:20:51,057 ERROR   StreamThr :18148 [internal.py:wandb_internal():153] Internal process shutdown.
+2023-03-09 17:20:51,203 INFO    SenderThread:18148 [sender.py:finish():1504] shutting down sender
+2023-03-09 17:20:51,204 INFO    SenderThread:18148 [file_pusher.py:finish():164] shutting down file pusher
+2023-03-09 17:20:51,204 INFO    SenderThread:18148 [file_pusher.py:join():169] waiting for file pusher

@@ -1,0 +1,120 @@
+2023-03-08 19:56:51,913 INFO    StreamThr :4194 [internal.py:wandb_internal():90] W&B internal server running at pid: 4194, started at: 2023-03-08 19:56:51.910203
+2023-03-08 19:56:51,921 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status
+2023-03-08 19:56:51,925 INFO    WriterThread:4194 [datastore.py:open_for_write():85] open: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/run-7qmjj9tt.wandb
+2023-03-08 19:56:51,938 DEBUG   SenderThread:4194 [sender.py:send():336] send: header
+2023-03-08 19:56:51,950 DEBUG   SenderThread:4194 [sender.py:send():336] send: run
+2023-03-08 19:56:52,450 INFO    SenderThread:4194 [dir_watcher.py:__init__():219] watching files in: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files
+2023-03-08 19:56:52,451 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: check_version
+2023-03-08 19:56:52,451 INFO    SenderThread:4194 [sender.py:_start_run_threads():1081] run started: 7qmjj9tt with start time 1678305411.904174
+2023-03-08 19:56:52,453 DEBUG   SenderThread:4194 [sender.py:send_request():363] send_request: summary_record
+2023-03-08 19:56:52,454 INFO    SenderThread:4194 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-08 19:56:52,456 DEBUG   SenderThread:4194 [sender.py:send_request():363] send_request: check_version
+2023-03-08 19:56:52,697 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: run_start
+2023-03-08 19:56:52,717 DEBUG   HandlerThread:4194 [system_info.py:__init__():31] System info init
+2023-03-08 19:56:52,718 DEBUG   HandlerThread:4194 [system_info.py:__init__():46] System info init done
+2023-03-08 19:56:52,718 INFO    HandlerThread:4194 [system_monitor.py:start():183] Starting system monitor
+2023-03-08 19:56:52,719 INFO    SystemMonitor:4194 [system_monitor.py:_start():147] Starting system asset monitoring threads
+2023-03-08 19:56:52,723 INFO    HandlerThread:4194 [system_monitor.py:probe():204] Collecting system info
+2023-03-08 19:56:52,723 INFO    SystemMonitor:4194 [interfaces.py:start():187] Started cpu monitoring
+2023-03-08 19:56:52,725 INFO    SystemMonitor:4194 [interfaces.py:start():187] Started disk monitoring
+2023-03-08 19:56:52,729 INFO    SystemMonitor:4194 [interfaces.py:start():187] Started gpu monitoring
+2023-03-08 19:56:52,735 INFO    SystemMonitor:4194 [interfaces.py:start():187] Started memory monitoring
+2023-03-08 19:56:52,739 INFO    SystemMonitor:4194 [interfaces.py:start():187] Started network monitoring
+2023-03-08 19:56:52,773 DEBUG   HandlerThread:4194 [system_info.py:probe():195] Probing system
+2023-03-08 19:56:52,784 DEBUG   HandlerThread:4194 [system_info.py:_probe_git():180] Probing git
+2023-03-08 19:56:52,822 DEBUG   HandlerThread:4194 [system_info.py:_probe_git():188] Probing git done
+2023-03-08 19:56:52,823 DEBUG   HandlerThread:4194 [system_info.py:probe():240] Probing system done
+2023-03-08 19:56:52,823 DEBUG   HandlerThread:4194 [system_monitor.py:probe():213] {'os': 'Linux-5.4.0-144-generic-x86_64-with-Ubuntu-18.04-bionic', 'python': '3.7.13', 'heartbeatAt': '2023-03-08T19:56:52.773591', 'startedAt': '2023-03-08T19:56:51.876295', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': '/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'codePath': 'value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'git': {'remote': 'https://github.com/Daniellayeghi/Mujoco_Python_Sandbox.git', 'commit': '2ac229b88c0486b5b22ba426a5459dccd7ee23af'}, 'email': 'Daniellayeghi@gmail.com', 'root': '/home/daniel/Repos/Mujoco_Python_Sandbox', 'host': 'daniel-System-Product-Name', 'username': 'daniel', 'executable': '/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/bin/python', 'cpu_count': 8, 'cpu_count_logical': 16, 'cpu_freq': {'current': 1274.4328125, 'min': 1200.0, 'max': 4350.0}, 'cpu_freq_per_core': [{'current': 1200.04, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.004, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.017, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.008, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.032, 'min': 1200.0, 'max': 4300.0}, {'current': 1501.914, 'min': 1200.0, 'max': 4300.0}, {'current': 1300.003, 'min': 1200.0, 'max': 4500.0}, {'current': 1320.964, 'min': 1200.0, 'max': 4500.0}, {'current': 1200.013, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.004, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.034, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.016, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.112, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.062, 'min': 1200.0, 'max': 4300.0}, {'current': 1300.547, 'min': 1200.0, 'max': 4500.0}, {'current': 1380.75, 'min': 1200.0, 'max': 4500.0}], 'disk': {'total': 467.8886032104492, 'used': 234.54421997070312}, 'gpu': 'NVIDIA GeForce GTX 1080 Ti', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11811160064}], 'memory': {'total': 31.042236328125}}
+2023-03-08 19:56:52,824 INFO    HandlerThread:4194 [system_monitor.py:probe():214] Finished collecting system info
+2023-03-08 19:56:52,824 INFO    HandlerThread:4194 [system_monitor.py:probe():217] Publishing system info
+2023-03-08 19:56:52,825 DEBUG   HandlerThread:4194 [system_info.py:_save_pip():52] Saving list of pip packages installed into the current environment
+2023-03-08 19:56:52,830 DEBUG   HandlerThread:4194 [system_info.py:_save_pip():67] Saving pip packages done
+2023-03-08 19:56:52,851 INFO    HandlerThread:4194 [system_monitor.py:probe():219] Finished publishing system info
+2023-03-08 19:56:52,865 DEBUG   SenderThread:4194 [sender.py:send():336] send: files
+2023-03-08 19:56:52,867 INFO    SenderThread:4194 [sender.py:_save_file():1332] saving file wandb-metadata.json with policy now
+2023-03-08 19:56:52,885 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: stop_status
+2023-03-08 19:56:52,907 DEBUG   SenderThread:4194 [sender.py:send_request():363] send_request: stop_status
+2023-03-08 19:56:53,116 DEBUG   SenderThread:4194 [sender.py:send():336] send: telemetry
+2023-03-08 19:56:53,443 DEBUG   SenderThread:4194 [sender.py:send():336] send: telemetry
+2023-03-08 19:56:53,469 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/wandb-metadata.json
+2023-03-08 19:56:53,470 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/wandb-summary.json
+2023-03-08 19:56:53,471 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/output.log
+2023-03-08 19:56:53,472 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/requirements.txt
+2023-03-08 19:56:53,536 INFO    wandb-upload_0:4194 [upload_job.py:push():138] Uploaded file /tmp/tmpydyc_ls8wandb/zvx376gu-wandb-metadata.json
+2023-03-08 19:56:55,451 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/output.log
+2023-03-08 19:56:57,445 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:02,446 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:07,448 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:07,880 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:07,881 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:12,449 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:12,882 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:17,451 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:17,884 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:22,458 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:22,885 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:23,498 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/config.yaml
+2023-03-08 19:57:27,887 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:28,348 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:32,889 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:33,350 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:37,890 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:38,351 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:42,893 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:43,353 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:47,894 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:48,355 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:52,740 DEBUG   SystemMonitor:4194 [system_monitor.py:_start():161] Starting system metrics aggregation loop
+2023-03-08 19:57:52,746 DEBUG   SenderThread:4194 [sender.py:send():336] send: stats
+2023-03-08 19:57:52,896 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:53,749 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:57:57,898 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:57:58,751 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:02,900 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:03,752 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:07,901 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:08,754 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:09,121 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-08 19:58:09,130 DEBUG   SenderThread:4194 [sender.py:send():336] send: history
+2023-03-08 19:58:09,131 DEBUG   SenderThread:4194 [sender.py:send_request():363] send_request: summary_record
+2023-03-08 19:58:09,159 INFO    SenderThread:4194 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-08 19:58:09,546 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/wandb-summary.json
+2023-03-08 19:58:11,549 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/output.log
+2023-03-08 19:58:12,903 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:14,163 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:17,905 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:19,165 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:20,810 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-08 19:58:20,811 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-08 19:58:20,811 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-08 19:58:20,812 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: partial_history
+2023-03-08 19:58:22,747 DEBUG   SenderThread:4194 [sender.py:send():336] send: stats
+2023-03-08 19:58:22,912 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:24,748 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:27,914 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:29,750 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:32,916 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:34,757 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:37,917 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:39,758 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:42,919 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:44,760 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:47,921 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:49,761 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:52,753 DEBUG   SenderThread:4194 [sender.py:send():336] send: stats
+2023-03-08 19:58:52,923 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:58:55,756 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:58:57,924 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:59:00,757 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:59:02,927 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:59:05,759 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:59:07,927 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:59:10,760 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:59:12,929 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: keepalive
+2023-03-08 19:59:15,619 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/output.log
+2023-03-08 19:59:15,806 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:59:17,621 INFO    Thread-17 :4194 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230308_195651-7qmjj9tt/files/output.log
+2023-03-08 19:59:20,808 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:59:22,757 DEBUG   SenderThread:4194 [sender.py:send():336] send: stats
+2023-03-08 19:59:26,760 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report
+2023-03-08 19:59:31,761 DEBUG   HandlerThread:4194 [handler.py:handle_request():144] handle_request: status_report

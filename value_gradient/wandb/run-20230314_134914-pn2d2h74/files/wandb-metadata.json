@@ -1,0 +1,125 @@
+{
+    "os": "Linux-5.4.0-144-generic-x86_64-with-Ubuntu-18.04-bionic",
+    "python": "3.7.13",
+    "heartbeatAt": "2023-03-14T13:49:15.788635",
+    "startedAt": "2023-03-14T13:49:14.496446",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py",
+    "codePath": "value_gradient/tv_value_synthesis_trajopt_cartpole.py",
+    "git": {
+        "remote": "https://github.com/Daniellayeghi/Mujoco_Python_Sandbox.git",
+        "commit": "2ac229b88c0486b5b22ba426a5459dccd7ee23af"
+    },
+    "email": "Daniellayeghi@gmail.com",
+    "root": "/home/daniel/Repos/Mujoco_Python_Sandbox",
+    "host": "daniel-System-Product-Name",
+    "username": "daniel",
+    "executable": "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 1217.3961250000002,
+        "min": 1200.0,
+        "max": 4350.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1200.044,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1200.078,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1200.038,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1237.046,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1200.005,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1200.001,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1300.073,
+            "min": 1200.0,
+            "max": 4500.0
+        },
+        {
+            "current": 1300.001,
+            "min": 1200.0,
+            "max": 4500.0
+        },
+        {
+            "current": 1200.012,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1200.038,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1200.076,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1211.206,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1200.022,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1199.987,
+            "min": 1200.0,
+            "max": 4300.0
+        },
+        {
+            "current": 1300.042,
+            "min": 1200.0,
+            "max": 4500.0
+        },
+        {
+            "current": 1300.063,
+            "min": 1200.0,
+            "max": 4500.0
+        }
+    ],
+    "disk": {
+        "total": 467.8886032104492,
+        "used": 235.3429946899414
+    },
+    "gpu": "NVIDIA GeForce GTX 1080 Ti",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce GTX 1080 Ti",
+            "memory_total": 11811160064
+        }
+    ],
+    "memory": {
+        "total": 31.042236328125
+    }
+}

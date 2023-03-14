@@ -1,0 +1,6 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py", line 177, in <module>
+    traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+TypeError: 'module' object is not callable

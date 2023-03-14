@@ -9,11 +9,13 @@ from utilities.mujoco_torch import SimulationParams
 from PSDNets import ICNN
 from torchdiffeq_ctrl import odeint_adjoint as ctrl_odeint
 from mj_renderer import *
+torch.manual_seed(0)
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 10, 10, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 10, 700, 0.01)
 tl_params = ModelParams(2, 2, 1, 4, 4)
-max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1.0, 15, 10, 'inv'
-Q = torch.diag(torch.Tensor([5, 5, .0001, .0001])).repeat(sim_params.nsim, 1, 1).to(device)
+max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1.0, 15, 1, 'fwd'
+Q = torch.diag(torch.Tensor([10, 10, .0001, .0001])).repeat(sim_params.nsim, 1, 1).to(device)
+R = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([1000, 1000, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-0, sim_params.nsim, 1, 1))
 tl = TwoLink(sim_params.nsim, tl_params, device)
@@ -101,6 +103,7 @@ def batch_state_loss(x: torch.Tensor):
 
 
 def batch_inv_dynamics_loss(x, acc, alpha):
+    x, acc = x[:-1].clone(), acc[:-1, :, :, sim_params.nv:].clone()
     q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
     q = q.reshape((q.shape[0]*q.shape[1], 1, sim_params.nq))
     x_reshape = x.reshape((x.shape[0]*x.shape[1], 1, sim_params.nqv))
@@ -121,7 +124,7 @@ dyn_system = ProjectedDynamicalSystem(
 ).to(device)
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device).requires_grad_(True)
 one_step = torch.linspace(0, dt, 2).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=2e-3, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=4e-3, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 
@@ -157,8 +160,9 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
             traj, dtrj_dt = ctrl_odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
-            acc = dtrj_dt[:, :, :, sim_params.nv:].clone()
-            loss = loss_function(traj, acc, alpha)
+            # acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
+            acc = dtrj_dt[:, :, :, sim_params.nv:]
+            loss = loss_function(traj, dtrj_dt, alpha)
             loss_buffer.append(loss.item())
             loss.backward()
             optimizer.step()
@@ -185,8 +189,8 @@ if __name__ == "__main__":
                     ax1.set_title('Pos')
                     ax2 = plt.subplot(221)
                     ax2.margins(0.05)  # Values >0.0 zoom out
-                    ax2.plot(dtrj_dt[:, selection, 0, 0].cpu().detach())
-                    ax2.plot(dtrj_dt[:, selection, 0, 1].cpu().detach())
+                    ax2.plot(acc[:, selection, 0, 0].cpu().detach())
+                    ax2.plot(acc[:, selection, 0, 1].cpu().detach())
                     ax2.set_title('Acc')
                     traj_tl_mj = transform_coordinates_tl(traj.clone())
                     renderer.render(traj_tl_mj[:, selection, 0, :tl_params.nq].cpu().detach().numpy())

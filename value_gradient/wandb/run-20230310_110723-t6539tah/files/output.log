@@ -1,0 +1,210 @@
+Creating window glfw
+Epochs: 1, Loss: 1158870912.0, lr: 0.004, time: 75, False
+Epochs: 2, Loss: 1144612224.0, lr: 0.004, time: 75, False
+Epochs: 3, Loss: 1130515968.0, lr: 0.004, time: 75, False
+Epochs: 4, Loss: 1116594304.0, lr: 0.004, time: 75, False
+Epochs: 5, Loss: 1102701696.0, lr: 0.004, time: 75, False
+Epochs: 6, Loss: 1088807168.0, lr: 0.004, time: 75, False
+Epochs: 7, Loss: 1074864384.0, lr: 0.004, time: 75, False
+Epochs: 8, Loss: 1060777088.0, lr: 0.004, time: 75, False
+Epochs: 9, Loss: 1046480576.0, lr: 0.004, time: 75, False
+Epochs: 10, Loss: 1031915648.0, lr: 0.004, time: 75, False
+Epochs: 11, Loss: 1016978304.0, lr: 0.004, time: 75, False
+Epochs: 12, Loss: 1001611904.0, lr: 0.004, time: 75, False
+Epochs: 13, Loss: 985780480.0, lr: 0.004, time: 75, False
+Epochs: 14, Loss: 969336832.0, lr: 0.004, time: 75, False
+Epochs: 15, Loss: 952278848.0, lr: 0.004, time: 75, False
+Epochs: 16, Loss: 934522112.0, lr: 0.004, time: 75, False
+Epochs: 17, Loss: 916032896.0, lr: 0.004, time: 75, False
+Epochs: 18, Loss: 896808576.0, lr: 0.004, time: 75, False
+Epochs: 19, Loss: 876804928.0, lr: 0.004, time: 75, False
+Epochs: 20, Loss: 856012736.0, lr: 0.004, time: 75, False
+Epochs: 21, Loss: 834465792.0, lr: 0.004, time: 75, False
+Epochs: 22, Loss: 812152192.0, lr: 0.004, time: 75, False
+Epochs: 23, Loss: 789116736.0, lr: 0.004, time: 75, False
+Epochs: 24, Loss: 765475776.0, lr: 0.004, time: 75, False
+Epochs: 25, Loss: 741262080.0, lr: 0.004, time: 75, False
+Epochs: 26, Loss: 716616064.0, lr: 0.004, time: 75, False
+Epochs: 27, Loss: 691802752.0, lr: 0.004, time: 75, False
+Epochs: 28, Loss: 666884160.0, lr: 0.004, time: 75, False
+Epochs: 29, Loss: 642105792.0, lr: 0.004, time: 75, False
+Epochs: 30, Loss: 617704896.0, lr: 0.004, time: 75, False
+Epochs: 31, Loss: 594083776.0, lr: 0.004, time: 75, False
+Epochs: 32, Loss: 571373888.0, lr: 0.004, time: 75, False
+Epochs: 33, Loss: 549837120.0, lr: 0.004, time: 75, False
+Epochs: 34, Loss: 529889952.0, lr: 0.004, time: 75, False
+Epochs: 35, Loss: 511855264.0, lr: 0.004, time: 75, False
+Epochs: 36, Loss: 496564864.0, lr: 0.004, time: 75, False
+Epochs: 37, Loss: 482723520.0, lr: 0.004, time: 75, False
+Epochs: 38, Loss: 467233120.0, lr: 0.004, time: 75, False
+Epochs: 39, Loss: 451619552.0, lr: 0.004, time: 75, False
+Epochs: 40, Loss: 433433376.0, lr: 0.004, time: 75, False
+Epochs: 41, Loss: 415677280.0, lr: 0.004, time: 75, False
+Epochs: 42, Loss: 400731520.0, lr: 0.004, time: 75, False
+Epochs: 43, Loss: 388515552.0, lr: 0.004, time: 75, False
+Epochs: 44, Loss: 377457184.0, lr: 0.004, time: 75, False
+Epochs: 45, Loss: 368078112.0, lr: 0.004, time: 75, False
+Epochs: 46, Loss: 359611040.0, lr: 0.004, time: 75, False
+Epochs: 47, Loss: 351836544.0, lr: 0.004, time: 75, False
+Epochs: 48, Loss: 344674112.0, lr: 0.004, time: 75, False
+Epochs: 49, Loss: 338102016.0, lr: 0.004, time: 75, False
+Epochs: 50, Loss: 332276896.0, lr: 0.004, time: 75, False
+Epochs: 51, Loss: 326397184.0, lr: 0.004, time: 75, False
+Epochs: 52, Loss: 320719104.0, lr: 0.004, time: 75, False
+Epochs: 53, Loss: 315119776.0, lr: 0.004, time: 75, False
+Epochs: 54, Loss: 310614016.0, lr: 0.004, time: 75, False
+Epochs: 55, Loss: 305250368.0, lr: 0.004, time: 75, False
+Epochs: 56, Loss: 299873088.0, lr: 0.004, time: 75, False
+Epochs: 57, Loss: 294707040.0, lr: 0.004, time: 75, False
+Epochs: 58, Loss: 289497152.0, lr: 0.004, time: 75, False
+Epochs: 59, Loss: 284353984.0, lr: 0.004, time: 75, False
+Epochs: 60, Loss: 285146880.0, lr: 0.004, time: 75, False
+Epochs: 61, Loss: 284037344.0, lr: 0.004, time: 75, False
+Epochs: 62, Loss: 272061664.0, lr: 0.004, time: 75, False
+Epochs: 63, Loss: 266418960.0, lr: 0.004, time: 75, False
+Epochs: 64, Loss: 261577568.0, lr: 0.004, time: 75, False
+Epochs: 65, Loss: 256821104.0, lr: 0.004, time: 75, False
+Epochs: 66, Loss: 252230752.0, lr: 0.004, time: 75, False
+Epochs: 67, Loss: 247816640.0, lr: 0.004, time: 75, False
+Epochs: 68, Loss: 243545584.0, lr: 0.004, time: 75, False
+Epochs: 69, Loss: 241558528.0, lr: 0.004, time: 75, False
+Epochs: 70, Loss: 239198064.0, lr: 0.004, time: 75, False
+Epochs: 71, Loss: 241045328.0, lr: 0.004, time: 75, False
+Epochs: 72, Loss: 230677504.0, lr: 0.004, time: 75, False
+Epochs: 73, Loss: 225719616.0, lr: 0.004, time: 75, False
+Epochs: 74, Loss: 221540976.0, lr: 0.004, time: 75, False
+Epochs: 75, Loss: 217614688.0, lr: 0.004, time: 75, False
+Epochs: 76, Loss: 213854544.0, lr: 0.004, time: 75, False
+Epochs: 77, Loss: 210222960.0, lr: 0.004, time: 75, False
+Epochs: 78, Loss: 206658224.0, lr: 0.004, time: 75, False
+Epochs: 79, Loss: 203156912.0, lr: 0.004, time: 75, False
+Epochs: 80, Loss: 199749840.0, lr: 0.004, time: 75, False
+Epochs: 81, Loss: 196408144.0, lr: 0.004, time: 75, False
+Epochs: 82, Loss: 193160304.0, lr: 0.004, time: 75, False
+Epochs: 83, Loss: 189994304.0, lr: 0.004, time: 75, False
+Epochs: 84, Loss: 186934032.0, lr: 0.004, time: 75, False
+Epochs: 85, Loss: 183962144.0, lr: 0.004, time: 75, False
+Epochs: 86, Loss: 181086560.0, lr: 0.004, time: 75, False
+Epochs: 87, Loss: 178965152.0, lr: 0.004, time: 75, False
+Epochs: 88, Loss: 176115360.0, lr: 0.004, time: 75, False
+Epochs: 89, Loss: 173450576.0, lr: 0.004, time: 75, False
+Epochs: 90, Loss: 170890128.0, lr: 0.004, time: 75, False
+Epochs: 91, Loss: 168434592.0, lr: 0.004, time: 75, False
+Epochs: 92, Loss: 166428816.0, lr: 0.004, time: 75, False
+Epochs: 93, Loss: 164114320.0, lr: 0.004, time: 75, False
+Epochs: 94, Loss: 162050928.0, lr: 0.004, time: 75, False
+Epochs: 95, Loss: 159926160.0, lr: 0.004, time: 75, False
+Epochs: 96, Loss: 157891856.0, lr: 0.004, time: 75, False
+Epochs: 97, Loss: 155923584.0, lr: 0.004, time: 75, False
+Epochs: 98, Loss: 154037360.0, lr: 0.004, time: 75, False
+Epochs: 99, Loss: 152221760.0, lr: 0.004, time: 75, False
+Epochs: 100, Loss: 150463328.0, lr: 0.004, time: 75, False
+Epochs: 101, Loss: 148774224.0, lr: 0.004, time: 75, False
+Epochs: 102, Loss: 147121088.0, lr: 0.004, time: 75, False
+Epochs: 103, Loss: 145512992.0, lr: 0.004, time: 75, False
+Epochs: 104, Loss: 143979216.0, lr: 0.004, time: 75, False
+Epochs: 105, Loss: 142462080.0, lr: 0.004, time: 75, False
+Epochs: 106, Loss: 140976288.0, lr: 0.004, time: 75, False
+Epochs: 107, Loss: 139513744.0, lr: 0.004, time: 75, False
+Epochs: 108, Loss: 138084800.0, lr: 0.004, time: 75, False
+Epochs: 109, Loss: 136678032.0, lr: 0.004, time: 75, False
+Epochs: 110, Loss: 135285072.0, lr: 0.004, time: 75, False
+Epochs: 111, Loss: 133927752.0, lr: 0.004, time: 75, False
+Epochs: 112, Loss: 132590176.0, lr: 0.004, time: 75, False
+Epochs: 113, Loss: 131249368.0, lr: 0.004, time: 75, False
+Epochs: 114, Loss: 129923720.0, lr: 0.004, time: 75, False
+Epochs: 115, Loss: 128622024.0, lr: 0.004, time: 75, False
+Epochs: 116, Loss: 127327320.0, lr: 0.004, time: 75, False
+Epochs: 117, Loss: 126048840.0, lr: 0.004, time: 75, False
+Epochs: 118, Loss: 124786608.0, lr: 0.004, time: 75, False
+Epochs: 119, Loss: 123539576.0, lr: 0.004, time: 75, False
+Epochs: 120, Loss: 122305968.0, lr: 0.004, time: 75, False
+Epochs: 121, Loss: 121089488.0, lr: 0.004, time: 75, False
+Epochs: 122, Loss: 119882616.0, lr: 0.004, time: 75, False
+Epochs: 123, Loss: 118689776.0, lr: 0.004, time: 75, False
+Epochs: 124, Loss: 117499816.0, lr: 0.004, time: 75, False
+Epochs: 125, Loss: 116336344.0, lr: 0.004, time: 75, False
+Epochs: 126, Loss: 115185560.0, lr: 0.004, time: 75, False
+Epochs: 127, Loss: 114036960.0, lr: 0.004, time: 75, False
+Epochs: 128, Loss: 112919944.0, lr: 0.004, time: 75, False
+Epochs: 129, Loss: 111799728.0, lr: 0.004, time: 75, False
+Epochs: 130, Loss: 110696208.0, lr: 0.004, time: 75, False
+Epochs: 131, Loss: 109601888.0, lr: 0.004, time: 75, False
+Epochs: 132, Loss: 108522896.0, lr: 0.004, time: 75, False
+Epochs: 133, Loss: 107483032.0, lr: 0.004, time: 75, False
+Epochs: 134, Loss: 106531656.0, lr: 0.004, time: 75, False
+Epochs: 135, Loss: 105480376.0, lr: 0.004, time: 75, False
+Epochs: 136, Loss: 104452352.0, lr: 0.004, time: 75, False
+Epochs: 137, Loss: 103438912.0, lr: 0.004, time: 75, False
+Epochs: 138, Loss: 102430992.0, lr: 0.004, time: 75, False
+Epochs: 139, Loss: 101443416.0, lr: 0.004, time: 75, False
+Epochs: 140, Loss: 100479304.0, lr: 0.004, time: 75, False
+Epochs: 141, Loss: 99531872.0, lr: 0.004, time: 75, False
+Epochs: 142, Loss: 98607584.0, lr: 0.004, time: 75, False
+Epochs: 143, Loss: 97697176.0, lr: 0.004, time: 75, False
+Epochs: 144, Loss: 96803400.0, lr: 0.004, time: 75, False
+Epochs: 145, Loss: 95912704.0, lr: 0.004, time: 75, False
+Epochs: 146, Loss: 95044184.0, lr: 0.004, time: 75, False
+Epochs: 147, Loss: 94185688.0, lr: 0.004, time: 75, False
+Epochs: 148, Loss: 93343552.0, lr: 0.004, time: 75, False
+Epochs: 149, Loss: 92523008.0, lr: 0.004, time: 75, False
+Epochs: 150, Loss: 91727048.0, lr: 0.004, time: 75, False
+Epochs: 151, Loss: 90937984.0, lr: 0.004, time: 75, False
+Epochs: 152, Loss: 90177208.0, lr: 0.004, time: 75, False
+Epochs: 153, Loss: 89426320.0, lr: 0.004, time: 75, False
+Epochs: 154, Loss: 88711576.0, lr: 0.004, time: 75, False
+Epochs: 155, Loss: 88107544.0, lr: 0.004, time: 75, False
+Epochs: 156, Loss: 87408272.0, lr: 0.004, time: 75, False
+Epochs: 157, Loss: 86729776.0, lr: 0.004, time: 75, False
+Epochs: 158, Loss: 86071536.0, lr: 0.004, time: 75, False
+Epochs: 159, Loss: 85423656.0, lr: 0.004, time: 75, False
+Epochs: 160, Loss: 84797072.0, lr: 0.004, time: 75, False
+Epochs: 161, Loss: 84178024.0, lr: 0.004, time: 75, False
+Epochs: 162, Loss: 83577800.0, lr: 0.004, time: 75, False
+Epochs: 163, Loss: 82991840.0, lr: 0.004, time: 75, False
+Epochs: 164, Loss: 82414976.0, lr: 0.004, time: 75, False
+Epochs: 165, Loss: 81860376.0, lr: 0.004, time: 75, False
+Epochs: 166, Loss: 81308480.0, lr: 0.004, time: 75, False
+Epochs: 167, Loss: 80772536.0, lr: 0.004, time: 75, False
+Epochs: 168, Loss: 80258992.0, lr: 0.004, time: 75, False
+Epochs: 169, Loss: 79741584.0, lr: 0.004, time: 75, False
+Epochs: 170, Loss: 79234856.0, lr: 0.004, time: 75, False
+Epochs: 171, Loss: 78741504.0, lr: 0.004, time: 75, False
+Epochs: 172, Loss: 78246112.0, lr: 0.004, time: 75, False
+Epochs: 173, Loss: 77766352.0, lr: 0.004, time: 75, False
+Epochs: 174, Loss: 77284904.0, lr: 0.004, time: 75, False
+Epochs: 175, Loss: 76819816.0, lr: 0.004, time: 75, False
+Epochs: 176, Loss: 76360096.0, lr: 0.004, time: 75, False
+Epochs: 177, Loss: 75895328.0, lr: 0.004, time: 75, False
+Epochs: 178, Loss: 75441928.0, lr: 0.004, time: 75, False
+Epochs: 179, Loss: 74987592.0, lr: 0.004, time: 75, False
+Epochs: 180, Loss: 74536904.0, lr: 0.004, time: 75, False
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 220, in <module>
+    loss.backward()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/_tensor.py", line 488, in backward
+    self, gradient, retain_graph, create_graph, inputs=inputs
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/autograd/__init__.py", line 199, in backward
+    allow_unreachable=True, accumulate_grad=True)  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 261, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 74
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

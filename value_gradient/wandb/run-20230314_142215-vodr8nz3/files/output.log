@@ -1,0 +1,54 @@
+
+Creating window glfw
+Epochs: 1, Loss: 1175704832.0, lr: 0.004, time: 80
+Epochs: 2, Loss: 1143268352.0, lr: 0.004, time: 80
+Epochs: 3, Loss: 1136653952.0, lr: 0.004, time: 80
+Epochs: 4, Loss: 1129786624.0, lr: 0.004, time: 80
+Epochs: 5, Loss: 1122841472.0, lr: 0.004, time: 80
+Epochs: 6, Loss: 1115849984.0, lr: 0.004, time: 80
+Epochs: 7, Loss: 1108790272.0, lr: 0.004, time: 80
+Epochs: 8, Loss: 1101650816.0, lr: 0.004, time: 80
+Epochs: 9, Loss: 1094446976.0, lr: 0.004, time: 80
+Epochs: 10, Loss: 1087140864.0, lr: 0.004, time: 80
+Epochs: 11, Loss: 1079682560.0, lr: 0.004, time: 80
+Epochs: 12, Loss: 1072086784.0, lr: 0.004, time: 80
+Epochs: 13, Loss: 1064327808.0, lr: 0.004, time: 80
+Epochs: 14, Loss: 1056403584.0, lr: 0.004, time: 80
+Epochs: 15, Loss: 1048309632.0, lr: 0.004, time: 80
+Epochs: 16, Loss: 1039810880.0, lr: 0.004, time: 80
+Epochs: 17, Loss: 1031056960.0, lr: 0.004, time: 80
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 224, in <module>
+    sim_params.ntime = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/time_search.py", line 33, in optimal_time
+    return bisection_search(func_wrap, criteria, init_time, max_time)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/time_search.py", line 14, in bisection_search
+    if criteria(func(mid)):
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/time_search.py", line 27, in func_wrap
+    return loss_func(y, dydt)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 145, in loss_function
+    l_bellman = backup_loss(x)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 105, in backup_loss
+    return -value_init + value_final
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 262, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 75
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

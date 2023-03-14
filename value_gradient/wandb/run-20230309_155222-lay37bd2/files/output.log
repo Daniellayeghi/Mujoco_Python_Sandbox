@@ -1,0 +1,10 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 179, in <module>
+    loss = loss_function(traj, dtraj_dt, alpha)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 134, in loss_function
+    l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 102, in batch_state_loss
+    l_running = (loss_quadratic(x_run, Q) * lambdas).squeeze()
+RuntimeError: The size of tensor a (246) must match the size of tensor b (248) at non-singleton dimension 0

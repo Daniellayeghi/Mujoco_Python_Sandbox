@@ -1,0 +1,50 @@
+2023-03-09 15:25:11,161 INFO    StreamThr :11893 [internal.py:wandb_internal():90] W&B internal server running at pid: 11893, started at: 2023-03-09 15:25:11.158648
+2023-03-09 15:25:11,165 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: status
+2023-03-09 15:25:11,173 INFO    WriterThread:11893 [datastore.py:open_for_write():85] open: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/run-ufmgbc36.wandb
+2023-03-09 15:25:11,176 DEBUG   SenderThread:11893 [sender.py:send():336] send: header
+2023-03-09 15:25:11,259 DEBUG   SenderThread:11893 [sender.py:send():336] send: run
+2023-03-09 15:25:12,663 INFO    SenderThread:11893 [dir_watcher.py:__init__():219] watching files in: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files
+2023-03-09 15:25:12,664 INFO    SenderThread:11893 [sender.py:_start_run_threads():1081] run started: ufmgbc36 with start time 1678375511.150766
+2023-03-09 15:25:12,664 DEBUG   SenderThread:11893 [sender.py:send_request():363] send_request: summary_record
+2023-03-09 15:25:12,665 INFO    SenderThread:11893 [sender.py:_save_file():1332] saving file wandb-summary.json with policy end
+2023-03-09 15:25:12,673 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: check_version
+2023-03-09 15:25:12,675 DEBUG   SenderThread:11893 [sender.py:send_request():363] send_request: check_version
+2023-03-09 15:25:13,486 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: run_start
+2023-03-09 15:25:13,497 DEBUG   HandlerThread:11893 [system_info.py:__init__():31] System info init
+2023-03-09 15:25:13,498 DEBUG   HandlerThread:11893 [system_info.py:__init__():46] System info init done
+2023-03-09 15:25:13,498 INFO    HandlerThread:11893 [system_monitor.py:start():183] Starting system monitor
+2023-03-09 15:25:13,499 INFO    SystemMonitor:11893 [system_monitor.py:_start():147] Starting system asset monitoring threads
+2023-03-09 15:25:13,499 INFO    HandlerThread:11893 [system_monitor.py:probe():204] Collecting system info
+2023-03-09 15:25:13,501 INFO    SystemMonitor:11893 [interfaces.py:start():187] Started cpu monitoring
+2023-03-09 15:25:13,504 INFO    SystemMonitor:11893 [interfaces.py:start():187] Started disk monitoring
+2023-03-09 15:25:13,509 INFO    SystemMonitor:11893 [interfaces.py:start():187] Started gpu monitoring
+2023-03-09 15:25:13,512 INFO    SystemMonitor:11893 [interfaces.py:start():187] Started memory monitoring
+2023-03-09 15:25:13,514 INFO    SystemMonitor:11893 [interfaces.py:start():187] Started network monitoring
+2023-03-09 15:25:13,559 DEBUG   HandlerThread:11893 [system_info.py:probe():195] Probing system
+2023-03-09 15:25:13,571 DEBUG   HandlerThread:11893 [system_info.py:_probe_git():180] Probing git
+2023-03-09 15:25:13,611 DEBUG   HandlerThread:11893 [system_info.py:_probe_git():188] Probing git done
+2023-03-09 15:25:13,612 DEBUG   HandlerThread:11893 [system_info.py:probe():240] Probing system done
+2023-03-09 15:25:13,612 DEBUG   HandlerThread:11893 [system_monitor.py:probe():213] {'os': 'Linux-5.4.0-144-generic-x86_64-with-Ubuntu-18.04-bionic', 'python': '3.7.13', 'heartbeatAt': '2023-03-09T15:25:13.559848', 'startedAt': '2023-03-09T15:25:11.120502', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': '/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'codePath': 'value_gradient/tv_value_synthesis_trajopt_cartpole.py', 'git': {'remote': 'https://github.com/Daniellayeghi/Mujoco_Python_Sandbox.git', 'commit': '2ac229b88c0486b5b22ba426a5459dccd7ee23af'}, 'email': 'Daniellayeghi@gmail.com', 'root': '/home/daniel/Repos/Mujoco_Python_Sandbox', 'host': 'daniel-System-Product-Name', 'username': 'daniel', 'executable': '/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/bin/python', 'cpu_count': 8, 'cpu_count_logical': 16, 'cpu_freq': {'current': 1220.169875, 'min': 1200.0, 'max': 4350.0}, 'cpu_freq_per_core': [{'current': 1200.541, 'min': 1200.0, 'max': 4300.0}, {'current': 1201.283, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.74, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.34, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.094, 'min': 1200.0, 'max': 4300.0}, {'current': 1199.998, 'min': 1200.0, 'max': 4300.0}, {'current': 1299.999, 'min': 1200.0, 'max': 4500.0}, {'current': 1300.021, 'min': 1200.0, 'max': 4500.0}, {'current': 1200.091, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.196, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.046, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.097, 'min': 1200.0, 'max': 4300.0}, {'current': 1200.071, 'min': 1200.0, 'max': 4300.0}, {'current': 1199.947, 'min': 1200.0, 'max': 4300.0}, {'current': 1299.556, 'min': 1200.0, 'max': 4500.0}, {'current': 1299.968, 'min': 1200.0, 'max': 4500.0}], 'disk': {'total': 467.8886032104492, 'used': 234.59446334838867}, 'gpu': 'NVIDIA GeForce GTX 1080 Ti', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1080 Ti', 'memory_total': 11811160064}], 'memory': {'total': 31.042236328125}}
+2023-03-09 15:25:13,612 INFO    HandlerThread:11893 [system_monitor.py:probe():214] Finished collecting system info
+2023-03-09 15:25:13,613 INFO    HandlerThread:11893 [system_monitor.py:probe():217] Publishing system info
+2023-03-09 15:25:13,613 DEBUG   HandlerThread:11893 [system_info.py:_save_pip():52] Saving list of pip packages installed into the current environment
+2023-03-09 15:25:13,618 DEBUG   HandlerThread:11893 [system_info.py:_save_pip():67] Saving pip packages done
+2023-03-09 15:25:13,636 INFO    HandlerThread:11893 [system_monitor.py:probe():219] Finished publishing system info
+2023-03-09 15:25:13,650 DEBUG   SenderThread:11893 [sender.py:send():336] send: files
+2023-03-09 15:25:13,650 INFO    SenderThread:11893 [sender.py:_save_file():1332] saving file wandb-metadata.json with policy now
+2023-03-09 15:25:13,683 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: stop_status
+2023-03-09 15:25:13,687 DEBUG   SenderThread:11893 [sender.py:send_request():363] send_request: stop_status
+2023-03-09 15:25:13,718 INFO    Thread-17 :11893 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files/wandb-summary.json
+2023-03-09 15:25:13,721 INFO    Thread-17 :11893 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files/wandb-metadata.json
+2023-03-09 15:25:13,723 INFO    Thread-17 :11893 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files/requirements.txt
+2023-03-09 15:25:13,922 DEBUG   SenderThread:11893 [sender.py:send():336] send: telemetry
+2023-03-09 15:25:14,231 DEBUG   SenderThread:11893 [sender.py:send():336] send: telemetry
+2023-03-09 15:25:14,710 INFO    Thread-17 :11893 [dir_watcher.py:_on_file_created():278] file/dir created: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files/output.log
+2023-03-09 15:25:16,232 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 15:25:16,712 INFO    Thread-17 :11893 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files/output.log
+2023-03-09 15:25:20,826 INFO    wandb-upload_0:11893 [upload_job.py:push():138] Uploaded file /tmp/tmphzyiwmfwwandb/q2gfd74o-wandb-metadata.json
+2023-03-09 15:25:21,234 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 15:25:26,726 INFO    Thread-17 :11893 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files/output.log
+2023-03-09 15:25:27,097 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: status_report
+2023-03-09 15:25:27,728 INFO    Thread-17 :11893 [dir_watcher.py:_on_file_modified():295] file/dir modified: /home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/wandb/run-20230309_152511-ufmgbc36/files/output.log
+2023-03-09 15:25:32,090 DEBUG   HandlerThread:11893 [handler.py:handle_request():144] handle_request: status_report

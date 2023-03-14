@@ -1,0 +1,10 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 179, in <module>
+    loss = loss_function(traj, dtraj_dt, alpha)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 134, in loss_function
+    l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 101, in batch_state_loss
+    x_final = x[-2:-1, :, :, :].view(2, nsim, r, c).clone()
+RuntimeError: shape '[2, 100, 1, 4]' is invalid for input of size 400

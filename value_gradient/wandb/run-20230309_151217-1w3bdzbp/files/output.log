@@ -1,0 +1,83 @@
+
+Creating window glfw
+Epochs: 0, Loss: 83940152.0, lr: 0.004
+Epochs: 1, Loss: 82554824.0, lr: 0.004
+Epochs: 2, Loss: 81074152.0, lr: 0.004
+Epochs: 3, Loss: 79480440.0, lr: 0.004
+Epochs: 4, Loss: 77773096.0, lr: 0.004
+Epochs: 5, Loss: 75972736.0, lr: 0.004
+Epochs: 6, Loss: 74114480.0, lr: 0.004
+Epochs: 7, Loss: 72235976.0, lr: 0.004
+Epochs: 8, Loss: 70364888.0, lr: 0.004
+Epochs: 9, Loss: 68511656.0, lr: 0.004
+Epochs: 10, Loss: 66691320.0, lr: 0.004
+Epochs: 11, Loss: 64963828.0, lr: 0.004
+Epochs: 12, Loss: 63420140.0, lr: 0.004
+Epochs: 13, Loss: 62066012.0, lr: 0.004
+Epochs: 14, Loss: 60768472.0, lr: 0.004
+Epochs: 15, Loss: 59550344.0, lr: 0.004
+Epochs: 16, Loss: 58681084.0, lr: 0.004
+Epochs: 17, Loss: 58175072.0, lr: 0.004
+Epochs: 18, Loss: 57873972.0, lr: 0.004
+Epochs: 19, Loss: 57710780.0, lr: 0.004
+Epochs: 20, Loss: 57704272.0, lr: 0.004
+Epochs: 21, Loss: 57739996.0, lr: 0.004
+Epochs: 22, Loss: 57684308.0, lr: 0.004
+Epochs: 23, Loss: 57503388.0, lr: 0.004
+Epochs: 24, Loss: 57239408.0, lr: 0.004
+Epochs: 25, Loss: 56955704.0, lr: 0.004
+Epochs: 26, Loss: 56703300.0, lr: 0.004
+Epochs: 27, Loss: 56507808.0, lr: 0.004
+Epochs: 28, Loss: 56370188.0, lr: 0.004
+Epochs: 29, Loss: 56275356.0, lr: 0.004
+Epochs: 30, Loss: 56202636.0, lr: 0.004
+Epochs: 31, Loss: 56134320.0, lr: 0.004
+Epochs: 32, Loss: 56060544.0, lr: 0.004
+Epochs: 33, Loss: 55980444.0, lr: 0.004
+Epochs: 34, Loss: 55900312.0, lr: 0.004
+Epochs: 35, Loss: 55829616.0, lr: 0.004
+Epochs: 36, Loss: 55775908.0, lr: 0.004
+Epochs: 37, Loss: 55740920.0, lr: 0.004
+Epochs: 38, Loss: 55719296.0, lr: 0.004
+Epochs: 39, Loss: 55700768.0, lr: 0.004
+Epochs: 40, Loss: 55673964.0, lr: 0.004
+Epochs: 41, Loss: 55630064.0, lr: 0.004
+Epochs: 42, Loss: 55565252.0, lr: 0.004
+Epochs: 43, Loss: 55481336.0, lr: 0.004
+Epochs: 44, Loss: 55384708.0, lr: 0.004
+Epochs: 45, Loss: 55284220.0, lr: 0.004
+Epochs: 46, Loss: 55188516.0, lr: 0.004
+Epochs: 47, Loss: 55103644.0, lr: 0.004
+Epochs: 48, Loss: 55031268.0, lr: 0.004
+Epochs: 49, Loss: 54968964.0, lr: 0.004
+Epochs: 50, Loss: 54912308.0, lr: 0.004
+Epochs: 51, Loss: 54857960.0, lr: 0.004
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 180, in <module>
+    loss.backward()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/_tensor.py", line 488, in backward
+    self, gradient, retain_graph, create_graph, inputs=inputs
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/autograd/__init__.py", line 199, in backward
+    allow_unreachable=True, accumulate_grad=True)  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 218, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 64
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

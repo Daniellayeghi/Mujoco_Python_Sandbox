@@ -1,0 +1,10 @@
+
+Creating window glfw
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 171, in <module>
+    loss = loss_function(traj, dtraj_dt, alpha)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 125, in loss_function
+    l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
+  File "tv_value_synthesis_trajopt_cartpole.py", line 105, in batch_state_loss
+    return torch.cat((l_running, l_terminal.unsqueeze(0)), dim=0)
+RuntimeError: Tensors must have same number of dimensions: got 2 and 3

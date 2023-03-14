@@ -1,0 +1,232 @@
+
+Creating window glfw
+Epochs: 0, Loss: 3359444992.0, lr: 0.004
+Epochs: 1, Loss: 3292875776.0, lr: 0.004
+Epochs: 2, Loss: 3211483648.0, lr: 0.004
+Epochs: 3, Loss: 3146292224.0, lr: 0.004
+Epochs: 4, Loss: 3095480576.0, lr: 0.004
+Epochs: 5, Loss: 3043997184.0, lr: 0.004
+Epochs: 6, Loss: 2994268160.0, lr: 0.004
+Epochs: 7, Loss: 2951434752.0, lr: 0.004
+Epochs: 8, Loss: 2914347008.0, lr: 0.004
+Epochs: 9, Loss: 2879249152.0, lr: 0.004
+Epochs: 10, Loss: 2845217280.0, lr: 0.004
+Epochs: 11, Loss: 2813778432.0, lr: 0.004
+Epochs: 12, Loss: 2785846016.0, lr: 0.004
+Epochs: 13, Loss: 2760512000.0, lr: 0.004
+Epochs: 14, Loss: 2736331008.0, lr: 0.004
+Epochs: 15, Loss: 2712918784.0, lr: 0.004
+Epochs: 16, Loss: 2690866176.0, lr: 0.004
+Epochs: 17, Loss: 2670557184.0, lr: 0.004
+Epochs: 18, Loss: 2651558400.0, lr: 0.004
+Epochs: 19, Loss: 2633123840.0, lr: 0.004
+Epochs: 20, Loss: 2614939392.0, lr: 0.004
+Epochs: 21, Loss: 2597103872.0, lr: 0.004
+Epochs: 22, Loss: 2579551232.0, lr: 0.004
+Epochs: 23, Loss: 2561757696.0, lr: 0.004
+Epochs: 24, Loss: 2543096320.0, lr: 0.004
+Epochs: 25, Loss: 2523262464.0, lr: 0.004
+Epochs: 26, Loss: 2502150400.0, lr: 0.004
+Epochs: 27, Loss: 2479461888.0, lr: 0.004
+Epochs: 28, Loss: 2454641152.0, lr: 0.004
+Epochs: 29, Loss: 2427200768.0, lr: 0.004
+Epochs: 30, Loss: 2396919552.0, lr: 0.004
+Epochs: 31, Loss: 2363701504.0, lr: 0.004
+Epochs: 32, Loss: 2327443712.0, lr: 0.004
+Epochs: 33, Loss: 2288210432.0, lr: 0.004
+Epochs: 34, Loss: 2246524160.0, lr: 0.004
+Epochs: 35, Loss: 2203439872.0, lr: 0.004
+Epochs: 36, Loss: 2160401664.0, lr: 0.004
+Epochs: 37, Loss: 2119004928.0, lr: 0.004
+Epochs: 38, Loss: 2080692992.0, lr: 0.004
+Epochs: 39, Loss: 2046473856.0, lr: 0.004
+Epochs: 40, Loss: 2016801536.0, lr: 0.004
+Epochs: 41, Loss: 1991713280.0, lr: 0.004
+Epochs: 42, Loss: 1970987648.0, lr: 0.004
+Epochs: 43, Loss: 1954344448.0, lr: 0.004
+Epochs: 44, Loss: 1941322624.0, lr: 0.004
+Epochs: 45, Loss: 1931069056.0, lr: 0.004
+Epochs: 46, Loss: 1922580480.0, lr: 0.004
+Epochs: 47, Loss: 1915106560.0, lr: 0.004
+Epochs: 48, Loss: 1908134912.0, lr: 0.004
+Epochs: 49, Loss: 1901234560.0, lr: 0.004
+Epochs: 50, Loss: 1894073728.0, lr: 0.004
+Epochs: 51, Loss: 1886507904.0, lr: 0.004
+Epochs: 52, Loss: 1878573824.0, lr: 0.004
+Epochs: 53, Loss: 1870422528.0, lr: 0.004
+Epochs: 54, Loss: 1862257920.0, lr: 0.004
+Epochs: 55, Loss: 1854308352.0, lr: 0.004
+Epochs: 56, Loss: 1846800768.0, lr: 0.004
+Epochs: 57, Loss: 1839916288.0, lr: 0.004
+Epochs: 58, Loss: 1833747072.0, lr: 0.004
+Epochs: 59, Loss: 1828256384.0, lr: 0.004
+Epochs: 60, Loss: 1823244416.0, lr: 0.004
+Epochs: 61, Loss: 1818445184.0, lr: 0.004
+Epochs: 62, Loss: 1813907200.0, lr: 0.004
+Epochs: 63, Loss: 1809834112.0, lr: 0.004
+Epochs: 64, Loss: 1806329088.0, lr: 0.004
+Epochs: 65, Loss: 1803400832.0, lr: 0.004
+Epochs: 66, Loss: 1801056768.0, lr: 0.004
+Epochs: 67, Loss: 1799317888.0, lr: 0.004
+Epochs: 68, Loss: 1798242688.0, lr: 0.004
+Epochs: 69, Loss: 1797868416.0, lr: 0.004
+Epochs: 70, Loss: 1798200832.0, lr: 0.004
+Epochs: 71, Loss: 1799274112.0, lr: 0.004
+Epochs: 72, Loss: 1801277824.0, lr: 0.004
+Epochs: 73, Loss: 1804481408.0, lr: 0.004
+Epochs: 74, Loss: 1808832768.0, lr: 0.004
+Epochs: 75, Loss: 1813848960.0, lr: 0.004
+Epochs: 76, Loss: 1818876032.0, lr: 0.004
+Epochs: 77, Loss: 1824081024.0, lr: 0.004
+Epochs: 78, Loss: 1829843712.0, lr: 0.004
+Epochs: 79, Loss: 1834813056.0, lr: 0.004
+Epochs: 80, Loss: 1838570752.0, lr: 0.004
+Epochs: 81, Loss: 1839153280.0, lr: 0.004
+Epochs: 82, Loss: 1837304064.0, lr: 0.004
+Epochs: 83, Loss: 1843746688.0, lr: 0.004
+Epochs: 84, Loss: 1848856448.0, lr: 0.004
+Epochs: 85, Loss: 1845694080.0, lr: 0.004
+Epochs: 86, Loss: 1838086400.0, lr: 0.004
+Epochs: 87, Loss: 1827719424.0, lr: 0.004
+Epochs: 88, Loss: 1813615872.0, lr: 0.004
+Epochs: 89, Loss: 1794775680.0, lr: 0.004
+Epochs: 90, Loss: 1774412416.0, lr: 0.004
+Epochs: 91, Loss: 1756051456.0, lr: 0.004
+Epochs: 92, Loss: 1741141888.0, lr: 0.004
+Epochs: 93, Loss: 1729869184.0, lr: 0.004
+Epochs: 94, Loss: 1720481152.0, lr: 0.004
+Epochs: 95, Loss: 1710808832.0, lr: 0.004
+Epochs: 96, Loss: 1702585216.0, lr: 0.004
+Epochs: 97, Loss: 1695154176.0, lr: 0.004
+Epochs: 98, Loss: 1689371648.0, lr: 0.004
+Epochs: 99, Loss: 1684509312.0, lr: 0.004
+Epochs: 100, Loss: 1683552128.0, lr: 0.004
+Epochs: 101, Loss: 1685443584.0, lr: 0.004
+Epochs: 102, Loss: 1687418752.0, lr: 0.004
+Epochs: 103, Loss: 1686576768.0, lr: 0.004
+Epochs: 104, Loss: 1681034496.0, lr: 0.004
+Epochs: 105, Loss: 1671797888.0, lr: 0.004
+Epochs: 106, Loss: 1661406208.0, lr: 0.004
+Epochs: 107, Loss: 1653020416.0, lr: 0.004
+Epochs: 108, Loss: 1647636992.0, lr: 0.004
+Epochs: 109, Loss: 1644281728.0, lr: 0.004
+Epochs: 110, Loss: 1642701056.0, lr: 0.004
+Epochs: 111, Loss: 1643985280.0, lr: 0.004
+Epochs: 112, Loss: 1647997440.0, lr: 0.004
+Epochs: 113, Loss: 1650199296.0, lr: 0.004
+Epochs: 114, Loss: 1647756672.0, lr: 0.004
+Epochs: 115, Loss: 1641818496.0, lr: 0.004
+Epochs: 116, Loss: 1633711360.0, lr: 0.004
+Epochs: 117, Loss: 1625225600.0, lr: 0.004
+Epochs: 118, Loss: 1618673024.0, lr: 0.004
+Epochs: 119, Loss: 1614023552.0, lr: 0.004
+Epochs: 120, Loss: 1611838720.0, lr: 0.004
+Epochs: 121, Loss: 1613453952.0, lr: 0.004
+Epochs: 122, Loss: 1618510848.0, lr: 0.004
+Epochs: 123, Loss: 1625075968.0, lr: 0.004
+Epochs: 124, Loss: 1631404288.0, lr: 0.004
+Epochs: 125, Loss: 1636300672.0, lr: 0.004
+Epochs: 126, Loss: 1639171584.0, lr: 0.004
+Epochs: 127, Loss: 1640345856.0, lr: 0.004
+Epochs: 128, Loss: 1639745792.0, lr: 0.004
+Epochs: 129, Loss: 1637727744.0, lr: 0.004
+Epochs: 130, Loss: 1633639808.0, lr: 0.004
+Epochs: 131, Loss: 1628791680.0, lr: 0.004
+Epochs: 132, Loss: 1624578816.0, lr: 0.004
+Epochs: 133, Loss: 1621458176.0, lr: 0.004
+Epochs: 134, Loss: 1619606272.0, lr: 0.004
+Epochs: 135, Loss: 1618753152.0, lr: 0.004
+Epochs: 136, Loss: 1618388352.0, lr: 0.004
+Epochs: 137, Loss: 1618119296.0, lr: 0.004
+Epochs: 138, Loss: 1617841792.0, lr: 0.004
+Epochs: 139, Loss: 1617101056.0, lr: 0.004
+Epochs: 140, Loss: 1615123456.0, lr: 0.004
+Epochs: 141, Loss: 1611691904.0, lr: 0.004
+Epochs: 142, Loss: 1607170688.0, lr: 0.004
+Epochs: 143, Loss: 1602213248.0, lr: 0.004
+Epochs: 144, Loss: 1597303680.0, lr: 0.004
+Epochs: 145, Loss: 1592828032.0, lr: 0.004
+Epochs: 146, Loss: 1589202432.0, lr: 0.004
+Epochs: 147, Loss: 1586665088.0, lr: 0.004
+Epochs: 148, Loss: 1585388160.0, lr: 0.004
+Epochs: 149, Loss: 1585276416.0, lr: 0.004
+Epochs: 150, Loss: 1586182144.0, lr: 0.004
+Epochs: 151, Loss: 1587497344.0, lr: 0.004
+Epochs: 152, Loss: 1588208000.0, lr: 0.004
+Epochs: 153, Loss: 1587726720.0, lr: 0.004
+Epochs: 154, Loss: 1586458880.0, lr: 0.004
+Epochs: 155, Loss: 1584760320.0, lr: 0.004
+Epochs: 156, Loss: 1582857856.0, lr: 0.004
+Epochs: 157, Loss: 1580967168.0, lr: 0.004
+Epochs: 158, Loss: 1579301504.0, lr: 0.004
+Epochs: 159, Loss: 1578007040.0, lr: 0.004
+Epochs: 160, Loss: 1577169792.0, lr: 0.004
+Epochs: 161, Loss: 1576803840.0, lr: 0.004
+Epochs: 162, Loss: 1576811904.0, lr: 0.004
+Epochs: 163, Loss: 1577042304.0, lr: 0.004
+Epochs: 164, Loss: 1576760064.0, lr: 0.004
+Epochs: 165, Loss: 1575760128.0, lr: 0.004
+Epochs: 166, Loss: 1575017472.0, lr: 0.004
+Epochs: 167, Loss: 1574744576.0, lr: 0.004
+Epochs: 168, Loss: 1574959104.0, lr: 0.004
+Epochs: 169, Loss: 1575588224.0, lr: 0.004
+Epochs: 170, Loss: 1576530560.0, lr: 0.004
+Epochs: 171, Loss: 1577582336.0, lr: 0.004
+Epochs: 172, Loss: 1578470528.0, lr: 0.004
+Epochs: 173, Loss: 1579110656.0, lr: 0.004
+Epochs: 174, Loss: 1579606400.0, lr: 0.004
+Epochs: 175, Loss: 1580045184.0, lr: 0.004
+Epochs: 176, Loss: 1580812800.0, lr: 0.004
+Epochs: 177, Loss: 1582628608.0, lr: 0.004
+Epochs: 178, Loss: 1585342976.0, lr: 0.004
+Epochs: 179, Loss: 1586718080.0, lr: 0.004
+Epochs: 180, Loss: 1589016576.0, lr: 0.004
+Epochs: 181, Loss: 1590942592.0, lr: 0.004
+Epochs: 182, Loss: 1592206976.0, lr: 0.004
+Epochs: 183, Loss: 1592806528.0, lr: 0.004
+Epochs: 184, Loss: 1592546560.0, lr: 0.004
+Epochs: 185, Loss: 1591204480.0, lr: 0.004
+Epochs: 186, Loss: 1588669184.0, lr: 0.004
+Epochs: 187, Loss: 1585884672.0, lr: 0.004
+Epochs: 188, Loss: 1583747968.0, lr: 0.004
+Epochs: 189, Loss: 1582267392.0, lr: 0.004
+Epochs: 190, Loss: 1581576192.0, lr: 0.004
+Epochs: 191, Loss: 1581304064.0, lr: 0.004
+Epochs: 192, Loss: 1579402880.0, lr: 0.004
+Epochs: 193, Loss: 1575876736.0, lr: 0.004
+Epochs: 194, Loss: 1571195904.0, lr: 0.004
+Epochs: 195, Loss: 1566617472.0, lr: 0.004
+Epochs: 196, Loss: 1562289920.0, lr: 0.004
+Epochs: 197, Loss: 1558607872.0, lr: 0.004
+Epochs: 198, Loss: 1556148736.0, lr: 0.004
+Epochs: 199, Loss: 1556141568.0, lr: 0.004
+Epochs: 200, Loss: 1557106944.0, lr: 0.004
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 180, in <module>
+    loss.backward()
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/_tensor.py", line 488, in backward
+    self, gradient, retain_graph, create_graph, inputs=inputs
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/autograd/__init__.py", line 199, in backward
+    allow_unreachable=True, accumulate_grad=True)  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 218, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 64
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

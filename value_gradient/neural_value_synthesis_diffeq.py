@@ -46,21 +46,18 @@ class ProjectedDynamicalSystem(nn.Module):
         self._step_func = self._dynamics
         self.collect = True
 
-        if R is not None:
-            self._Rinv = torch.inverse(R)
-
         self._policy = None
 
         if mode == 'proj':
             self._ctrl = self.project
         if mode == 'fwd':
             def underactuated_fwd_policy(q, v, x, Vx):
-                dfdu_top = torch.zeros_like(v)
+                dfdu_top = torch.zeros((sim_params.nsim, sim_params.nv, sim_params.nu)).to(device)
                 M = self._dynamics._Mfull(q)
                 Minv = torch.inverse(M)
                 B = self._dynamics._Bvec()
-                dfdu = torch.cat((dfdu_top, (-Minv @ B.mT).mT), dim=2)
-                return -0.5 * self._Rinv @ dfdu @ Vx.mT
+                dfdu = torch.cat((dfdu_top, (-Minv @ B.mT).mT), dim=1)
+                return -0.5 * self._scale * (M @ dfdu.mT @ Vx.mT).mT
 
             self._policy = underactuated_fwd_policy
             self._ctrl = self.hjb

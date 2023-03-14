@@ -1,0 +1,151 @@
+
+Creating window glfw
+Epochs: 1, Loss: 3241884928.0, lr: 0.03976012016036101, time: 69
+Epochs: 2, Loss: 3037727744.0, lr: 0.03952048128579246, time: 69
+Epochs: 3, Loss: 2823634176.0, lr: 0.039281084349407296, time: 69
+Epochs: 4, Loss: 2531262720.0, lr: 0.03904193033320545, time: 69
+Epochs: 5, Loss: 2259107840.0, lr: 0.03880302022820075, time: 69
+Epochs: 6, Loss: 2143479680.0, lr: 0.03856435503455027, time: 69
+Epochs: 7, Loss: 2196310016.0, lr: 0.03832593576168624, time: 69
+Epochs: 8, Loss: 2207050752.0, lr: 0.03808776342845054, time: 69
+Epochs: 9, Loss: 2358898176.0, lr: 0.03784983906323186, time: 69
+Epochs: 10, Loss: 2473030400.0, lr: 0.03761216370410556, time: 69
+Epochs: 11, Loss: 2500351488.0, lr: 0.03737473839897637, time: 69
+Epochs: 12, Loss: 2541836032.0, lr: 0.03713756420572393, time: 69
+Epochs: 13, Loss: 2612731904.0, lr: 0.03690064219235128, time: 69
+Epochs: 14, Loss: 2640506624.0, lr: 0.03666397343713634, time: 69
+Epochs: 15, Loss: 2652797696.0, lr: 0.036427559028786555, time: 69
+Epochs: 16, Loss: 2577855744.0, lr: 0.036191400066596616, time: 69
+Epochs: 17, Loss: 2537393408.0, lr: 0.03595549766060951, time: 69
+Epochs: 18, Loss: 2504832000.0, lr: 0.035719852931780864, time: 69
+Epochs: 19, Loss: 2474617344.0, lr: 0.03548446701214679, time: 69
+Epochs: 20, Loss: 2399033344.0, lr: 0.035249341044995164, time: 69
+Epochs: 21, Loss: 2324344832.0, lr: 0.035014476185040576, time: 69
+Epochs: 22, Loss: 2198520064.0, lr: 0.03477987359860296, time: 69
+Epochs: 23, Loss: 2176652800.0, lr: 0.034545534463790085, time: 69
+Epochs: 24, Loss: 2175223808.0, lr: 0.03431145997068388, time: 69
+Epochs: 25, Loss: 2158177024.0, lr: 0.034077651321530886, time: 69
+Epochs: 26, Loss: 2139317248.0, lr: 0.033844109730936725, time: 69
+Epochs: 27, Loss: 2159810304.0, lr: 0.03361083642606493, time: 69
+Epochs: 28, Loss: 2166774016.0, lr: 0.03337783264684001, time: 69
+Epochs: 29, Loss: 2182603776.0, lr: 0.03314509964615514, time: 69
+Epochs: 30, Loss: 2196568832.0, lr: 0.032912638690084366, time: 69
+Epochs: 31, Loss: 2194971136.0, lr: 0.03268045105809957, time: 69
+Epochs: 32, Loss: 2137399424.0, lr: 0.032448538043292334, time: 69
+Epochs: 33, Loss: 2101797888.0, lr: 0.032216900952600803, time: 69
+Epochs: 34, Loss: 2055944064.0, lr: 0.031985541107041694, time: 69
+Epochs: 35, Loss: 2064128128.0, lr: 0.03175445984194766, time: 69
+Epochs: 36, Loss: 2044333440.0, lr: 0.03152365850721008, time: 69
+Epochs: 37, Loss: 2013903872.0, lr: 0.03129313846752742, time: 69
+Epochs: 38, Loss: 2063542528.0, lr: 0.031062901102659524, time: 69
+Epochs: 39, Loss: 2068332288.0, lr: 0.030832947807687725, time: 69
+Epochs: 40, Loss: 2076862208.0, lr: 0.030603279993281187, time: 69
+Epochs: 41, Loss: 2092980864.0, lr: 0.030373899085969467, time: 69
+Epochs: 42, Loss: 2062900096.0, lr: 0.030144806528421723, time: 69
+Epochs: 43, Loss: 2036952192.0, lr: 0.029916003779732497, time: 69
+Epochs: 44, Loss: 2042423552.0, lr: 0.029687492315714527, time: 69
+Epochs: 45, Loss: 1973405824.0, lr: 0.029459273629198583, time: 69
+Epochs: 46, Loss: 1981863680.0, lr: 0.029231349230340743, time: 69
+Epochs: 47, Loss: 2109966464.0, lr: 0.02900372064693717, time: 71
+Epochs: 48, Loss: 2076758912.0, lr: 0.02877638942474676, time: 71
+Epochs: 49, Loss: 2045834368.0, lr: 0.028549357127821823, time: 71
+Epochs: 50, Loss: 1996378752.0, lr: 0.02832262533884706, time: 71
+Epochs: 51, Loss: 1970341760.0, lr: 0.028096195659487178, time: 72
+Epochs: 52, Loss: 2117989888.0, lr: 0.027870069710743323, time: 73
+Epochs: 53, Loss: 1982786560.0, lr: 0.027644249133318657, time: 73
+Epochs: 54, Loss: 1990362752.0, lr: 0.027418735587993404, time: 73
+Epochs: 55, Loss: 2004631424.0, lr: 0.027193530756009637, time: 73
+Epochs: 56, Loss: 2023231744.0, lr: 0.026968636339466143, time: 74
+Epochs: 57, Loss: 2118224128.0, lr: 0.026744054061723702, time: 78
+Epochs: 58, Loss: 1956925440.0, lr: 0.02651978566782111, time: 78
+Epochs: 59, Loss: 1927480704.0, lr: 0.026295832924902406, time: 78
+Epochs: 60, Loss: 2071627136.0, lr: 0.026072197622655457, time: 78
+Epochs: 61, Loss: 2070358272.0, lr: 0.025848881573762608, time: 79
+Epochs: 62, Loss: 1932540800.0, lr: 0.02562588661436351, time: 79
+Epochs: 63, Loss: 1872249472.0, lr: 0.02540321460453079, time: 81
+Epochs: 64, Loss: 1965135744.0, lr: 0.025180867428758774, time: 85
+Epochs: 65, Loss: 1850368384.0, lr: 0.024958846996466045, time: 85
+Epochs: 66, Loss: 1991036544.0, lr: 0.024737155242511914, time: 87
+Epochs: 67, Loss: 1857394816.0, lr: 0.024515794127727725, time: 87
+Epochs: 68, Loss: 1831306240.0, lr: 0.024294765639463194, time: 89
+Epochs: 69, Loss: 1920743808.0, lr: 0.024074071792148564, time: 89
+Epochs: 70, Loss: 2468284928.0, lr: 0.023853714627872953, time: 89
+Epochs: 71, Loss: 1781021824.0, lr: 0.023633696216979687, time: 91
+Epochs: 72, Loss: 1943327488.0, lr: 0.02341401865867911, time: 91
+Epochs: 73, Loss: 2378901248.0, lr: 0.023194684081679587, time: 91
+Epochs: 74, Loss: 2575655680.0, lr: 0.02297569464483736, time: 91
+Epochs: 75, Loss: 2007927296.0, lr: 0.022757052537826006, time: 91
+Epochs: 76, Loss: 1782255488.0, lr: 0.022538759981826223, time: 94
+Epochs: 77, Loss: 2117619840.0, lr: 0.022320819230236745, time: 94
+Epochs: 78, Loss: 1732873088.0, lr: 0.022103232569407185, time: 94
+Epochs: 79, Loss: 2141108864.0, lr: 0.02188600231939371, time: 94
+Epochs: 80, Loss: 2141134336.0, lr: 0.021669130834738422, time: 98
+Epochs: 81, Loss: 1513309824.0, lr: 0.02145262050527339, time: 99
+Epochs: 82, Loss: 1775370880.0, lr: 0.021236473756950352, time: 99
+Epochs: 83, Loss: 1475712000.0, lr: 0.02102069305269709, time: 108
+Epochs: 84, Loss: 1719654400.0, lr: 0.02080528089330166, time: 108
+Epochs: 85, Loss: 3197570560.0, lr: 0.020590239818325466, time: 171
+Epochs: 86, Loss: 20928004096.0, lr: 0.020375572407046585, time: 171
+Epochs: 87, Loss: 329895136.0, lr: 0.0201612812794344, time: 171
+Epochs: 88, Loss: 210848752.0, lr: 0.019947369097157126, time: 197
+Epochs: 89, Loss: 964554176.0, lr: 0.01973383856462332, time: 197
+Epochs: 90, Loss: 2022168576.0, lr: 0.019520692430059175, time: 197
+Epochs: 91, Loss: 10832744448.0, lr: 0.01930793348662288, time: 199
+Epochs: 92, Loss: 3915136000.0, lr: 0.019095564573557888, time: 199
+Epochs: 93, Loss: 2804307968.0, lr: 0.01888358857738663, time: 199
+Epochs: 94, Loss: 2569380352.0, lr: 0.018672008433146713, time: 199
+Epochs: 95, Loss: 2310941440.0, lr: 0.018460827125671236, time: 199
+Epochs: 96, Loss: 2097731200.0, lr: 0.018250047690915577, time: 199
+Epochs: 97, Loss: 1981012608.0, lr: 0.018039673217332457, time: 199
+Epochs: 98, Loss: 1914426112.0, lr: 0.0178297068472978, time: 199
+Epochs: 99, Loss: 1924612864.0, lr: 0.017620151778589617, time: 199
+Epochs: 100, Loss: 1996146944.0, lr: 0.017411011265922482, time: 199
+Epochs: 101, Loss: 2088491648.0, lr: 0.01720228862254028, time: 199
+Epochs: 102, Loss: 2068713472.0, lr: 0.01699398722187002, time: 199
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 219, in <module>
+    traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/odeint.py", line 57, in odeint
+    solution, solution_dt = solver.integrate(t)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/solvers.py", line 72, in integrate
+    dy, f0 = self._step_func(self.func, t0, dt, t1, y0)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/fixed_grid.py", line 9, in _step_func
+    f0 = func(t0, y0, perturb=Perturb.NEXT if self.perturb else Perturb.NONE)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 193, in forward
+    return self.base_func(t, y)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1208, in _call_impl
+    result = forward_call(*input, **kwargs)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/neural_value_synthesis_diffeq.py", line 166, in forward
+    xd = self._step_func(x, u)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/models.py", line 65, in simulate_PFL
+    return self.PFL(x, acc)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/models.py", line 192, in PFL
+    M = self._Mfull(q)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/models.py", line 156, in _Mfull
+    Mtop = self._Mact(q)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/models.py", line 148, in _Mact
+    M00 = (self.MASS_P + self.MASS_C) * torch.ones_like(qp)
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 262, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 75
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)

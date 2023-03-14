@@ -1,0 +1,107 @@
+Creating window glfw
+Epochs: 1, Loss: 12755459072.0, lr: 0.009940030040090253, time: 50
+Epochs: 2, Loss: 12628330496.0, lr: 0.009880120321448116, time: 50
+Epochs: 3, Loss: 12334411776.0, lr: 0.009820271087351824, time: 50
+Epochs: 4, Loss: 12049693696.0, lr: 0.009760482583301363, time: 50
+Epochs: 5, Loss: 11497400320.0, lr: 0.009700755057050188, time: 61
+Epochs: 6, Loss: 11256032256.0, lr: 0.009641088758637567, time: 61
+Epochs: 7, Loss: 11007466496.0, lr: 0.00958148394042156, time: 61
+Epochs: 8, Loss: 10759632896.0, lr: 0.009521940857112636, time: 61
+Epochs: 9, Loss: 10508069888.0, lr: 0.009462459765807965, time: 61
+Epochs: 10, Loss: 10592697344.0, lr: 0.00940304092602639, time: 68
+Epochs: 11, Loss: 10235499520.0, lr: 0.009343684599744093, time: 68
+Epochs: 12, Loss: 9844841472.0, lr: 0.009284391051430982, time: 68
+Epochs: 13, Loss: 9396403200.0, lr: 0.00922516054808782, time: 68
+Epochs: 14, Loss: 8966319104.0, lr: 0.009165993359284084, time: 68
+Epochs: 15, Loss: 8808767488.0, lr: 0.009106889757196639, time: 74
+Epochs: 16, Loss: 8219738112.0, lr: 0.009047850016649154, time: 74
+Epochs: 17, Loss: 7699049984.0, lr: 0.008988874415152377, time: 74
+Epochs: 18, Loss: 7428224512.0, lr: 0.008929963232945216, time: 74
+Epochs: 19, Loss: 6650212352.0, lr: 0.008871116753036697, time: 74
+Epochs: 20, Loss: 6120812544.0, lr: 0.008812335261248791, time: 79
+Epochs: 21, Loss: 5578480128.0, lr: 0.008753619046260144, time: 79
+Epochs: 22, Loss: 5243616768.0, lr: 0.00869496839965074, time: 79
+Epochs: 23, Loss: 4650599936.0, lr: 0.008636383615947521, time: 79
+Epochs: 24, Loss: 4422671360.0, lr: 0.00857786499267097, time: 79
+Epochs: 25, Loss: 4485949440.0, lr: 0.008519412830382721, time: 83
+Epochs: 26, Loss: 4400075776.0, lr: 0.008461027432734181, time: 83
+Epochs: 27, Loss: 4309015552.0, lr: 0.008402709106516233, time: 83
+Epochs: 28, Loss: 4240146944.0, lr: 0.008344458161710002, time: 83
+Epochs: 29, Loss: 4178274816.0, lr: 0.008286274911538785, time: 83
+Epochs: 30, Loss: 4670966272.0, lr: 0.008228159672521091, time: 87
+Epochs: 31, Loss: 4615812096.0, lr: 0.008170112764524893, time: 87
+Epochs: 32, Loss: 4481748992.0, lr: 0.008112134510823083, time: 87
+Epochs: 33, Loss: 4356444672.0, lr: 0.008054225238150201, time: 87
+Epochs: 34, Loss: 4234910720.0, lr: 0.007996385276760424, time: 87
+Epochs: 35, Loss: 4951542784.0, lr: 0.007938614960486916, time: 91
+Epochs: 36, Loss: 4748380160.0, lr: 0.00788091462680252, time: 91
+Epochs: 37, Loss: 4615440384.0, lr: 0.007823284616881854, time: 91
+Epochs: 38, Loss: 4531378176.0, lr: 0.007765725275664881, time: 91
+Epochs: 39, Loss: 4423137792.0, lr: 0.007708236951921931, time: 91
+Epochs: 40, Loss: 4968316416.0, lr: 0.007650819998320297, time: 94
+Epochs: 41, Loss: 4853680640.0, lr: 0.007593474771492367, time: 94
+Epochs: 42, Loss: 4690348544.0, lr: 0.007536201632105431, time: 94
+Epochs: 43, Loss: 4608587776.0, lr: 0.007479000944933124, time: 94
+Epochs: 44, Loss: 4723656192.0, lr: 0.007421873078928632, time: 94
+Epochs: 45, Loss: 5868302336.0, lr: 0.007364818407299646, time: 97
+Epochs: 46, Loss: 6142237184.0, lr: 0.007307837307585186, time: 97
+Epochs: 47, Loss: 6475356672.0, lr: 0.007250930161734293, time: 97
+Epochs: 48, Loss: 6458309632.0, lr: 0.00719409735618669, time: 97
+Epochs: 49, Loss: 6369682432.0, lr: 0.007137339281955456, time: 97
+Epochs: 50, Loss: 7229616128.0, lr: 0.007080656334711765, time: 100
+Epochs: 51, Loss: 6917124096.0, lr: 0.007024048914871794, time: 100
+Epochs: 52, Loss: 6609036288.0, lr: 0.006967517427685831, time: 100
+Epochs: 53, Loss: 6323597312.0, lr: 0.006911062283329664, time: 100
+Epochs: 54, Loss: 6131700736.0, lr: 0.006854683896998351, time: 100
+Epochs: 55, Loss: 6972955136.0, lr: 0.006798382689002409, time: 103
+########## Saving Trace ##########
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 198, in <module>
+    traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 209, in odeint_adjoint
+    adjoint_method, adjoint_options, t.requires_grad, *adjoint_params)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/adjoint.py", line 23, in forward
+    ans, ans_dt = odeint(func, y0, t, rtol=rtol, atol=atol, method=method, options=options)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/odeint.py", line 57, in odeint
+    solution, solution_dt = solver.integrate(t)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/solvers.py", line 72, in integrate
+    dy, f0 = self._step_func(self.func, t0, dt, t1, y0)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/fixed_grid.py", line 9, in _step_func
+    f0 = func(t0, y0, perturb=Perturb.NEXT if self.perturb else Perturb.NONE)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 193, in forward
+    return self.base_func(t, y)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1190, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torchdiffeq_ctrl/_impl/misc.py", line 193, in forward
+    return self.base_func(t, y)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1208, in _call_impl
+    result = forward_call(*input, **kwargs)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/neural_value_synthesis_diffeq.py", line 166, in forward
+    xd = self._step_func(x, u)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/models.py", line 65, in simulate_PFL
+    return self.PFL(x, acc)
+  File "/home/daniel/Repos/Mujoco_Python_Sandbox/value_gradient/models.py", line 198, in PFL
+    xd = torch.cat((qd[:, :, 0], qd[:, :, 1], qddc, qddp), 1).unsqueeze(1).clone()
+KeyboardInterrupt
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "tv_value_synthesis_trajopt_cartpole.py", line 239, in <module>
+    model_scripted = torch.jit.script(dyn_system.value_func.to('cpu'))  # Export to TorchScript
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_script.py", line 1287, in script
+    obj, torch.jit._recursive.infer_methods_to_compile
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 476, in create_script_module
+    return create_script_module_impl(nn_module, concrete_type, stubs_fn)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 542, in create_script_module_impl
+    create_methods_and_properties_from_stubs(concrete_type, method_stubs, property_stubs)
+  File "/home/daniel/.local/share/virtualenvs/Mujoco_Python_Sandbox-gNKKWzd6/lib/python3.7/site-packages/torch/jit/_recursive.py", line 393, in create_methods_and_properties_from_stubs
+    concrete_type._create_methods_and_properties(property_defs, property_rcbs, method_defs, method_rcbs, method_defaults)
+RuntimeError:
+attribute lookup is not defined on python value of type 'SimulationParams':
+  File "tv_value_synthesis_trajopt_cartpole.py", line 74
+    def forward(self, t, x):
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+                           ~~~~~~~~~~~~~~~ <--- HERE
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)
