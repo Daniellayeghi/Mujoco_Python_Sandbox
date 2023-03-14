@@ -5,19 +5,19 @@ from models import Cartpole, ModelParams
 from time_search import optimal_time
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
-from torchdiffeq_ctrl import odeint as odeint
+from torchdiffeq_ctrl import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 import wandb
 from mj_renderer import *
 
 wandb.init(project='cartpole_trajopt', entity='lonephd')
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 100, 50, 0.01)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 100, 100, 0.01)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-max_iter, max_time, alpha, dt, n_bins, discount, step, scale, mode = 500, 200, .5, 0.01, 3, 1, 15, 5, 'inv'
-Q = torch.diag(torch.Tensor([0.05, 0.5, .1, .1])).repeat(sim_params.nsim, 1, 1).to(device)
+max_iter, max_time, alpha, dt, n_bins, discount, step, scale, mode = 500, 250, .5, 0.01, 3, 1, 15, 5, 'inv'
+Q = torch.diag(torch.Tensor([0.5, 0.5, 0, 0])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
-Qf = torch.diag(torch.Tensor([500, 500, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
+Qf = torch.diag(torch.Tensor([1000, 500, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-2, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
 renderer = MjRenderer("../xmls/cartpole.xml", 0.0001)
@@ -66,8 +66,8 @@ class NNValueFunction(nn.Module):
 
         def init_weights(m):
             if isinstance(m, nn.Linear):
-                torch.nn.init.xavier_normal_(m.weight)
-                torch.nn.init.zeros_(m.bias)
+                torch.nn.init.xavier_uniform_(m.weight)
+                torch.nn.init.uniform_(m.bias)
 
         self.nn.apply(init_weights)
 
@@ -150,8 +150,9 @@ dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step, scale=scale
 ).to(device)
 
+init_lr = 4e-2
 one_step = torch.linspace(0, dt, 2).to(device)
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=4e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=init_lr, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 # fig_3, p, r, width, height = init_fig_cp(0)
@@ -161,8 +162,8 @@ wandb.watch(dyn_system, loss_function, log="all")
 
 
 def schedule_lr(optimizer, epoch, rate):
-    # pass
-    lr = 0.04 * (1.0 - epoch / 200) ** 1.2
+    pass
+    lr = max(init_lr * (1.0 - epoch / 200) ** 2, 1e-3)
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 

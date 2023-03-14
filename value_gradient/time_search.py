@@ -1,6 +1,7 @@
 import torch
 from torchdiffeq_ctrl import odeint_adjoint as odeint
 from utilities.torch_device import device
+import math
 
 
 def bisection_search(func, criteria, lower_bound, upper_bound, max_iterations=7):
@@ -21,6 +22,9 @@ def bisection_search(func, criteria, lower_bound, upper_bound, max_iterations=7)
 
 
 def optimal_time(init_time, max_time, dt, loss_func, x_init, func, init_loss):
+
+    max_iteration = int(math.log2(max_time - init_time))
+
     def func_wrap(time):
         time = torch.linspace(0, (time - 1) * dt, time).to(device)
         y, dydt = odeint(func, x_init, time, method='euler', options=dict(step_size=dt))
@@ -30,4 +34,4 @@ def optimal_time(init_time, max_time, dt, loss_func, x_init, func, init_loss):
         return loss < init_loss
 
     with torch.no_grad():
-        return bisection_search(func_wrap, criteria, init_time, max_time)
+        return bisection_search(func_wrap, criteria, init_time, max_time, max_iteration)
