@@ -1,6 +1,0 @@
-
-Creating window glfw
-Traceback (most recent call last):
-  File "tv_value_synthesis_trajopt_cartpole.py", line 221, in <module>
-    mean, criterion = close_to_goal(traj, 1) #moving_loss_decrease(loss_buffer)
-ValueError: too many values to unpack (expected 2)

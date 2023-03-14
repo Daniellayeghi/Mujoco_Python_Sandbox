@@ -1,8 +1,0 @@
-
-Creating window glfw
-Traceback (most recent call last):
-  File "tv_value_synthesis_trajopt_cartpole.py", line 196, in <module>
-    loss = loss_function(traj, dtraj_dt, alpha)
-  File "tv_value_synthesis_trajopt_cartpole.py", line 145, in loss_function
-    l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
-torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 722.53 GiB (GPU 0; 10.92 GiB total capacity; 107.63 MiB already allocated; 8.96 GiB free; 150.00 MiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
