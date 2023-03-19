@@ -142,6 +142,11 @@ fig_3, p, r, width, height = init_fig_dcp(0)
 
 log = f"m-{mode}_d-{discount}_s-{step}"
 
+def transform_coordinates_dcp(traj: torch.Tensor):
+    # traj[:, :, :, 1] = traj[:, :, :, 1] + 2 * (torch.pi - traj[:, :, :, 1])
+    traj[:, :, :, 2] = torch.pi - (traj[:, :, :, 1] + (torch.pi - traj[:, :, :, 2]))
+    return traj
+
 
 if __name__ == "__main__":
     qp_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq-1).uniform_(torch.pi - 0.3, torch.pi + 0.3) * 1
@@ -188,8 +193,8 @@ if __name__ == "__main__":
 
             for i in range(0, sim_params.nsim, 10):
                 selection = random.randint(0, sim_params.nsim - 1)
-                traj_mj = (traj.clone() - torch.Tensor([0, 0, torch.pi, 0, 0, 0]).to(device))* torch.Tensor([1, -1, -1, 1, 1, 1]).to(device)
-                renderer.render(traj_mj[:, selection, 0, :sim_params.nq].cpu().detach().numpy())
+                traj_dcp_mj = transform_coordinates_dcp(traj)
+                renderer.render(traj_dcp_mj[:, 0, 0, :dcp_params.nq].cpu().detach().numpy())
                 # cart = traj[:, selection, 0, 0].cpu().detach().numpy()
                 # pole1 = traj[:, selection, 0, 1].cpu().detach().numpy()
                 # pole2 = traj[:, selection, 0, 2].cpu().detach().numpy()

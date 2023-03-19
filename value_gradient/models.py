@@ -21,6 +21,8 @@ class BaseRBD(object):
         self.simulator = self.simulate_REG
         if mode == 'pfl':
             self.simulator = self.simulate_PFL
+        else:
+            self.simulator = self.simulate_REG
 
     def _Muact(self, q):
         pass
@@ -204,7 +206,7 @@ class DoubleCartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 1
     GRAVITY = 9.81
-    FRICTION = .1
+    FRICTION = 0.001
     GEAR = 30
 
     def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
@@ -359,9 +361,74 @@ class TwoLink(BaseRBD):
         return self.simulator(x, inputs)
 
 
+class TwoLink2(BaseRBD):
+    FRICTION = 0.025
+    GEAR = 1
+
+    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
+        super(TwoLink2, self).__init__(nsims, params, device, mode)
+        self._b = torch.diag(torch.Tensor([1, 1])).repeat(nsims, 1, 1).to(device)
+
+    def _Mact(self, q):
+        return self._Ms(q)[1]
+
+    def _Muact(self, q):
+        return self._Ms(q)[2]
+
+    def _Mfull(self, q):
+        return self._Ms(q)[0]
+
+    def _Ms(self, q):
+        qp1, qp2 = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
+        ones = torch.ones_like(qp1)
+        a1, a2, a3 = 0.025 + 0.045 + 1.4 * 0.3 ** 2, 0.3 * 0.16, 0.045
+        M11 = a1 * ones + 2 * a2 * torch.cos(qp2)
+        M12 = a3 * ones + a2 * torch.cos(qp2)
+        M22 = a3 * ones
+        M1s = torch.cat((M11, M12), dim=2)
+        M2s = torch.cat((M12, M22), dim=2)
+
+        Mfull = torch.hstack(
+            (M1s, M2s)
+        )
+
+        return Mfull, Mfull, None
+
+    def _Mu_Mua(self, q):
+        return None, None
+
+    def _Cfull(self, x):
+        pass
+
+    def _Tgrav(self, q):
+        pass
+
+    def _Tbias(self, x):
+        qp1, qp2 = x[:, :, 0].unsqueeze(1).clone(), x[:, :, 1].unsqueeze(1).clone(),
+        qdp1, qdp2 = x[:, :, 2].unsqueeze(1).clone(), x[:, :, 3].unsqueeze(1).clone()
+        a2 = 0.3 * 0.1
+        T1act = -qdp2 * (2 * qdp1 + qdp2)
+        T2act = qdp1 ** 2
+        return -torch.cat((T1act, T2act), dim=2) * (a2 * torch.sin(qp2))
+
+    def _Bvec(self):
+        return self._b * self.GEAR
+
+    def _Tfric(self, qd):
+        return qd * self.FRICTION
+
+    def PFL(self, x, acc):
+        qd = x[:, :, 2:]
+        xd = torch.cat((qd, acc), 2).clone()
+        return xd
+
+    def __call__(self, x, inputs):
+        return self.simulator(x, inputs)
+
+
 if __name__ == "__main__":
     from mj_renderer import *
-    ren = MjRenderer('../xmls/double_cart_pole.xml')
+    # ren = MjRenderer('../xmls/double_cart_pole.xml')
     ren_tl = MjRenderer('../xmls/reacher.xml')
 
     cp_params = ModelParams(2, 2, 1, 4, 4)
@@ -371,55 +438,52 @@ if __name__ == "__main__":
     dcp = DoubleCartpole(1, dcp_params, 'cpu', mode='pfl')
 
     tl_params = ModelParams(2, 2, 2, 4, 4)
-    tl = TwoLink(1, tl_params, 'cpu', mode='pfl')
+    tl = TwoLink2(1, tl_params, 'cpu', mode='norm')
 
     x_init_cp = torch.Tensor([0, torch.pi-0.3, 0, 0]).view(1, 1, 4)
     qdd_init_cp = torch.Tensor([0, 0]).view(1, 1, 2)
 
-    x_init_dcp = torch.Tensor([0, 2, 2, 0, 0, 0]).view(1, 1, 6)
+    x_init_dcp = torch.Tensor([0, 0.1, 0.1, 0, 0, 0]).view(1, 1, 6)
     qdd_init_dcp = torch.Tensor([0, 0, 0]).view(1, 1, 3)
     traj_dcp = torch.zeros((500, 1, 1, dcp_params.nx))
 
     x_init_tl = torch.Tensor([0, 0, 0, 0]).view(1, 1, 4)
     qdd_init_tl = torch.Tensor([0, 0]).view(1, 1, 2)
     traj_tl = torch.zeros((500, 1, 1, tl_params.nx))
-
-
+    # test_acc = torch.from_numpy(np.load('test_acc.npy'))[:,:,:,0].reshape(200, 1, 1, 1)
 
     def integrate(func, x, xd, time, dt, res: torch.Tensor):
         for t in range(time):
-            xd_new = func(x, torch.randn((1, 1, 2))* 0)
+            xd_new = func(x, torch.Tensor([0, .1]).reshape(1, 1, 2))
             x = x + xd_new * dt
             res[t] = x
 
         return res
 
-
+    #
     # def transform_coordinates_dcp(traj: torch.Tensor):
     #    # traj[:, :, :, 1] = traj[:, :, :, 1] + 2 * (torch.pi - traj[:, :, :, 1])
     #    traj[:, :, :, 2] = torch.pi - (traj[:, :, :, 1] + (torch.pi - traj[:, :, :, 2]))
     #    return traj
     #
     # # xs_cp = integrate(cp.simulate_REG, x_init_cp, qdd_init_cp, 500, 0.01)
-    # xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 500, 0.01)
+    # xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 500, 0.01, traj_dcp)
     # traj_dcp_mj = transform_coordinates_dcp(traj_dcp)
     # ren.render(traj_dcp_mj[:, 0, 0, :dcp_params.nq].cpu().detach().numpy())
-    #
+
     # theta1 = [x[:, :, 1].item() for x in xs_dcp]
     # theta2 = [x[:, :, 2].item() for x in xs_dcp]
     # cart = [x[:, :, 0].item() for x in xs_dcp]
     #
     # fig, p, r, width, height = init_fig_dcp(0)
     # animate_double_cartpole(np.array(cart), np.array(theta1), np.array(theta2), fig, p, r, width, height, skip=2)
-    #
-    # xs_dcp = integrate(dcp, x_init_dcp, qdd_init_dcp, 500, 0.01)
 
 
     def transform_coordinates_tl(traj: torch.Tensor):
        traj[:, :, :, 1] = torch.pi - (traj[:, :, :, 0] + (torch.pi - traj[:, :, :, 1]))
        return traj
 
-    traj_tl = integrate(tl.simulate_REG, x_init_tl, qdd_init_tl, 500, 0.01, traj_tl)
+    traj_tl = integrate(tl, x_init_tl, qdd_init_tl, 500, 0.01, traj_tl)
     traj_tl_mj = transform_coordinates_tl(traj_tl)
     ren_tl.render(traj_tl_mj[:, 0, 0, :tl_params.nq].cpu().detach().numpy())
 
