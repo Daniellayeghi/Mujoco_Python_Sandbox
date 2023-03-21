@@ -28,10 +28,9 @@ class ICNN(nn.Module):
             nn.init.uniform_(b, -bound, bound)
 
     def forward(self, t, x):
-        x = x.reshape(x.shape[0], x.shape[-1])
         nsim = x.shape[0]
-        time = torch.ones(nsim, 1).to(device) * t
-        aug_x = torch.cat((x, time), dim=1)
+        time = torch.ones((nsim, 1, 1)).to(device) * t
+        aug_x = torch.cat((x, time), dim=2)
         z = F.linear(aug_x, self.W[0], self.bias[0])
         z = self.act(z)
 

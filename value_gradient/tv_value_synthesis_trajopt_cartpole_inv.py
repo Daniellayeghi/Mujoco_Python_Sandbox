@@ -10,16 +10,17 @@ from utilities.mujoco_torch import SimulationParams
 import wandb
 from mj_renderer import *
 
-wandb.init(project='cartpole_trajopt', entity='lonephd')
 torch.manual_seed(0)
+wandb.init(project='cartpole_trajopt', entity='lonephd')
+
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 100, 100, 0.01)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-max_iter, max_time, alpha, dt, n_bins, discount, step, scale, mode = 200, 148, .5, 0.01, 3, 1, 15, 10, 'fwd'
-Q = torch.diag(torch.Tensor([0.5, 5, 0, 0])).repeat(sim_params.nsim, 1, 1).to(device)
+max_iter, max_time, alpha, dt, n_bins, discount, step, scale, mode = 500, 250, .5, 0.01, 3, 1, 15, 5, 'inv'
+Q = torch.diag(torch.Tensor([0.5, 0.5, 0, 0])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
-Qf = torch.diag(torch.Tensor([1000, 500, 10, 50])).repeat(sim_params.nsim, 1, 1).to(device)
+Qf = torch.diag(torch.Tensor([1000, 500, 10, 10])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-2, sim_params.nsim, 1, 1))
-cartpole = Cartpole(sim_params.nsim, cp_params, device, mode, stabalize=True)
+cartpole = Cartpole(sim_params.nsim, cp_params, device)
 renderer = MjRenderer("../xmls/cartpole.xml", 0.0001)
 
 
@@ -151,7 +152,7 @@ dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=cartpole, mode=mode, step=step, scale=scale
 ).to(device)
 
-init_lr = 2e-3
+init_lr = 1e-2
 one_step = torch.linspace(0, dt, 2).to(device)
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=init_lr, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
@@ -164,20 +165,44 @@ wandb.watch(dyn_system, loss_function, log="all")
 
 def schedule_lr(optimizer, epoch, rate):
     pass
-    # lr = max(init_lr * (1.0 - epoch / 200) ** 2, 1e-3)
-    # for param_group in optimizer.param_groups:
-    #     param_group['lr'] = lr
+    lr = max(init_lr * (1.0 - epoch / 200) ** 1.1, 1e-3)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
 
+
+def increase_time_horizon(init_time, time, max_time, num_epochs, epoch, criterion):
+    if criterion:
+        ratio = epoch / num_epochs
+        new_ntime = min(int(init_time + 1/(ratio ** (1/1.9))), max_time)
+        sim_params.ntime = new_ntime
+        return torch.linspace(0, (new_ntime - 1) * dt, new_ntime).to(device).requires_grad_(True)
+
+    return time
+
+
+def moving_loss_decrease(losses_list, n=10):
+    arr = np.array(losses_list)
+    if n > len(arr):
+        return 0
+
+    last_n = arr[-n:]
+    diff = np.diff(last_n)
+    avg_diff = np.mean(diff)
+    return avg_diff
+
+def close_to_goal(x, tol):
+    x = batch_state_encoder(x)
+    t, nsim, r, c = x.shape
+    x_final = x[-4:-1].view(3, nsim, r, c).clone()
+    l_terminal = loss_quadratic(x_final, Qf).squeeze()
+    mean = torch.mean(torch.sum(l_terminal, dim=0)).item()
+    return mean, mean < tol
 
 
 if __name__ == "__main__":
     def get_lr(optimizer):
         for param_group in optimizer.param_groups:
             return param_group['lr']
-
-    def set_lr(optimizer, lr):
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
 
 
     time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device).requires_grad_(True)
@@ -199,12 +224,7 @@ if __name__ == "__main__":
             loss = loss_function(traj, dtraj_dt, alpha)
             loss_buffer.append(loss.item())
             loss.backward()
-            sim_params.ntime, update = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
-            # if update:
-            #     print("Reset lr")
-            #     lr_iteration = 1
-
-
+            sim_params.ntime = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
             optimizer.step()
             schedule_lr(optimizer, iteration, 20)
             wandb.log({'epoch': iteration+1, 'loss': loss.item()})

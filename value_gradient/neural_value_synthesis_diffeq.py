@@ -61,7 +61,7 @@ class ProjectedDynamicalSystem(nn.Module):
 
             self._policy = underactuated_fwd_policy
             self._ctrl = self.hjb
-            self._step_func = self._dynamics.simulate_REG
+            self._step_func = self._dynamics
 
         if mode == 'inv':
             def underactuated_inv_policy(q, v, x, Vx):
@@ -78,8 +78,8 @@ class ProjectedDynamicalSystem(nn.Module):
 
                 if Mu is None:
                     Minv = torch.linalg.inv(M)
-                    qdd = torch.ones((self.sim_params.nsim, M.shape[2], 1)).to(device)
-                    return (Minv @ (Tbias - .5 * self._scale * Vqd @ qdd).mT).mT
+                    dfdqd = torch.eye(self.sim_params.nv).repeat(self.sim_params.nsim, 1, 1).to(device)
+                    return (Minv @ (Tbias - .5 * self._scale * Vqd @ dfdqd).mT).mT
 
                 Tbiasc, Tbiasu = Tbias[:, :, 0].reshape(self.sim_params.nsim, 1, 1).clone(), Tbias[:, :, 1:].reshape(
                     self.sim_params.nsim, 1, self.sim_params.nv-1).clone()
@@ -92,7 +92,7 @@ class ProjectedDynamicalSystem(nn.Module):
 
             self._policy = underactuated_inv_policy
             self._ctrl = self.hjb
-            self._step_func = self._dynamics.simulate_PFL
+            self._step_func = self._dynamics
 
         if dynamics is None:
             def dynamics(x, acc):

@@ -16,13 +16,16 @@ class ModelParams:
 
 
 class BaseRBD(object):
-    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
+    def __init__(self, nsims, params: ModelParams, device, mode, stabilize=False):
         self._params = params
         self.simulator = self.simulate_REG
-        if mode == 'pfl':
+        self._mode = mode
+        if mode == 'inv':
             self.simulator = self.simulate_PFL
-        else:
+        if mode == 'fwd':
             self.simulator = self.simulate_REG
+        self._stabilize = stabilize
+
 
     def _Muact(self, q):
         pass
@@ -46,6 +49,12 @@ class BaseRBD(object):
         pass
 
     def _Tfric(self, qd):
+        pass
+
+    def _FWDreg(self, x):
+        pass
+
+    def _INVreg(self, x):
         pass
 
     def inverse_dynamics(self, x, acc):
@@ -76,12 +85,13 @@ class BaseRBD(object):
         xd = torch.cat((qd[:, :, 0:self._params.nx], qdd), 2).clone()
         return xd
 
+
 class DoubleIntegrator(BaseRBD):
     MASS = 1
     FRICTION = .1
     GEAR = 1
 
-    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
+    def __init__(self, nsims, params: ModelParams, device, mode='inv'):
         super(DoubleIntegrator, self).__init__(nsims, params, device, mode)
         self._M = torch.ones((nsims, 1, 1)).to(device) * self.MASS
         self._b = torch.diag(torch.Tensor([1])).repeat(nsims, 1, 1).to(device)
@@ -122,19 +132,28 @@ class DoubleIntegrator(BaseRBD):
 
 
 class Cartpole(BaseRBD):
-    LENGTH = 1
+    LENGTH = 0.3
     MASS_C = 1
-    MASS_P = 1
+    MASS_P = 0.1
     GRAVITY = -9.81
-    FRICTION = torch.Tensor([0.13, 0.13]).to(device)
-    GEAR = 10
+    FRICTION = torch.Tensor([0.025, 0.025]).to(device)
+    GEAR = 1
 
-    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
-        super(Cartpole, self).__init__(nsims, params, device, mode)
+    def __init__(self, nsims, params: ModelParams, device, mode='inv', stabalize=False):
+        super(Cartpole, self).__init__(nsims, params, device, mode, stabalize)
         self._L = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
         self._Mp = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
         self._Mc = torch.ones((nsims, 1, 1)).to(device) * self.MASS_C
         self._b = torch.diag(torch.Tensor([1, 0])).repeat(nsims, 1, 1).to(device)
+        self.K = torch.Tensor([5.162, 40.269, 0.05, .4]).repeat(nsims, 1, 1).to(device)
+
+        def state_encoder(x: torch.Tensor):
+            b, r, c = x.shape
+            x = x.reshape((b, r * c))
+            qc, qp, v = x[:, 0].clone().unsqueeze(1), x[:, 1].clone().unsqueeze(1), x[:, 2:].clone()
+            qp = torch.cos(qp) - 1
+            return torch.cat((qc, qp, v), 1).reshape((b, r, c))
+        self._state_encoder = state_encoder
 
     def _Muact(self, q):
         qc, qp = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
@@ -186,7 +205,23 @@ class Cartpole(BaseRBD):
     def _Tfric(self, qd):
         return qd * self.FRICTION
 
+    def _FWDreg(self, x):
+        # x_enc = self._state_encoder(x)
+        reg = x @ self.K.mT
+        return torch.cat((reg, torch.zeros_like(reg)), dim=2).to(device)
+
+    def _INVreg(self, x):
+        # x = self._state_encoder(x)
+        return x @ self.K
+
     def __call__(self, x, inputs):
+        if self._stabilize:
+            stab = (torch.abs(self._state_encoder(x)[:, :, 1]) < 0.17).squeeze()
+            not_stab = (torch.abs(self._state_encoder(x)[:, :, 1]) > 0.17).squeeze()
+
+            ctrl = self._FWDreg(x) if self._mode != "inv" else self._INVreg(x)
+            inputs = inputs * not_stab.reshape(x.shape[0], 1, 1) + ctrl * stab.reshape(x.shape[0], 1, 1)
+
         return self.simulator(x, inputs)
 
     def PFL(self, x, acc):
@@ -204,12 +239,12 @@ class Cartpole(BaseRBD):
 class DoubleCartpole(BaseRBD):
     LENGTH = 1
     MASS_C = 1
-    MASS_P = 1
+    MASS_P = 0.1
     GRAVITY = 9.81
     FRICTION = 0.001
     GEAR = 30
 
-    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
+    def __init__(self, nsims, params: ModelParams, device, mode='inv'):
         super(DoubleCartpole, self).__init__(nsims, params, device, mode)
         self._b = torch.diag(torch.Tensor([1, 0, 0])).repeat(nsims, 1, 1).to(device)
 
@@ -292,80 +327,11 @@ class DoubleCartpole(BaseRBD):
         return self.simulator(x, inputs)
 
 
-class TwoLink(BaseRBD):
-    LENGTH = 1
-    MASS_P = 1
-    GRAVITY = 0
-    FRICTION = 1
-    GEAR = 10
-
-    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
-        super(TwoLink, self).__init__(nsims, params, device, mode)
-        self._b = torch.diag(torch.Tensor([1, 1])).repeat(nsims, 1, 1).to(device)
-
-    def _Mact(self, q):
-        return self._Ms(q)[1]
-
-    def _Muact(self, q):
-        return self._Ms(q)[2]
-
-    def _Mfull(self, q):
-        return self._Ms(q)[0]
-
-    def _Ms(self, q):
-        qp1, qp2 = q[:, :, 0].unsqueeze(1).clone(), q[:, :, 1].unsqueeze(1).clone()
-        ones = torch.ones_like(qp1)
-        M11 = (self.LENGTH ** 2 + (1/12 * self.LENGTH**2 * self.MASS_P) + (0.25 * self.MASS_P + self.MASS_P)) * ones
-        M12 = 0.5 * self.MASS_P * self.LENGTH ** 2 * torch.cos((qp1 - qp2))
-        M22 = (0.25 * self.MASS_P * self.LENGTH ** 2 + (1/12 * self.LENGTH**2 * self.MASS_P)) * ones
-
-        M1s = torch.cat((M11, M12), dim=2)
-        M2s = torch.cat((M12, M22), dim=2)
-
-        Mfull = torch.hstack(
-            (M1s, M2s)
-        )
-
-        return Mfull, Mfull, None
-
-    def _Mu_Mua(self, q):
-        return None, None
-
-    def _Cfull(self, x):
-        pass
-
-    def _Tgrav(self, q):
-        pass
-
-    def _Tbias(self, x):
-        qp1, qp2 = x[:, :, 0].unsqueeze(1).clone(), x[:, :, 1].unsqueeze(1).clone(),
-        qdp1, qdp2 = x[:, :, 2].unsqueeze(1).clone(), x[:, :, 3].unsqueeze(1).clone()
-        L = self.LENGTH
-
-        T1act = -L * (0.5 * self.MASS_P * L * qdp2**2 * torch.sin(qp1 - qp2))
-        T2act = 0.5 * L * self.MASS_P * (L * qdp1 ** 2 * torch.sin(qp1 - qp2))
-        return torch.cat((T1act, T2act), dim=2)
-
-    def _Bvec(self):
-        return self._b * self.GEAR
-
-    def _Tfric(self, qd):
-        return qd * self.FRICTION
-
-    def PFL(self, x, acc):
-        qd = x[:, :, 2:]
-        xd = torch.cat((qd, acc), 2).clone()
-        return xd
-
-    def __call__(self, x, inputs):
-        return self.simulator(x, inputs)
-
-
 class TwoLink2(BaseRBD):
     FRICTION = 0.025
     GEAR = 1
 
-    def __init__(self, nsims, params: ModelParams, device, mode='pfl'):
+    def __init__(self, nsims, params: ModelParams, device, mode='inv'):
         super(TwoLink2, self).__init__(nsims, params, device, mode)
         self._b = torch.diag(torch.Tensor([1, 1])).repeat(nsims, 1, 1).to(device)
 
@@ -406,6 +372,7 @@ class TwoLink2(BaseRBD):
     def _Tbias(self, x):
         qp1, qp2 = x[:, :, 0].unsqueeze(1).clone(), x[:, :, 1].unsqueeze(1).clone(),
         qdp1, qdp2 = x[:, :, 2].unsqueeze(1).clone(), x[:, :, 3].unsqueeze(1).clone()
+        qd = x[:, :, 2:].unsqueeze(1).clone()
         a2 = 0.3 * 0.1
         T1act = -qdp2 * (2 * qdp1 + qdp2)
         T2act = qdp1 ** 2
@@ -430,18 +397,20 @@ if __name__ == "__main__":
     from mj_renderer import *
     # ren = MjRenderer('../xmls/double_cart_pole.xml')
     ren_tl = MjRenderer('../xmls/reacher.xml')
+    ren_cp = MjRenderer('../xmls/cartpole.xml')
 
     cp_params = ModelParams(2, 2, 1, 4, 4)
-    cp = Cartpole(1, cp_params, 'cpu', mode='pfl')
+    cp = Cartpole(1, cp_params, 'cpu', mode='fwd', stabalize=True)
 
     dcp_params = ModelParams(3, 3, 1, 6, 6)
-    dcp = DoubleCartpole(1, dcp_params, 'cpu', mode='pfl')
+    dcp = DoubleCartpole(1, dcp_params, 'cpu', mode='inv')
 
     tl_params = ModelParams(2, 2, 2, 4, 4)
-    tl = TwoLink2(1, tl_params, 'cpu', mode='norm')
+    tl = TwoLink2(1, tl_params, 'cpu', mode='fwd')
 
-    x_init_cp = torch.Tensor([0, torch.pi-0.3, 0, 0]).view(1, 1, 4)
+    x_init_cp = torch.Tensor([0, 0.7, 0, 0]).view(1, 1, 4)
     qdd_init_cp = torch.Tensor([0, 0]).view(1, 1, 2)
+    traj_cp = torch.zeros((500, 1, 1, cp_params.nx))
 
     x_init_dcp = torch.Tensor([0, 0.1, 0.1, 0, 0, 0]).view(1, 1, 6)
     qdd_init_dcp = torch.Tensor([0, 0, 0]).view(1, 1, 3)
@@ -452,9 +421,12 @@ if __name__ == "__main__":
     traj_tl = torch.zeros((500, 1, 1, tl_params.nx))
     # test_acc = torch.from_numpy(np.load('test_acc.npy'))[:,:,:,0].reshape(200, 1, 1, 1)
 
+    K = torch.Tensor([-1.162, -2.269, 0, 0]).reshape(1, 4, 1)
+
+
     def integrate(func, x, xd, time, dt, res: torch.Tensor):
         for t in range(time):
-            xd_new = func(x, torch.Tensor([0, .1]).reshape(1, 1, 2))
+            xd_new = func(x, torch.randn(1, 1, 2) * 0)
             x = x + xd_new * dt
             res[t] = x
 
@@ -479,11 +451,13 @@ if __name__ == "__main__":
     # animate_double_cartpole(np.array(cart), np.array(theta1), np.array(theta2), fig, p, r, width, height, skip=2)
 
 
-    def transform_coordinates_tl(traj: torch.Tensor):
-       traj[:, :, :, 1] = torch.pi - (traj[:, :, :, 0] + (torch.pi - traj[:, :, :, 1]))
-       return traj
+    # def transform_coordinates_tl(traj: torch.Tensor):
+    #    traj[:, :, :, 1] = torch.pi - (traj[:, :, :, 0] + (torch.pi - traj[:, :, :, 1]))
+    #    return traj
+    #
+    # traj_tl = integrate(tl, x_init_tl, qdd_init_tl, 500, 0.01, traj_tl)
+    # traj_tl_mj = transform_coordinates_tl(traj_tl)
+    # ren_tl.render(traj_tl_mj[:, 0, 0, :tl_params.nq].cpu().detach().numpy())
 
-    traj_tl = integrate(tl, x_init_tl, qdd_init_tl, 500, 0.01, traj_tl)
-    traj_tl_mj = transform_coordinates_tl(traj_tl)
-    ren_tl.render(traj_tl_mj[:, 0, 0, :tl_params.nq].cpu().detach().numpy())
-
+    traj_cp = integrate(cp, x_init_cp, qdd_init_cp, 500, 0.01, traj_cp)
+    ren_cp.render(traj_cp[:, 0, 0, :cp_params.nq].cpu().detach().numpy())

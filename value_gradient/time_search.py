@@ -6,6 +6,7 @@ import math
 
 def bisection_search(func, criteria, lower_bound, upper_bound, max_iterations=7):
     iteration = 0
+    update = False
     for _ in range(max_iterations):
         mid = int((lower_bound+upper_bound)/2)
 
@@ -14,13 +15,14 @@ def bisection_search(func, criteria, lower_bound, upper_bound, max_iterations=7)
 
         if criteria(func(mid)):
             lower_bound, upper_bound = mid, upper_bound
+            update = True
         else:
             lower_bound, upper_bound = lower_bound, mid
 
         iteration += 1
 
     print(f"bisection iteration {iteration}")
-    return lower_bound
+    return lower_bound, update
 
 
 def optimal_time(init_time, max_time, dt, loss_func, x_init, func, init_loss):

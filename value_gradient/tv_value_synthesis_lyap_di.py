@@ -6,19 +6,23 @@ from models import DoubleIntegrator, ModelParams
 from mj_renderer import *
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
-from torchdiffeq import odeint_adjoint as odeint
+from torchdiffeq_ctrl import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 from PSDNets import ReHU, MakePSD, ICNN
+import wandb
 
 di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
 max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 1, 1, 'proj'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 10
-Qf = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 100
+Qf = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 1000
 R = torch.diag(torch.Tensor([.5])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 renderer = MjRenderer("../xmls/pointmass.xml")
+
+wandb.init(project='di_lyap', entity='lonephd')
+
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
     assert len(xs) == len(ys)
@@ -79,11 +83,9 @@ class NNValueFunction(nn.Module):
         self.nn.apply(init_weights)
 
     def forward(self, t, x):
-        x = x.reshape(x.shape[0], sim_params.nqv)
-        b = x.shape[0]
-        time = torch.ones((b, 1)).to(device) * t
-        aug_x = torch.cat((x, time), dim=1)
-        return self.nn(aug_x).reshape(b, 1, 1)
+        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
+        aug_x = torch.cat((x, time), dim=2)
+        return self.nn(aug_x)
 
 
 def loss_func(x: torch.Tensor):
@@ -91,8 +93,8 @@ def loss_func(x: torch.Tensor):
     return x @ Q @ x.mT
 
 import torch.nn.functional as F
-# nn_value_func = ICNN([sim_params.nqv+1, 64, 64, 1], F.softplus).to(device)
-nn_value_func= NNValueFunction(sim_params.nqv+1).to(device)
+nn_value_func = ICNN([sim_params.nqv+1, 64, 64, 1], F.softplus).to(device)
+# nn_value_func= NNValueFunction(sim_params.nqv+1).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
 def batch_state_loss(x: torch.Tensor):
@@ -123,15 +125,21 @@ def backup_loss(x: torch.Tensor):
 
     return -value_init + value_final
 
+def value_terminal_loss(x: torch.Tensor):
+    t, nsim, r, c = x.shape
+    x_final = x[-1].view(1, nsim, r, c).clone().reshape(nsim, r, c)
+    value_final = nn_value_func(0, x_final).squeeze()
+    return value_final
 
 def batch_inv_dynamics_loss(acc, alpha):
+    acc = acc[:-1, :, :, sim_params.nv:].clone()
     l_ctrl = inv_dynamics_reg(acc, alpha)
     return torch.mean(l_ctrl) * 1/scale
 
 
 def loss_function(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(acc, alpha), batch_state_loss(x), backup_loss(x)
-    loss = torch.mean(l_ctrl + l_state + l_bellman)
+    l_ctrl, l_state, l_bellman, l_terminal = batch_inv_dynamics_loss(acc, alpha), batch_state_loss(x), backup_loss(x), value_terminal_loss(x) * 1000
+    loss = torch.mean(l_ctrl + l_state + l_bellman + l_terminal)
     return torch.maximum(loss, torch.zeros_like(loss))
 
 
@@ -150,6 +158,7 @@ lambdas = build_discounts(lambdas, discount).to(device)
 
 
 log = f"m-{mode}_d-{discount}_s-{step}"
+wandb.watch(dyn_system, loss_function, log="all")
 
 
 def schedule_lr(optimizer, epoch, rate):
@@ -174,13 +183,13 @@ if __name__ == "__main__":
     while iteration < max_iter:
         optimizer.zero_grad()
         x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
-        traj = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
-
-        acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
-        loss = loss_function(traj, acc, alpha)
+        traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+        acc = dtraj_dt[:, :, :, sim_params.nv:]
+        loss = loss_function(traj, dtraj_dt, alpha)
         loss.backward()
         optimizer.step()
         schedule_lr(optimizer, iteration, 60)
+        wandb.log({'epoch': iteration + 1, 'loss': loss.item()})
 
         print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
 
