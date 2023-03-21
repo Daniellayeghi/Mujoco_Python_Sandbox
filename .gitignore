@@ -4,3 +4,4 @@
 *.pt*
 *.dat*
 *__pycache__*
+*wandb*

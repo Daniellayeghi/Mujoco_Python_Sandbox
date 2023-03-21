@@ -69,3 +69,36 @@ class MakePSD(nn.Module):
         smoothed_output = self.rehu(self.f(aug_x) - self.zero)
         quadratic_under = self.eps*(aug_x**2).sum(1,keepdim=True)
         return (smoothed_output + quadratic_under).reshape(nsim, 1, 1)
+
+
+class PosDefICNN(nn.Module):
+    def __init__(self, layer_sizes, eps=0.1, negative_slope=0.05):
+        super().__init__()
+        self.W = nn.ParameterList([nn.Parameter(torch.Tensor(l, layer_sizes[0]))
+                                   for l in layer_sizes[1:]])
+        self.U = nn.ParameterList([nn.Parameter(torch.Tensor(layer_sizes[i+1], layer_sizes[i]))
+                                   for i in range(1,len(layer_sizes)-1)])
+        self.eps = eps
+        self.negative_slope = negative_slope
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        # copying from PyTorch Linear
+        for W in self.W:
+            nn.init.kaiming_uniform_(W, a=5**0.5)
+        for U in self.U:
+            nn.init.kaiming_uniform_(U, a=5**0.5)
+
+    def forward(self, t, x):
+        nsim, c = x.shape[0], x.shape[2]
+        time = torch.ones((nsim, 1, 1)).to(device) * t
+        aug_x = torch.cat((x, time), dim=2).reshape(nsim, c+1)
+        z = F.linear(aug_x, self.W[0])
+        F.softplus(z)
+
+        for W,U in zip(self.W[1:-1], self.U[:-1]):
+            z = F.linear(aug_x, W) + F.linear(z, F.softplus(U))*self.negative_slope
+            z = F.softplus(z)
+
+        z = F.linear(aug_x, self.W[-1]) + F.linear(z, F.softplus(self.U[-1]))
+        return F.softplus(z) + self.eps*(aug_x**2).sum(1)[:,None]

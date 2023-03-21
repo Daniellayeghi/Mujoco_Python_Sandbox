@@ -8,13 +8,14 @@ from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
 from torchdiffeq_ctrl import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
-from PSDNets import ReHU, MakePSD, ICNN
+from PSDNets import ReHU, MakePSD, ICNN, PosDefICNN
+from time_search import optimal_time
 import wandb
 
 di_params = ModelParams(1, 1, 1, 2, 2)
-sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
+sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 100, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 1, 1, 'proj'
+max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 501, .5, 0.01, 1, 1, 1, 'proj'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 10
 Qf = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 1000
 R = torch.diag(torch.Tensor([.5])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -93,7 +94,7 @@ def loss_func(x: torch.Tensor):
     return x @ Q @ x.mT
 
 import torch.nn.functional as F
-nn_value_func = ICNN([sim_params.nqv+1, 64, 64, 1], F.softplus).to(device)
+nn_value_func = PosDefICNN([sim_params.nqv+1, 64, 64, 1]).to(device)
 # nn_value_func= NNValueFunction(sim_params.nqv+1).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
@@ -147,7 +148,6 @@ pos_arr = torch.linspace(-5, 5, 100).to(device)
 vel_arr = torch.linspace(-5, 5, 100).to(device)
 f_mat = torch.zeros((100, 100)).to(device)
 [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
-time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
@@ -182,11 +182,13 @@ if __name__ == "__main__":
 
     while iteration < max_iter:
         optimizer.zero_grad()
+        time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
         x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
         traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
         acc = dtraj_dt[:, :, :, sim_params.nv:]
         loss = loss_function(traj, dtraj_dt, alpha)
         loss.backward()
+        sim_params.ntime, update = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
         optimizer.step()
         schedule_lr(optimizer, iteration, 60)
         wandb.log({'epoch': iteration + 1, 'loss': loss.item()})
