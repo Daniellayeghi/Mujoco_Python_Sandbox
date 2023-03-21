@@ -13,9 +13,9 @@ from time_search import optimal_time
 import wandb
 
 di_params = ModelParams(1, 1, 1, 2, 2)
-sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 100, 0.01)
+sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 135, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 501, .5, 0.01, 1, 1, 1, 'proj'
+max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 501, .5, 0.01, 1, 1, 2, 'proj'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 10
 Qf = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 1000
 R = torch.diag(torch.Tensor([.5])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -71,9 +71,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 16),
+            nn.Linear(n_in, 64),
             nn.Softplus(beta=5),
-            nn.Linear(16, 1)
+            nn.Linear(64, 1),
         )
 
         def init_weights(m):
@@ -84,8 +84,9 @@ class NNValueFunction(nn.Module):
         self.nn.apply(init_weights)
 
     def forward(self, t, x):
-        time = torch.ones((sim_params.nsim, 1, 1)).to(device) * t
-        aug_x = torch.cat((x, time), dim=2)
+        nsim, c = x.shape[0], x.shape[2]
+        time = torch.ones((nsim, 1, 1)).to(device) * t
+        aug_x = torch.cat((x, time), dim=2).reshape(nsim, c+1)
         return self.nn(aug_x)
 
 
@@ -94,8 +95,8 @@ def loss_func(x: torch.Tensor):
     return x @ Q @ x.mT
 
 import torch.nn.functional as F
-nn_value_func = PosDefICNN([sim_params.nqv+1, 64, 64, 1]).to(device)
-# nn_value_func= NNValueFunction(sim_params.nqv+1).to(device)
+# nn_value_func = PosDefICNN([sim_params.nqv+1, 64, 64, 1]).to(device)
+nn_value_func = NNValueFunction(sim_params.nqv+1).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
 def batch_state_loss(x: torch.Tensor):
@@ -153,7 +154,7 @@ dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
 ).to(device)
 
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=5e-3, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 
@@ -193,7 +194,7 @@ if __name__ == "__main__":
         schedule_lr(optimizer, iteration, 60)
         wandb.log({'epoch': iteration + 1, 'loss': loss.item()})
 
-        print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
+        print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}, time: {sim_params.ntime} \n")
 
         if iteration % 5 == 1:
             plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=traj, contour=True)

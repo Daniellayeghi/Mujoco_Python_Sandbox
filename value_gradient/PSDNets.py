@@ -61,13 +61,10 @@ class MakePSD(nn.Module):
         self.d = d
         self.rehu = ReHU(self.d)
 
-    def forward(self, t, x):
-        x = x.reshape(x.shape[0], x.shape[-1])
+    def forward(self, x):
         nsim = x.shape[0]
-        time = torch.ones(nsim, 1) * t
-        aug_x = torch.cat((x, time), dim=1)
-        smoothed_output = self.rehu(self.f(aug_x) - self.zero)
-        quadratic_under = self.eps*(aug_x**2).sum(1,keepdim=True)
+        smoothed_output = self.rehu(self.f(x) - self.zero)
+        quadratic_under = self.eps*(x**2).sum(1,keepdim=True)
         return (smoothed_output + quadratic_under).reshape(nsim, 1, 1)
 
 
