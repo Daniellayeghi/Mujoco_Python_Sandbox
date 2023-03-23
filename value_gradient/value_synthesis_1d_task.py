@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
     while diff > tol or iteration > max_iter:
         optimizer.zero_grad()
-        traj = odeint(dyn_system, x_init, time, method='euler')
+        traj, _ = odeint(dyn_system, x_init, time, method='euler')
         acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), 0.01)
         loss = loss_function(traj, acc)
         # xxd = compose_xxd(traj, acc)

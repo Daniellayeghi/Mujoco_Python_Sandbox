@@ -32,7 +32,7 @@ mujoco-py = "==2.1.2.14"
 torchdiffeq = {git = "https://github.com/rtqichen/torchdiffeq.git"}
 wandb = "*"
 protobuf = "==3.18"
-torchdiff-ctrl = {ref = "euler", git = "https://github.com/Daniellayeghi/torchdiffeq_ctrl.git"}
+torchdiffeq-ctrl = {ref = "euler", git = "https://github.com/Daniellayeghi/torchdiffeq_ctrl.git"}
 
 [requires]
 python_version = "3.7"

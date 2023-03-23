@@ -115,12 +115,9 @@ def batch_inv_dynamics_loss(x, acc, alpha):
     q, v = x[:, :, :, :sim_params.nq], x[:, :, :, sim_params.nq:]
     q = q.reshape((q.shape[0]*q.shape[1], 1, sim_params.nq))
     x_reshape = x.reshape((x.shape[0]*x.shape[1], 1, sim_params.nqv))
-    v_reshape = v.reshape((v.shape[0]*v.shape[1], 1, sim_params.nv))
-
     M = tl._Mfull(q).reshape((x.shape[0], x.shape[1], sim_params.nv, sim_params.nv))
     C = tl._Tbias(x_reshape).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
-    F = tl._Tfric(v_reshape).reshape((x.shape[0], x.shape[1], 1, sim_params.nv))
-    u_batch = (M @ acc.mT).mT - C + F
+    u_batch = (M @ acc.mT).mT - C
     return u_batch @ torch.linalg.inv(M) @ u_batch.mT / scale
 
 
@@ -135,10 +132,10 @@ def value_terminal_loss(x: torch.Tensor):
 def loss_function(x, acc, alpha=1):
     l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
     l_bellman = backup_loss(x)
-    l_terminal = 1000 * value_terminal_loss(x)
+    l_terminal = 1000  * value_terminal_loss(x)
     return torch.mean(torch.square(l_run + l_bellman + l_terminal))
 
-init_lr = 4e-2
+init_lr = 8e-2
 dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=tl, mode=mode, step=step, scale=scale
 ).to(device)
