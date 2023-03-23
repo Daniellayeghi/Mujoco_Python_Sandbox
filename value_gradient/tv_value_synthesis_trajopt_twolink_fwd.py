@@ -184,7 +184,7 @@ if __name__ == "__main__":
             acc = dtrj_dt[:, :, :, sim_params.nv:]
             loss = loss_function(traj, dtrj_dt, alpha)
             loss.backward()
-            sim_params.ntime = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
+            sim_params.ntime, _= optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
             optimizer.step()
             schedule_lr(optimizer, iteration, 20)
             wandb.log({'epoch': iteration+1, 'loss': loss.item()})

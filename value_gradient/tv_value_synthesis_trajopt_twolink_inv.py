@@ -13,12 +13,12 @@ from mj_renderer import *
 import wandb
 
 
-wandb.init(project='twolink_trajopt', entity='lonephd')
+wandb.init(project='twolink_trajopt_inv', entity='lonephd')
 
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 100, 75, 0.01)
 tl_params = ModelParams(2, 2, 1, 4, 4)
-max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 300, .5, 0.01, 1.0, 15, 1, 'inv'
+max_iter, max_time, alpha, dt, discount, step, scale, mode = 120, 300, .5, 0.01, 1.0, 15, 1, 'inv'
 Q = torch.diag(torch.Tensor([1, .1, 0, 0])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([10000, 10000, 100, 100])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -183,7 +183,7 @@ if __name__ == "__main__":
             acc = dtrj_dt[:, :, :, sim_params.nv:]
             loss = loss_function(traj, dtrj_dt, alpha)
             loss.backward()
-            sim_params.ntime = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
+            sim_params.ntime, _ = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
             optimizer.step()
             schedule_lr(optimizer, iteration, 20)
             wandb.log({'epoch': iteration+1, 'loss': loss.item()})
