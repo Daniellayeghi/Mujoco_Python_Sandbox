@@ -147,9 +147,9 @@ class ProjectedDynamicalSystem(nn.Module):
                 return dvdx
 
         Vx = dvdx(t, x_enc, self.value_func)
-        Vt = dvdt(t, x_enc, self.value_func)
+        # Vt = dvdt(t, x_enc, self.value_func)
         norm = ((Vx @ Vx.mT) + 1e-6).sqrt().view(self.nsim, 1, 1)
-        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x) + Vt)
+        unnorm_porj = Func.relu((Vx @ xd.mT) + self.step * self.loss_func(x))
         xd_trans = - (Vx / norm) * unnorm_porj
         return torch.clamp(xd_trans[:, :, self.sim_params.nv:].view(self.sim_params.nsim, 1, self.sim_params.nv), -40, 40)
 

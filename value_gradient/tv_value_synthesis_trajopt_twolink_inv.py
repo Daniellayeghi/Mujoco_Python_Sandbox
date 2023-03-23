@@ -13,7 +13,7 @@ from mj_renderer import *
 import wandb
 
 
-wandb.init(project='twolink_trajopt', entity='lonephd')
+wandb.init(project='twolink_trajopt_inv', entity='lonephd')
 
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 100, 75, 0.01)

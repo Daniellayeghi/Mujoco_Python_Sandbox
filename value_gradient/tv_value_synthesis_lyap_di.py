@@ -6,24 +6,18 @@ from models import DoubleIntegrator, ModelParams
 from mj_renderer import *
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
-from torchdiffeq_ctrl import odeint_adjoint as odeint
+from torchdiffeq import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
-from PSDNets import ReHU, MakePSD, ICNN, PosDefICNN
-from time_search import optimal_time
-import wandb
+from PSDNets import ReHU, MakePSD, ICNN
 
 di_params = ModelParams(1, 1, 1, 2, 2)
-sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 135, 0.01)
+sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 501, .5, 0.01, 1, 1, 2, 'proj'
-Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 10
-Qf = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device) * 1000
-R = torch.diag(torch.Tensor([.5])).repeat(sim_params.nsim, 1, 1).to(device)
+max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 1, 10, 'proj'
+Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
+R = torch.diag(torch.Tensor([.1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 renderer = MjRenderer("../xmls/pointmass.xml")
-
-wandb.init(project='di_lyap', entity='lonephd')
-
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
     assert len(xs) == len(ys)
@@ -71,9 +65,10 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in, 64),
+            nn.Linear(n_in+1, 64),
             nn.Softplus(beta=5),
             nn.Linear(64, 1),
+            ReHU(0.01)
         )
 
         def init_weights(m):
@@ -84,10 +79,11 @@ class NNValueFunction(nn.Module):
         self.nn.apply(init_weights)
 
     def forward(self, t, x):
-        nsim, c = x.shape[0], x.shape[2]
-        time = torch.ones((nsim, 1, 1)).to(device) * t
-        aug_x = torch.cat((x, time), dim=2).reshape(nsim, c+1)
-        return self.nn(aug_x)
+        x = x.reshape(x.shape[0], sim_params.nqv)
+        b = x.shape[0]
+        time = torch.ones((b, 1)).to(device) * t
+        aug_x = torch.cat((x, time), dim=1)
+        return self.nn(aug_x).reshape(b, 1, 1)
 
 
 def loss_func(x: torch.Tensor):
@@ -95,25 +91,27 @@ def loss_func(x: torch.Tensor):
     return x @ Q @ x.mT
 
 import torch.nn.functional as F
-# nn_value_func = PosDefICNN([sim_params.nqv+1, 64, 64, 1]).to(device)
-nn_value_func = NNValueFunction(sim_params.nqv+1).to(device)
+# nn_value_func = ICNN([sim_params.nqv+1, 64, 64, 1], F.softplus).to(device)
+nn_value_func= NNValueFunction(sim_params.nqv).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
 def batch_state_loss(x: torch.Tensor):
     x = batch_state_encoder(x)
-    t, nsim, r, c = x.shape
-    x_run = x[:-1].view(t-1, nsim, r, c).clone()
-    x_final = x[-1].view(1, nsim, r, c).clone()
-    l_running = (x_run @ Q @ x_run.mT)
-    l_terminal = (x_final @ Qf @ x_final.mT)
-    l_running = torch.sum(l_running, 0) * lambdas
-    return l_running + l_terminal
+    l_running = torch.sum(x @ Q @ x.mT, 0).squeeze() * scale
+
+    return torch.mean(l_running)
+
 
 
 def inv_dynamics_reg(acc: torch.Tensor, alpha):
-    u_batch = acc
+    u_batch = torch.linalg.inv(R) @ acc
     loss = u_batch @ R @ u_batch.mT
     return torch.sum(loss, 0)
+
+
+def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
+    l_ctrl = inv_dynamics_reg(x, acc, alpha)
+    return torch.mean(l_ctrl) * 1/scale
 
 
 def backup_loss(x: torch.Tensor):
@@ -127,21 +125,15 @@ def backup_loss(x: torch.Tensor):
 
     return -value_init + value_final
 
-def value_terminal_loss(x: torch.Tensor):
-    t, nsim, r, c = x.shape
-    x_final = x[-1].view(1, nsim, r, c).clone().reshape(nsim, r, c)
-    value_final = nn_value_func(0, x_final).squeeze()
-    return value_final
 
 def batch_inv_dynamics_loss(acc, alpha):
-    acc = acc[:-1, :, :, sim_params.nv:].clone()
     l_ctrl = inv_dynamics_reg(acc, alpha)
     return torch.mean(l_ctrl) * 1/scale
 
 
 def loss_function(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman, l_terminal = batch_inv_dynamics_loss(acc, alpha), batch_state_loss(x), backup_loss(x), value_terminal_loss(x) * 1000
-    loss = torch.mean(l_ctrl + l_state + l_bellman + l_terminal)
+    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(acc, alpha), batch_state_loss(x), backup_loss(x)
+    loss = torch.mean(l_ctrl + l_state + l_bellman)
     return torch.maximum(loss, torch.zeros_like(loss))
 
 
@@ -149,6 +141,7 @@ pos_arr = torch.linspace(-5, 5, 100).to(device)
 vel_arr = torch.linspace(-5, 5, 100).to(device)
 f_mat = torch.zeros((100, 100)).to(device)
 [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
+time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
@@ -159,7 +152,6 @@ lambdas = build_discounts(lambdas, discount).to(device)
 
 
 log = f"m-{mode}_d-{discount}_s-{step}"
-wandb.watch(dyn_system, loss_function, log="all")
 
 
 def schedule_lr(optimizer, epoch, rate):
@@ -175,7 +167,7 @@ if __name__ == "__main__":
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 5.5
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 3
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     trajectory = x_init.detach().clone().unsqueeze(0)
@@ -183,21 +175,17 @@ if __name__ == "__main__":
 
     while iteration < max_iter:
         optimizer.zero_grad()
-        time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
         x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
-        traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
-        acc = dtraj_dt[:, :, :, sim_params.nv:]
-        loss = loss_function(traj, dtraj_dt, alpha)
+        traj, _ = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+
+        acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
+        loss = loss_function(traj, acc, alpha)
         loss.backward()
-        sim_params.ntime, update = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
         optimizer.step()
         schedule_lr(optimizer, iteration, 60)
-        wandb.log({'epoch': iteration + 1, 'loss': loss.item()})
 
-        print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}, time: {sim_params.ntime} \n")
+        print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
 
-        if iteration % 5 == 1:
-            plot_2d_funcition(pos_arr, vel_arr, [X, Y], f_mat, nn_value_func, trace=traj, contour=True)
 
         if iteration % 20 == 1:
             with torch.no_grad():
