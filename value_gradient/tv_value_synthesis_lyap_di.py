@@ -13,12 +13,14 @@ from PSDNets import ReHU, MakePSD, ICNN
 di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 0.005, 10, 'proj'
+max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 0.005, 1, 'proj'
 Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
 Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([.1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 renderer = MjRenderer("../xmls/pointmass.xml")
+
+torch.manual_seed(0)
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
     assert len(xs) == len(ys)
@@ -137,7 +139,7 @@ def value_terminal_loss(x: torch.Tensor):
 def batch_inv_dynamics_loss(acc, alpha):
     acc = acc[:-1, :, :, sim_params.nv:].clone()
     l_ctrl = inv_dynamics_reg(acc, alpha)
-    return torch.mean(l_ctrl) * 1
+    return l_ctrl * 1/scale
 
 
 def loss_function(x):
@@ -187,8 +189,8 @@ if __name__ == "__main__":
         x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
         traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
 
-        acc = dtraj_dt[:, :, :, sim_params.nv:].clone()
-        loss = loss_function(traj, acc, alpha)
+        # acc = dtraj_dt[:, :, :, sim_params.nv:].clone()
+        loss = loss_function(traj)
         dyn_system.step *= 1.08
         dyn_system.step = min(dyn_system.step, .2)
         loss.backward()
