@@ -14,7 +14,8 @@ di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
 max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 0.005, 10, 'proj'
-Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
+Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
+Qf = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([.1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 renderer = MjRenderer("../xmls/pointmass.xml")
@@ -95,45 +96,53 @@ import torch.nn.functional as F
 nn_value_func= NNValueFunction(sim_params.nqv).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
-def batch_state_loss(x: torch.Tensor):
-    x = batch_state_encoder(x)
-    l_running = torch.sum(x @ Q @ x.mT, 0).squeeze() * scale
 
-    return torch.mean(l_running)
+def loss_func(x: torch.Tensor):
+    return x @ Q @ x.mT
 
+
+def batch_loss(x: torch.Tensor):
+    t, nsim, r, c = x.shape
+    x_run = x[0:-1, :, :, :].view(t - 1, nsim, r, c).clone()
+    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
+    l_running = torch.sum(x_run @ Q @ x_run.mT, 0).squeeze()
+    l_terminal = (x_final @ Qf @ x_final.mT).squeeze()
+
+    return l_running + l_terminal
 
 
 def inv_dynamics_reg(acc: torch.Tensor, alpha):
-    u_batch = torch.linalg.inv(R) @ acc
+    u_batch = acc
     loss = u_batch @ R @ u_batch.mT
     return torch.sum(loss, 0)
 
 
-def inv_dynamics_reg_batch(x: torch.Tensor, acc: torch.Tensor, alpha):
-    l_ctrl = inv_dynamics_reg(x, acc, alpha)
-    return torch.mean(l_ctrl) * 1/scale
-
-
 def backup_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
-    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone()
-    x_init = x[0, :, :, :].view(1, nsim, r, c).clone()
-    x_final_w = batch_state_encoder(x_final).reshape(nsim, r, c)
-    x_init_w = batch_state_encoder(x_init).reshape(nsim, r, c)
-    value_final = nn_value_func((sim_params.ntime - 1) * dt, x_final_w).squeeze()
-    value_init = nn_value_func(0, x_init_w).squeeze()
+    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone().squeeze()
+    x_init = x[0, :, :, :].view(1, nsim, r, c).clone().squeeze()
+    value_final = nn_value_func((701 - 1) * 0.01, x_final).squeeze()
+    value_init = nn_value_func(0, x_init).squeeze()
 
     return -value_init + value_final
 
 
+def value_terminal_loss(x: torch.Tensor):
+    t, nsim, r, c = x.shape
+    x_final = x[-1].view(1, nsim, r, c).clone().reshape(nsim, r, c)
+    value_final = nn_value_func(0, x_final).squeeze()
+    return value_final
+
+
 def batch_inv_dynamics_loss(acc, alpha):
+    acc = acc[:-1, :, :, sim_params.nv:].clone()
     l_ctrl = inv_dynamics_reg(acc, alpha)
-    return torch.mean(l_ctrl) * 1/scale
+    return torch.mean(l_ctrl) * 1
 
 
-def loss_function(x, acc, alpha=1):
-    l_ctrl, l_state, l_bellman = batch_inv_dynamics_loss(acc, alpha), batch_state_loss(x), backup_loss(x)
-    loss = torch.mean(l_ctrl + l_state + l_bellman)
+def loss_function(x):
+    l_state, l_bellman, l_terminal = batch_loss(x), backup_loss(x), value_terminal_loss(x) * 1000
+    loss = torch.mean(l_state + l_bellman + l_terminal)
     return torch.maximum(loss, torch.zeros_like(loss))
 
 
