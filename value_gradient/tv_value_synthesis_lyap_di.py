@@ -6,14 +6,14 @@ from models import DoubleIntegrator, ModelParams
 from mj_renderer import *
 from neural_value_synthesis_diffeq import *
 import matplotlib.pyplot as plt
-from torchdiffeq import odeint_adjoint as odeint
+from torchdiffeq_ctrl import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 from PSDNets import ReHU, MakePSD, ICNN
 
 di_params = ModelParams(1, 1, 1, 2, 2)
 sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
-max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 1, 10, 'proj'
+max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 0.005, 10, 'proj'
 Q = torch.diag(torch.Tensor([1, .01])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([.1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
@@ -65,9 +65,9 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in+1, 64),
+            nn.Linear(n_in+1, 16),
             nn.Softplus(beta=5),
-            nn.Linear(64, 1),
+            nn.Linear(16, 1),
             ReHU(0.01)
         )
 
@@ -141,7 +141,7 @@ pos_arr = torch.linspace(-5, 5, 100).to(device)
 vel_arr = torch.linspace(-5, 5, 100).to(device)
 f_mat = torch.zeros((100, 100)).to(device)
 [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
-time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
+time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).requires_grad_(True).to(device)
 
 dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
@@ -176,16 +176,17 @@ if __name__ == "__main__":
     while iteration < max_iter:
         optimizer.zero_grad()
         x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
-        traj, _ = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
+        traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
 
-        acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
+        acc = dtraj_dt[:, :, :, sim_params.nv:].clone()
         loss = loss_function(traj, acc, alpha)
+        dyn_system.step *= 1.08
+        dyn_system.step = min(dyn_system.step, .2)
         loss.backward()
         optimizer.step()
         schedule_lr(optimizer, iteration, 60)
 
         print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")
-
 
         if iteration % 20 == 1:
             with torch.no_grad():
