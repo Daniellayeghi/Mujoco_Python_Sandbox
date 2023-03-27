@@ -28,8 +28,8 @@ def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, 
     trace = trace.detach().clone().cpu().squeeze()
     for i, x in enumerate(xs):
         for j, y in enumerate(ys):
-            in_tensor = torch.tensor((x, y)).view(1, 1, 2).float().to(device)
-            f_mat[i, j] = func(0, in_tensor).detach().squeeze()
+            in_tensor = torch.tensor((x, y)).repeat(2, 1, 1).float().to(device)
+            f_mat[i, j] = torch.mean(func(0, in_tensor).detach().squeeze())
 
     [X, Y] = xy_grid
     f_mat = f_mat.cpu()
@@ -93,8 +93,8 @@ def loss_func(x: torch.Tensor):
     return x @ Q @ x.mT
 
 import torch.nn.functional as F
-# nn_value_func = ICNN([sim_params.nqv+1, 64, 64, 1], F.softplus).to(device)
-nn_value_func = NNValueFunction(sim_params.nqv).to(device)
+nn_value_func = ICNN([sim_params.nqv+1, 4, 4, 1], F.softplus).to(device)
+# nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
 
@@ -120,9 +120,9 @@ def inv_dynamics_reg(acc: torch.Tensor, alpha):
 
 def backup_loss(x: torch.Tensor):
     t, nsim, r, c = x.shape
-    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone().squeeze()
-    x_init = x[0, :, :, :].view(1, nsim, r, c).clone().squeeze()
-    value_final = nn_value_func((701 - 1) * 0.01, x_final).squeeze()
+    x_final = x[-1, :, :, :].view(1, nsim, r, c).clone().reshape(nsim, r, c)
+    x_init = x[0, :, :, :].view(1, nsim, r, c).clone().reshape(nsim, r, c)
+    value_final = nn_value_func((sim_params.ntime - 1) * 0.01, x_final).squeeze()
     value_init = nn_value_func(0, x_init).squeeze()
 
     return -value_init + value_final
@@ -147,8 +147,8 @@ def loss_function(x):
     return torch.maximum(loss, torch.zeros_like(loss))
 
 
-pos_arr = torch.linspace(-5, 5, 100).to(device)
-vel_arr = torch.linspace(-5, 5, 100).to(device)
+pos_arr = torch.linspace(-10, 10, 100).to(device)
+vel_arr = torch.linspace(-10, 10, 100).to(device)
 f_mat = torch.zeros((100, 100)).to(device)
 [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).requires_grad_(True).to(device)
@@ -177,8 +177,8 @@ if __name__ == "__main__":
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 3
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 3
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     trajectory = x_init.detach().clone().unsqueeze(0)
     iteration = 0

@@ -28,9 +28,10 @@ class ICNN(nn.Module):
             nn.init.uniform_(b, -bound, bound)
 
     def forward(self, t, x):
-        nsim = x.shape[0]
-        time = torch.ones((nsim, 1, 1)).to(device) * t
-        aug_x = torch.cat((x, time), dim=2)
+        nsim, principal, dim = x.shape
+        x = x.reshape(nsim, dim)
+        time = torch.ones((nsim, 1)).to(device) * t
+        aug_x = torch.cat((x, time), dim=1).squeeze()
         z = F.linear(aug_x, self.W[0], self.bias[0])
         z = self.act(z)
 
@@ -38,7 +39,7 @@ class ICNN(nn.Module):
             z = F.linear(aug_x, W, b) + F.linear(z, F.softplus(U)) / U.shape[0]
             z = self.act(z)
 
-        return (F.linear(aug_x, self.W[-1], self.bias[-1]) + F.linear(z, F.softplus(self.U[-1])) / self.U[-1].shape[0]) + self.eps*(aug_x**2).sum(1)[:,None]
+        return ((F.linear(aug_x, self.W[-1], self.bias[-1]) + F.linear(z, F.softplus(self.U[-1])) / self.U[-1].shape[0]) + self.eps*(aug_x**2).sum(1)[:,None]).reshape(nsim, 1, 1)
 
 
 class ReHU(nn.Module):
