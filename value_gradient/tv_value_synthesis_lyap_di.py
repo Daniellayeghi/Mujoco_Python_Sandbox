@@ -11,7 +11,7 @@ from utilities.mujoco_torch import SimulationParams
 from PSDNets import ReHU, MakePSD, ICNN
 
 di_params = ModelParams(1, 1, 1, 2, 2)
-sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 50, 501, 0.01)
+sim_params = SimulationParams(3, 2, 1, 1, 1, 1, 80, 701, 0.01)
 di = DoubleIntegrator(sim_params.nsim, di_params, device)
 max_iter, alpha, dt, discount, step, scale, mode = 500, .5, 0.01, 1, 0.005, 1, 'proj'
 Q = torch.diag(torch.Tensor([1, 1])).repeat(sim_params.nsim, 1, 1).to(device)
@@ -21,6 +21,7 @@ lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 renderer = MjRenderer("../xmls/pointmass.xml")
 
 torch.manual_seed(0)
+np.random.seed(0)
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
     assert len(xs) == len(ys)
@@ -68,16 +69,14 @@ class NNValueFunction(nn.Module):
         super(NNValueFunction, self).__init__()
 
         self.nn = nn.Sequential(
-            nn.Linear(n_in+1, 16),
-            nn.Softplus(beta=5),
-            nn.Linear(16, 1),
-            ReHU(0.01)
+            nn.Linear(n_in+1, 4, bias=False),
+            nn.Softplus(),
+            nn.Linear(4, 1, bias=False)
         )
 
-        def init_weights(m):
-            if isinstance(m, nn.Linear):
-                torch.nn.init.xavier_normal_(m.weight)
-                torch.nn.init.zeros_(m.bias)
+        def init_weights(net):
+            if type(net) == nn.Linear:
+                torch.nn.init.xavier_uniform(net.weight)
 
         self.nn.apply(init_weights)
 
@@ -95,7 +94,7 @@ def loss_func(x: torch.Tensor):
 
 import torch.nn.functional as F
 # nn_value_func = ICNN([sim_params.nqv+1, 64, 64, 1], F.softplus).to(device)
-nn_value_func= NNValueFunction(sim_params.nqv).to(device)
+nn_value_func = NNValueFunction(sim_params.nqv).to(device)
 # nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
 
@@ -139,7 +138,7 @@ def value_terminal_loss(x: torch.Tensor):
 def batch_inv_dynamics_loss(acc, alpha):
     acc = acc[:-1, :, :, sim_params.nv:].clone()
     l_ctrl = inv_dynamics_reg(acc, alpha)
-    return l_ctrl * 1/scale
+    return l_ctrl
 
 
 def loss_function(x):
@@ -158,7 +157,7 @@ dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
 ).to(device)
 
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=1e-2, amsgrad=True)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 
@@ -178,21 +177,21 @@ if __name__ == "__main__":
         for param_group in optimizer.param_groups:
             return param_group['lr']
 
-    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 3
-    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 2
+    q_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
+    qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nq).uniform_(-1, 1) * 7
     x_init = torch.cat((q_init, qd_init), 2).to(device)
     trajectory = x_init.detach().clone().unsqueeze(0)
     iteration = 0
 
     while iteration < max_iter:
         optimizer.zero_grad()
-        x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
+        # x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
         traj, dtraj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
 
         # acc = dtraj_dt[:, :, :, sim_params.nv:].clone()
         loss = loss_function(traj)
         dyn_system.step *= 1.08
-        dyn_system.step = min(dyn_system.step, .2)
+        dyn_system.step = min(dyn_system.step, .4)
         loss.backward()
         optimizer.step()
         schedule_lr(optimizer, iteration, 60)
