@@ -57,15 +57,16 @@ class MakePSD(nn.Module):
     def __init__(self, f, n, eps=0.01, d=1.0):
         super().__init__()
         self.f = f
-        self.zero = torch.nn.Parameter(f(torch.zeros(1,n)), requires_grad=False)
+        zeros = torch.zeros(1,n).to(device)
+        self.zero = torch.nn.Parameter(f(0, zeros), requires_grad=False).to(device)
         self.eps = eps
         self.d = d
         self.rehu = ReHU(self.d)
 
-    def forward(self, x):
+    def forward(self, t, x):
         nsim = x.shape[0]
-        smoothed_output = self.rehu(self.f(x) - self.zero)
-        quadratic_under = self.eps*(x**2).sum(1,keepdim=True)
+        smoothed_output = self.rehu(self.f(t, x) - self.zero)
+        quadratic_under = self.eps*(x**2).sum(2,keepdim=True)
         return (smoothed_output + quadratic_under).reshape(nsim, 1, 1)
 
 

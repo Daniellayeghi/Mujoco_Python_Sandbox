@@ -12,9 +12,7 @@ from torchdiffeq_ctrl import odeint_adjoint as ctrl_odeint
 from mj_renderer import *
 import wandb
 
-
 wandb.init(project='twolink_trajopt', entity='lonephd')
-
 
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 100, 75, 0.01)
 tl_params = ModelParams(2, 2, 1, 4, 4)

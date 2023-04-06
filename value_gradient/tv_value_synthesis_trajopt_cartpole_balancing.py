@@ -15,12 +15,12 @@ from mj_renderer import *
 
 wandb.init(project='cartpole_lyap', entity='lonephd')
 
-sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 20, 100, 0.008)
+sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 200, 100, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
-max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 200, .5, 0.008, 20, .005, 10, 'fwd'
-Q = torch.diag(torch.Tensor([50, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
+max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 200, .5, 0.008, 20, 20, 10, 'fwd'
+Q = torch.diag(torch.Tensor([25, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
-Qf = torch.diag(torch.Tensor([50, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
+Qf = torch.diag(torch.Tensor([25, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-0, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
 renderer = MjRenderer("../xmls/cartpole.xml", 0.0001)
@@ -147,7 +147,7 @@ def loss_function(x, acc, alpha=1):
     l_bellman = backup_loss(x)
     l_terminal = 100 * value_terminal_loss(x)
     loss = torch.mean(l_run + l_bellman + l_terminal)
-    return torch.maximum(loss, torch.zeros_like(loss))
+    return loss
 
 
 dyn_system = ProjectedDynamicalSystem(
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             return param_group['lr']
 
     qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-2, 2) * 1
-    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-0.7, 0.7)
+    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-0.2, 0.2)
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(0.01, 0.01)
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
     iteration = 0
@@ -209,9 +209,10 @@ if __name__ == "__main__":
             ax2 = plt.subplot(121)
             ax1.clear()
             ax2.clear()
-            for i in range(0, sim_params.nsim):
+            for i in range(0, sim_params.nsim, 30):
                 selection = random.randint(0, sim_params.nsim - 1)
                 ax1.margins(0.05)  # Default margin is 0.05, value 0 means fit
+                ax1.plot(traj[:, selection, 0, 0].cpu().detach())
                 ax1.plot(traj[:, selection, 0, 1].cpu().detach())
                 ax1.set_title('Pos')
                 ax2 = plt.subplot(221)

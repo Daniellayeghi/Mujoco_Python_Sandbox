@@ -20,8 +20,11 @@ R = torch.diag(torch.Tensor([.1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime, sim_params.nsim, 1, 1))
 renderer = MjRenderer("../xmls/pointmass.xml")
 
+
 torch.manual_seed(0)
 np.random.seed(0)
+
+
 
 def plot_2d_funcition(xs: torch.Tensor, ys: torch.Tensor, xy_grid, f_mat, func, trace=None, contour=True):
     assert len(xs) == len(ys)
@@ -94,8 +97,6 @@ def loss_func(x: torch.Tensor):
 
 import torch.nn.functional as F
 nn_value_func = ICNN([sim_params.nqv+1, 4, 4, 1], F.softplus).to(device)
-# nn_value_func = NNValueFunction(sim_params.nqv).to(device)
-# nn_value_func = MakePSD(ICNN([sim_params.nqv+1, 64, 64, 1], ReHU(0.01)), sim_params.nqv+1, eps=0.005, d=1)
 
 
 def loss_func(x: torch.Tensor):
@@ -147,8 +148,8 @@ def loss_function(x):
     return torch.maximum(loss, torch.zeros_like(loss))
 
 
-pos_arr = torch.linspace(-10, 10, 100).to(device)
-vel_arr = torch.linspace(-10, 10, 100).to(device)
+pos_arr = torch.linspace(-5, 5, 100).to(device)
+vel_arr = torch.linspace(-5, 5, 100).to(device)
 f_mat = torch.zeros((100, 100)).to(device)
 [X, Y] = torch.meshgrid(pos_arr.squeeze().cpu(), vel_arr.squeeze().cpu())
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).requires_grad_(True).to(device)
@@ -157,7 +158,7 @@ dyn_system = ProjectedDynamicalSystem(
     nn_value_func, loss_func, sim_params, encoder=state_encoder, dynamics=di, mode=mode, step=step, scale=scale, R=R
 ).to(device)
 
-optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=3e-2)
+optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=6e-2)
 lambdas = build_discounts(lambdas, discount).to(device)
 
 
@@ -190,10 +191,10 @@ if __name__ == "__main__":
 
         # acc = dtraj_dt[:, :, :, sim_params.nv:].clone()
         loss = loss_function(traj)
-        dyn_system.step *= 1.08
-        dyn_system.step = min(dyn_system.step, .4)
         loss.backward()
         optimizer.step()
+        dyn_system.step *= 1.08
+        dyn_system.step = min(dyn_system.step, .4)
         schedule_lr(optimizer, iteration, 60)
 
         print(f"Epochs: {iteration}, Loss: {loss.item()}, lr: {get_lr(optimizer)}")

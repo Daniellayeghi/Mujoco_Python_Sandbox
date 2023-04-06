@@ -136,7 +136,7 @@ class Cartpole(BaseRBD):
     MASS_C = 1
     MASS_P = 0.1
     GRAVITY = -9.81
-    FRICTION = torch.Tensor([0.025, 0.025]).to(device)
+    FRICTION = torch.Tensor([0.0, 0.1]).to(device)
     GEAR = 1
 
     def __init__(self, nsims, params: ModelParams, device, mode='inv', stabalize=False):
@@ -213,6 +213,15 @@ class Cartpole(BaseRBD):
     def _INVreg(self, x):
         # x = self._state_encoder(x)
         return x @ self.K
+
+    def g(self, x):
+        q, qd = x[:, :, :2].clone(), x[:, :, 2:].clone()
+        Mu, Mua = self._Mu_Mua(q)
+        B = -torch.inverse(Mua) @ Mua
+        zeros = torch.zeros_like(qd).to(device)
+        ones = torch.ones((qd.shape[0], 1, 1)).to(device)
+        return torch.cat((zeros, B, ones), dim=2)
+
 
     def __call__(self, x, inputs):
         if self._stabilize:
