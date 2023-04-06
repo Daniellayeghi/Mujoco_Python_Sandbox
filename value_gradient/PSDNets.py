@@ -89,9 +89,10 @@ class PosDefICNN(nn.Module):
             nn.init.kaiming_uniform_(U, a=5**0.5)
 
     def forward(self, t, x):
-        nsim, c = x.shape[0], x.shape[2]
-        time = torch.ones((nsim, 1, 1)).to(device) * t
-        aug_x = torch.cat((x, time), dim=2).reshape(nsim, c+1)
+        nsim, principal, dim = x.shape
+        x = x.reshape(nsim, dim)
+        time = torch.ones((nsim, 1)).to(device) * t
+        aug_x = torch.cat((x, time), dim=1).squeeze()
         z = F.linear(aug_x, self.W[0])
         F.softplus(z)
 
@@ -100,4 +101,4 @@ class PosDefICNN(nn.Module):
             z = F.softplus(z)
 
         z = F.linear(aug_x, self.W[-1]) + F.linear(z, F.softplus(self.U[-1]))
-        return F.softplus(z) + self.eps*(aug_x**2).sum(1)[:,None]
+        return (F.softplus(z) + self.eps*(aug_x**2).sum(1)[:,None]).reshape(nsim, 1, 1)
