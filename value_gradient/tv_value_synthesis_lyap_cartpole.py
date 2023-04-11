@@ -81,7 +81,6 @@ class NNValueFunction(nn.Module):
         return self.nn(aug_x).reshape(b, 1, 1)
 
 
-
 nn_value_func = ICNN([sim_params.nqv+1, 200, 500, 1]).to(device)
 
 def loss_func(x: torch.Tensor):
@@ -155,7 +154,7 @@ def loss_function(x, acc, alpha=1):
     l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
     l_bellman = backup_loss(x)
     l_terminal = 100 * value_terminal_loss(x)
-    l_nsd = NSD_loss(x) * 100
+    l_nsd = torch.mean(torch.square(NSD_loss(x))) * 100
     loss = torch.mean(l_run + l_bellman + l_terminal)
     return torch.maximum(loss, torch.zeros_like(loss)) + l_nsd
 
