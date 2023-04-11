@@ -153,10 +153,10 @@ def batch_inv_dynamics_loss(x, acc, alpha):
 def loss_function(x, acc, alpha=1):
     l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
     l_bellman = backup_loss(x)
-    l_terminal = 100 * value_terminal_loss(x)
+    l_terminal = torch.mean(torch.square(value_terminal_loss(x))) * 100
     l_nsd = torch.mean(torch.square(NSD_loss(x))) * 100
-    loss = torch.mean(l_run + l_bellman + l_terminal)
-    return torch.maximum(loss, torch.zeros_like(loss)) + l_nsd
+    loss = torch.mean(l_run + l_bellman)
+    return torch.maximum(loss, torch.zeros_like(loss)) + l_nsd + l_terminal
 
 
 dyn_system = ProjectedDynamicalSystem(
