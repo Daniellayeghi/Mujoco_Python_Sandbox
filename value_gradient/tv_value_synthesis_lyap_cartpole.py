@@ -106,8 +106,10 @@ def backup_loss(x: torch.Tensor):
 
 
 def NSD_loss(x: torch.Tensor):
-    value_final = nn_value_func(0, torch.zeros_like(x)).squeeze()
-    value_init = nn_value_func((sim_params.ntime - 1) * dt, torch.zeros_like(x)).squeeze()
+    _, nsim, r, c = x.shape
+    zero = torch.zeros((nsim, r, c)).to(device)
+    value_final = nn_value_func(0, zero).squeeze()
+    value_init = nn_value_func((sim_params.ntime - 1) * dt, zero).squeeze()
 
     return -value_init+value_final
 
