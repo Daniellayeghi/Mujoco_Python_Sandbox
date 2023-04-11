@@ -81,9 +81,8 @@ class NNValueFunction(nn.Module):
         return self.nn(aug_x).reshape(b, 1, 1)
 
 
-import torch.nn.functional as F
-nn_value_func = MakePSD([sim_params.nqv+1, 200, 500, 1], F.softplus).to(device)
 
+nn_value_func = ICNN([sim_params.nqv+1, 200, 500, 1]).to(device)
 
 def loss_func(x: torch.Tensor):
     x = state_encoder(x)
@@ -103,7 +102,14 @@ def backup_loss(x: torch.Tensor):
     value_final = nn_value_func(0, x_final_w).squeeze()
     value_init = nn_value_func((sim_params.ntime - 1) * dt, x_init_w).squeeze()
 
-    return -value_init + value_final
+    return -value_init+value_final
+
+
+def NSD_loss(x: torch.Tensor):
+    value_final = nn_value_func(0, torch.zeros_like(x)).squeeze()
+    value_init = nn_value_func((sim_params.ntime - 1) * dt, torch.zeros_like(x)).squeeze()
+
+    return -value_init+value_final
 
 
 def batch_state_loss(x: torch.Tensor):
@@ -147,8 +153,9 @@ def loss_function(x, acc, alpha=1):
     l_run = torch.sum(batch_inv_dynamics_loss(x, acc, alpha) + batch_state_loss(x), dim=0)
     l_bellman = backup_loss(x)
     l_terminal = 100 * value_terminal_loss(x)
+    l_nsd = NSD_loss(x) * 100
     loss = torch.mean(l_run + l_bellman + l_terminal)
-    return torch.maximum(loss, torch.zeros_like(loss))
+    return torch.maximum(loss, torch.zeros_like(loss)) + l_nsd
 
 
 dyn_system = ProjectedDynamicalSystem(
@@ -157,7 +164,6 @@ dyn_system = ProjectedDynamicalSystem(
 time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device)
 one_step = torch.linspace(0, dt, 2).to(device)
 optimizer = torch.optim.AdamW(dyn_system.parameters(), lr=6e-3, amsgrad=True)
-# lambdas = build_discounts(lambdas, discount).to(device)
 
 fig_3, p, r, width, height = init_fig_cp(0)
 
@@ -189,14 +195,12 @@ if __name__ == "__main__":
         x_init = x_init[torch.randperm(sim_params.nsim)[:], :, :].clone()
         # time = torch.linspace(0, (sim_params.ntime - 1) * dt, sim_params.ntime).to(device).requires_grad_(True)
         traj, dtrj_dt = odeint(dyn_system, x_init, time, method='euler', options=dict(step_size=dt))
-        # acc = compose_acc(traj[:, :, :, sim_params.nv:].clone(), dt)
         acc = dtrj_dt[:, :, :, sim_params.nv:]
         loss = loss_function(traj, dtrj_dt, alpha)
         loss.backward()
         optimizer.step()
         sim_params.ntime, _ = optimal_time(sim_params.ntime, max_time, dt, loss_function, x_init, dyn_system, loss)
-        # dyn_system.step *= 1.08
-        # dyn_system.step = min(dyn_system.step, .4)
+
         schedule_lr(optimizer, iteration, 20)
 
         optimizer.step()

@@ -5,7 +5,7 @@ from utilities.torch_device import device
 
 
 class ICNN(nn.Module):
-    def __init__(self, layer_sizes, activation=F.relu_, eps=0.01):
+    def __init__(self, layer_sizes, activation=F.softplus, eps=0.01):
         super().__init__()
         self.W = nn.ParameterList([nn.Parameter(torch.Tensor(l, layer_sizes[0]))
                                    for l in layer_sizes[1:]])
@@ -71,7 +71,7 @@ class MakePSD(nn.Module):
 
 
 class PosDefICNN(nn.Module):
-    def __init__(self, layer_sizes, eps=0.1, negative_slope=0.05):
+    def __init__(self, layer_sizes, eps=0.01, negative_slope=0.05):
         super().__init__()
         self.W = nn.ParameterList([nn.Parameter(torch.Tensor(l, layer_sizes[0]))
                                    for l in layer_sizes[1:]])
@@ -97,7 +97,7 @@ class PosDefICNN(nn.Module):
         F.softplus(z)
 
         for W,U in zip(self.W[1:-1], self.U[:-1]):
-            z = F.linear(aug_x, W) + F.linear(z, F.softplus(U))*self.negative_slope
+            z = F.linear(aug_x, W) + F.linear(z, F.softplus(U))
             z = F.softplus(z)
 
         z = F.linear(aug_x, self.W[-1]) + F.linear(z, F.softplus(self.U[-1]))
