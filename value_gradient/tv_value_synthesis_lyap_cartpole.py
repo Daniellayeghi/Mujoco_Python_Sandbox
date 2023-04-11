@@ -10,6 +10,7 @@ from torchdiffeq_ctrl import odeint_adjoint as odeint
 from utilities.mujoco_torch import SimulationParams
 from time_search import optimal_time
 from PSDNets import ICNN, MakePSD, PosDefICNN
+
 import wandb
 from mj_renderer import *
 
@@ -18,9 +19,9 @@ wandb.init(project='cartpole_lyap', entity='lonephd')
 sim_params = SimulationParams(6, 4, 2, 2, 2, 1, 20, 100, 0.008)
 cp_params = ModelParams(2, 2, 1, 4, 4)
 max_iter, max_time, alpha, dt, discount, step, scale, mode = 500, 200, .5, 0.008, 20, .005, 10, 'fwd'
-Q = torch.diag(torch.Tensor([50, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
+Q = torch.diag(torch.Tensor([25, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 R = torch.diag(torch.Tensor([0.0001])).repeat(sim_params.nsim, 1, 1).to(device)
-Qf = torch.diag(torch.Tensor([50, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
+Qf = torch.diag(torch.Tensor([25, 25, 0.5, .1])).repeat(sim_params.nsim, 1, 1).to(device)
 lambdas = torch.ones((sim_params.ntime-0, sim_params.nsim, 1, 1))
 cartpole = Cartpole(sim_params.nsim, cp_params, device)
 renderer = MjRenderer("../xmls/cartpole.xml", 0.0001)
@@ -81,7 +82,7 @@ class NNValueFunction(nn.Module):
 
 
 import torch.nn.functional as F
-nn_value_func = PosDefICNN([sim_params.nqv+1, 200, 500, 1]).to(device)
+nn_value_func = MakePSD([sim_params.nqv+1, 200, 500, 1], F.softplus).to(device)
 
 
 def loss_func(x: torch.Tensor):
@@ -177,7 +178,7 @@ if __name__ == "__main__":
             return param_group['lr']
 
     qc_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-2, 2) * 1
-    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-0.7, 0.7)
+    qp_init = torch.FloatTensor(sim_params.nsim, 1, 1).uniform_(-0.6, 0.6)
     qd_init = torch.FloatTensor(sim_params.nsim, 1, sim_params.nv).uniform_(0.01, 0.01)
     x_init = torch.cat((qc_init, qp_init, qd_init), 2).to(device)
     iteration = 0
@@ -209,7 +210,7 @@ if __name__ == "__main__":
             ax2 = plt.subplot(121)
             ax1.clear()
             ax2.clear()
-            for i in range(0, sim_params.nsim):
+            for i in range(0, sim_params.nsim, 2):
                 selection = random.randint(0, sim_params.nsim - 1)
                 ax1.margins(0.05)  # Default margin is 0.05, value 0 means fit
                 ax1.plot(traj[:, selection, 0, 1].cpu().detach())
