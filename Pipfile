@@ -33,6 +33,12 @@ torchdiffeq = {git = "https://github.com/rtqichen/torchdiffeq.git"}
 wandb = "*"
 protobuf = "==3.18"
 torchdiffeq-ctrl = {ref = "euler", git = "https://github.com/Daniellayeghi/torchdiffeq_ctrl.git"}
+box2d = "*"
+box2d-kengz = "*"
+stable-baselines3 = {version = "==1.8.0", extras = ["extra"]}
+gym = "==0.25.2"
+tensorflow = "==1.14"
+tensorboard = "*"
 
 [requires]
 python_version = "3.7"

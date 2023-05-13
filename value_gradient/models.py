@@ -81,7 +81,7 @@ class BaseRBD(object):
         Tp = self._Tbias(x)
         Tfric = self._Tfric(qd)
         B = self._Bvec()
-        qdd = (Minv @ (Tp - Tfric + tau).mT).mT
+        qdd = (Minv @ (Tp - Tfric + B*tau).mT).mT
         xd = torch.cat((qd[:, :, 0:self._params.nx], qdd), 2).clone()
         return xd
 
@@ -132,7 +132,7 @@ class DoubleIntegrator(BaseRBD):
 
 
 class Cartpole(BaseRBD):
-    LENGTH = 0.3
+    LENGTH = .3
     MASS_C = 1
     MASS_P = 0.1
     GRAVITY = -9.81
@@ -144,7 +144,7 @@ class Cartpole(BaseRBD):
         self._L = torch.ones((nsims, 1, 1)).to(device) * self.LENGTH
         self._Mp = torch.ones((nsims, 1, 1)).to(device) * self.MASS_P
         self._Mc = torch.ones((nsims, 1, 1)).to(device) * self.MASS_C
-        self._b = torch.diag(torch.Tensor([1, 0])).repeat(nsims, 1, 1).to(device)
+        self._b = torch.Tensor([1, 0]).repeat(nsims, 1, 1)
         self.K = torch.Tensor([5.162, 40.269, 0.05, .4]).repeat(nsims, 1, 1).to(device)
 
         def state_encoder(x: torch.Tensor):
@@ -342,7 +342,7 @@ class TwoLink2(BaseRBD):
 
     def __init__(self, nsims, params: ModelParams, device, mode='inv'):
         super(TwoLink2, self).__init__(nsims, params, device, mode)
-        self._b = torch.diag(torch.Tensor([1, 1])).repeat(nsims, 1, 1).to(device)
+        self._b = torch.Tensor([1, 1]).repeat(nsims, 1, 1).to(device)
 
     def _Mact(self, q):
         return self._Ms(q)[1]
@@ -409,7 +409,7 @@ if __name__ == "__main__":
     ren_cp = MjRenderer('../xmls/cartpole.xml')
 
     cp_params = ModelParams(2, 2, 1, 4, 4)
-    cp = Cartpole(1, cp_params, 'cpu', mode='fwd', stabalize=True)
+    cp = Cartpole(1, cp_params, 'cpu', mode='fwd', stabalize=False)
 
     dcp_params = ModelParams(3, 3, 1, 6, 6)
     dcp = DoubleCartpole(1, dcp_params, 'cpu', mode='inv')
@@ -417,9 +417,9 @@ if __name__ == "__main__":
     tl_params = ModelParams(2, 2, 2, 4, 4)
     tl = TwoLink2(1, tl_params, 'cpu', mode='fwd')
 
-    x_init_cp = torch.Tensor([0, 0.7, 0, 0]).view(1, 1, 4)
+    x_init_cp = torch.Tensor([0, 0.7, 0, 0]).view(1, 1, 4) * 0
     qdd_init_cp = torch.Tensor([0, 0]).view(1, 1, 2)
-    traj_cp = torch.zeros((500, 1, 1, cp_params.nx))
+    traj_cp = torch.zeros((10, 1, 1, cp_params.nx))
 
     x_init_dcp = torch.Tensor([0, 0.1, 0.1, 0, 0, 0]).view(1, 1, 6)
     qdd_init_dcp = torch.Tensor([0, 0, 0]).view(1, 1, 3)
@@ -427,15 +427,18 @@ if __name__ == "__main__":
 
     x_init_tl = torch.Tensor([0, 0, 0, 0]).view(1, 1, 4)
     qdd_init_tl = torch.Tensor([0, 0]).view(1, 1, 2)
-    traj_tl = torch.zeros((500, 1, 1, tl_params.nx))
+    traj_tl = torch.zeros((10, 1, 1, tl_params.nx))
     # test_acc = torch.from_numpy(np.load('test_acc.npy'))[:,:,:,0].reshape(200, 1, 1, 1)
 
     K = torch.Tensor([-1.162, -2.269, 0, 0]).reshape(1, 4, 1)
+    np.random.seed(0)
+    u = np.random.randn(10)
+    u = torch.Tensor(u)
 
 
     def integrate(func, x, xd, time, dt, res: torch.Tensor):
         for t in range(time):
-            xd_new = func(x, torch.randn(1, 1, 2) * 0)
+            xd_new = func(x, u[t])
             x = x + xd_new * dt
             res[t] = x
 
@@ -464,9 +467,13 @@ if __name__ == "__main__":
     #    traj[:, :, :, 1] = torch.pi - (traj[:, :, :, 0] + (torch.pi - traj[:, :, :, 1]))
     #    return traj
     #
-    # traj_tl = integrate(tl, x_init_tl, qdd_init_tl, 500, 0.01, traj_tl)
+    # traj_tl = integrate(tl, x_init_tl, qdd_init_tl, 10, 0.01, traj_tl)
+    # np.save('x_test_tl.npy', traj_tl.detach().cpu().numpy())
+    # p =1
     # traj_tl_mj = transform_coordinates_tl(traj_tl)
     # ren_tl.render(traj_tl_mj[:, 0, 0, :tl_params.nq].cpu().detach().numpy())
 
-    traj_cp = integrate(cp, x_init_cp, qdd_init_cp, 500, 0.01, traj_cp)
-    ren_cp.render(traj_cp[:, 0, 0, :cp_params.nq].cpu().detach().numpy())
+    # np.save('u_test.npy', u.detach().cpu().numpy())
+    traj_cp = integrate(cp, x_init_cp, qdd_init_cp, 10, 0.01, traj_cp)
+    np.save('x_test.npy', traj_cp.detach().cpu().numpy())
+    # ren_cp.render(traj_cp[:, 0, 0, :cp_params.nq].cpu().detach().numpy())
